@@ -3,11 +3,14 @@
 #include <iostream>
 #include <windows.h>			// #include this (massive, platform-specific) header in VERY few places (and .CPPs only)
 #include "Engine/Core/EngineCommon.hpp"
-#include "Game/App.hpp"
-#include "Game/GameCommon.hpp"
+#include "Game/Framework/App.hpp"
+#include "Game/Framework/GameCommon.hpp"
 
 //-----------------------------------------------------------------------------------------------
-int WINAPI WinMain(HINSTANCE const applicationInstanceHandle, HINSTANCE, LPSTR const commandLineString, int)
+int WINAPI WinMain(HINSTANCE const applicationInstanceHandle,
+                   HINSTANCE,
+                   LPSTR const commandLineString,
+                   int)
 {
     UNUSED(applicationInstanceHandle)
     UNUSED(commandLineString)

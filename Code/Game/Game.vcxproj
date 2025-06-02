@@ -189,22 +189,32 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="App.cpp" />
-    <ClCompile Include="Entity.cpp" />
-    <ClCompile Include="Game.cpp" />
-    <ClCompile Include="GameCommon.cpp" />
-    <ClCompile Include="Main_Windows.cpp" />
-    <ClCompile Include="Player.cpp" />
-    <ClCompile Include="Prop.cpp" />
+    <ClCompile Include="Definition\PieceDefinition.cpp" />
+    <ClCompile Include="Framework\AIController.cpp" />
+    <ClCompile Include="Framework\App.cpp" />
+    <ClCompile Include="Framework\Controller.cpp" />
+    <ClCompile Include="Framework\GameCommon.cpp" />
+    <ClCompile Include="Framework\Main_Windows.cpp" />
+    <ClCompile Include="Framework\PlayerController.cpp" />
+    <ClCompile Include="Gameplay\Actor.cpp" />
+    <ClCompile Include="Gameplay\Board.cpp" />
+    <ClCompile Include="Gameplay\Game.cpp" />
+    <ClCompile Include="Gameplay\Match.cpp" />
+    <ClCompile Include="Gameplay\Piece.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="App.hpp" />
+    <ClInclude Include="Definition\PieceDefinition.hpp" />
     <ClInclude Include="EngineBuildPreferences.hpp" />
-    <ClInclude Include="Entity.hpp" />
-    <ClInclude Include="Game.hpp" />
-    <ClInclude Include="GameCommon.hpp" />
-    <ClInclude Include="Player.hpp" />
-    <ClInclude Include="Prop.hpp" />
+    <ClInclude Include="Framework\AIController.hpp" />
+    <ClInclude Include="Framework\App.hpp" />
+    <ClInclude Include="Framework\Controller.hpp" />
+    <ClInclude Include="Framework\GameCommon.hpp" />
+    <ClInclude Include="Framework\PlayerController.hpp" />
+    <ClInclude Include="Gameplay\Actor.hpp" />
+    <ClInclude Include="Gameplay\Board.hpp" />
+    <ClInclude Include="Gameplay\Game.hpp" />
+    <ClInclude Include="Gameplay\Match.hpp" />
+    <ClInclude Include="Gameplay\Piece.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Docs\README.md" />

@@ -3,7 +3,7 @@
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#include "Game/Prop.hpp"
+#include "Game/Gameplay/Piece.hpp"
 
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
@@ -11,18 +11,18 @@
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Renderer.hpp"
-#include "Game/GameCommon.hpp"
+#include "Game/Framework/GameCommon.hpp"
 #include "ThirdParty/stb/stb_image.h"
 
 //----------------------------------------------------------------------------------------------------
-Prop::Prop(Game* owner, Texture const* texture)
-    : Entity(owner),
+Piece::Piece(Game* owner, Texture const* texture)
+    : Actor(owner),
       m_texture(texture)
 {
 }
 
 //----------------------------------------------------------------------------------------------------
-void Prop::Update(float const deltaSeconds)
+void Piece::Update(float const deltaSeconds)
 {
     m_orientation.m_yawDegrees += m_angularVelocity.m_yawDegrees * deltaSeconds;
     m_orientation.m_pitchDegrees += m_angularVelocity.m_pitchDegrees * deltaSeconds;
@@ -30,7 +30,7 @@ void Prop::Update(float const deltaSeconds)
 }
 
 //----------------------------------------------------------------------------------------------------
-void Prop::Render() const
+void Piece::Render() const
 {
     g_theRenderer->SetModelConstants(GetModelToWorldTransform(), m_color);
     g_theRenderer->SetBlendMode(eBlendMode::OPAQUE); //AL
@@ -42,7 +42,7 @@ void Prop::Render() const
 }
 
 //----------------------------------------------------------------------------------------------------
-void Prop::InitializeLocalVertsForCube()
+void Piece::InitializeLocalVertsForCube()
 {
     Vec3 const frontBottomLeft(0.5f, -0.5f, -0.5f);
     Vec3 const frontBottomRight(0.5f, 0.5f, -0.5f);
@@ -62,7 +62,7 @@ void Prop::InitializeLocalVertsForCube()
 }
 
 //----------------------------------------------------------------------------------------------------
-void Prop::InitializeLocalVertsForSphere()
+void Piece::InitializeLocalVertsForSphere()
 {
     float constexpr radius    = 0.5f;
     int constexpr   numSlices = 32;
@@ -74,7 +74,7 @@ void Prop::InitializeLocalVertsForSphere()
 }
 
 //----------------------------------------------------------------------------------------------------
-void Prop::InitializeLocalVertsForGrid()
+void Piece::InitializeLocalVertsForGrid()
 {
     float gridLineLength = 100.f;
 
@@ -101,7 +101,7 @@ void Prop::InitializeLocalVertsForGrid()
 }
 
 //----------------------------------------------------------------------------------------------------
-void Prop::InitializeLocalVertsForWorldCoordinateArrows()
+void Piece::InitializeLocalVertsForWorldCoordinateArrows()
 {
     AddVertsForArrow3D(m_vertexes, m_position, m_position + Vec3::X_BASIS * 2.f, 0.6f, 0.25f, 0.4f, Rgba8::RED);
     AddVertsForArrow3D(m_vertexes, m_position, m_position + Vec3::Y_BASIS * 2.f, 0.6f, 0.25f, 0.4f, Rgba8::GREEN);
@@ -109,7 +109,7 @@ void Prop::InitializeLocalVertsForWorldCoordinateArrows()
 }
 
 //----------------------------------------------------------------------------------------------------
-void Prop::InitializeLocalVertsForText2D()
+void Piece::InitializeLocalVertsForText2D()
 {
     // g_theBitmapFont->AddVertsForTextInBox2D(m_vertexes, "XXX", AABB2::ZERO_TO_ONE, 10.f);
     g_theBitmapFont->AddVertsForText3DAtOriginXForward(m_vertexes, "ABCDEFGHIJKL", 1.f);

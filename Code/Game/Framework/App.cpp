@@ -3,7 +3,7 @@
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#include "Game/App.hpp"
+#include "Game/Framework/App.hpp"
 
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/Clock.hpp"
@@ -15,8 +15,8 @@
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Renderer/Window.hpp"
-#include "Game/Game.hpp"
-#include "Game/GameCommon.hpp"
+#include "Game/Gameplay/Game.hpp"
+#include "Game/Framework/GameCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
 App*                   g_theApp        = nullptr;       // Created and owned by Main_Windows.cpp
@@ -106,38 +106,25 @@ void App::Startup()
 void App::Shutdown()
 {
     // Destroy all Engine Subsystem
-    delete g_theGame;
-    g_theGame = nullptr;
-
-    delete g_theRNG;
-    g_theRNG = nullptr;
-
-    delete g_theBitmapFont;
-    g_theBitmapFont = nullptr;
+    SafeDeletePointer(g_theGame);
+    SafeDeletePointer(g_theRNG);
+    SafeDeletePointer(g_theBitmapFont);
 
     g_theAudio->Shutdown();
     g_theInput->Shutdown();
     g_theDevConsole->Shutdown();
 
-    delete m_devConsoleCamera;
-    m_devConsoleCamera = nullptr;
+    SafeDeletePointer(m_devConsoleCamera);
 
     DebugRenderSystemShutdown();
     g_theRenderer->Shutdown();
     g_theWindow->Shutdown();
     g_theEventSystem->Shutdown();
 
-    delete g_theAudio;
-    g_theAudio = nullptr;
-
-    delete g_theRenderer;
-    g_theRenderer = nullptr;
-
-    delete g_theWindow;
-    g_theWindow = nullptr;
-
-    delete g_theInput;
-    g_theInput = nullptr;
+    SafeDeletePointer(g_theAudio);
+    SafeDeletePointer(g_theRenderer);
+    SafeDeletePointer(g_theWindow);
+    SafeDeletePointer(g_theInput);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -213,7 +200,7 @@ void App::Render() const
     g_theRenderer->ClearScreen(clearColor);
     g_theGame->Render();
 
-    AABB2 const box            = AABB2(Vec2::ZERO, Vec2(1600.f, 30.f));
+    AABB2 const box = AABB2(Vec2::ZERO, Vec2(1600.f, 30.f));
 
     g_theDevConsole->Render(box);
 }

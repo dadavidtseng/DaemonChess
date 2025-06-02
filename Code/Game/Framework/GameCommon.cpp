@@ -3,7 +3,7 @@
 //
 
 //-----------------------------------------------------------------------------------------------
-#include "Game/GameCommon.hpp"
+#include "Game/Framework/GameCommon.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Math/MathUtils.hpp"
@@ -272,3 +272,4 @@ void DebugDrawBoxRing(Vec2 const& center, float radius, float thickness, Rgba8 c
 
     g_theRenderer->DrawVertexArray(24, &verts[0]);
 }
+

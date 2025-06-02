@@ -3,9 +3,9 @@
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#include "Game/Player.hpp"
+#include "Game/Framework/PlayerController.hpp"
 
-#include "Game.hpp"
+#include "Game/Gameplay/Game.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
@@ -16,7 +16,7 @@
 
 //----------------------------------------------------------------------------------------------------
 Player::Player(Game* owner)
-    : Entity(owner)
+    : Actor(owner)
 {
     m_worldCamera = new Camera();
 

@@ -3,7 +3,7 @@
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
-#include "Game/Game.hpp"
+#include "Game/Gameplay/Game.hpp"
 
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
@@ -13,10 +13,10 @@
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Renderer/Window.hpp"
-#include "Game/App.hpp"
-#include "Game/GameCommon.hpp"
-#include "Game/Player.hpp"
-#include "Game/Prop.hpp"
+#include "Game/Framework/App.hpp"
+#include "Game/Framework/GameCommon.hpp"
+#include "Game/Framework/PlayerController.hpp"
+#include "Game/Gameplay/Piece.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Game::Game()
@@ -346,10 +346,10 @@ void Game::SpawnProp()
 {
     Texture const* texture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/TestUV.png");
 
-    m_firstCube  = new Prop(this);
-    m_secondCube = new Prop(this);
-    m_sphere     = new Prop(this, texture);
-    m_grid       = new Prop(this);
+    m_firstCube  = new Piece(this);
+    m_secondCube = new Piece(this);
+    m_sphere     = new Piece(this, texture);
+    m_grid       = new Piece(this);
 
     m_firstCube->InitializeLocalVertsForCube();
     m_secondCube->InitializeLocalVertsForCube();

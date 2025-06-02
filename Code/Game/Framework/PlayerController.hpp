@@ -1,36 +1,28 @@
 //----------------------------------------------------------------------------------------------------
-// Prop.hpp
+// Player.hpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include <vector>
-
-#include "Engine/Core/Rgba8.hpp"
-#include "Engine/Core/VertexUtils.hpp"
-#include "Engine/Renderer/BitmapFont.hpp"
-#include "Game/Entity.hpp"
+#include "Game/Gameplay/Actor.hpp"
 
 //----------------------------------------------------------------------------------------------------
-class Texture;
-struct Vertex_PCU;
+class Camera;
 
 //----------------------------------------------------------------------------------------------------
-class Prop : public Entity
+class Player : public Actor
 {
 public:
-    Prop(Game* owner, Texture const* texture = nullptr);
+    explicit Player(Game* owner);
+    ~Player() override;
 
     void Update(float deltaSeconds) override;
     void Render() const override;
-    void InitializeLocalVertsForCube();
-    void InitializeLocalVertsForSphere();
-    void InitializeLocalVertsForGrid();
-    void InitializeLocalVertsForCylinder();
-    void InitializeLocalVertsForWorldCoordinateArrows();
-    void InitializeLocalVertsForText2D();
+    void UpdateFromKeyBoard();
+    void UpdateFromController();
+
+    Camera* GetCamera() const;
 
 private:
-    std::vector<Vertex_PCU> m_vertexes;
-    Texture const* m_texture = nullptr;
+    Camera* m_worldCamera = nullptr;
 };

@@ -11,50 +11,83 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="Definition">
+      <UniqueIdentifier>{c6793b6f-4156-4441-8bd0-8394ed472ec3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Game.cpp">
+    <ClCompile Include="Gameplay\Actor.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
-    <ClCompile Include="GameCommon.cpp">
+    <ClCompile Include="Gameplay\Game.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
-    <ClCompile Include="App.cpp">
+    <ClCompile Include="Framework\AIController.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
-    <ClCompile Include="Main_Windows.cpp">
+    <ClCompile Include="Framework\App.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
-    <ClCompile Include="Entity.cpp">
+    <ClCompile Include="Framework\Controller.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Framework\GameCommon.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Framework\Main_Windows.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Framework\PlayerController.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Definition\PieceDefinition.cpp">
+      <Filter>Definition</Filter>
+    </ClCompile>
+    <ClCompile Include="Gameplay\Board.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
-    <ClCompile Include="Player.cpp">
+    <ClCompile Include="Gameplay\Match.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
-    <ClCompile Include="Prop.cpp">
+    <ClCompile Include="Gameplay\Piece.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Game.hpp">
+    <ClInclude Include="Gameplay\Actor.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
-    <ClInclude Include="GameCommon.hpp">
+    <ClInclude Include="Gameplay\Game.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
-    <ClInclude Include="App.hpp">
+    <ClInclude Include="Framework\AIController.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Framework\App.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Framework\Controller.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Framework\GameCommon.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Framework\PlayerController.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="EngineBuildPreferences.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
-    <ClInclude Include="Entity.hpp">
+    <ClInclude Include="Definition\PieceDefinition.hpp">
+      <Filter>Definition</Filter>
+    </ClInclude>
+    <ClInclude Include="Gameplay\Board.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
-    <ClInclude Include="Player.hpp">
+    <ClInclude Include="Gameplay\Match.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
-    <ClInclude Include="Prop.hpp">
+    <ClInclude Include="Gameplay\Piece.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
   </ItemGroup>

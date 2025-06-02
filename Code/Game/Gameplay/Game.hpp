@@ -9,7 +9,7 @@
 class Camera;
 class Clock;
 class Player;
-class Prop;
+class Piece;
 
 //----------------------------------------------------------------------------------------------------
 enum class eGameState
@@ -41,10 +41,10 @@ private:
 
     Camera*    m_screenCamera = nullptr;
     Player*    m_player       = nullptr;
-    Prop*      m_firstCube    = nullptr;
-    Prop*      m_secondCube   = nullptr;
-    Prop*      m_sphere       = nullptr;
-    Prop*      m_grid         = nullptr;
+    Piece*      m_firstCube    = nullptr;
+    Piece*      m_secondCube   = nullptr;
+    Piece*      m_sphere       = nullptr;
+    Piece*      m_grid         = nullptr;
     Clock*     m_gameClock    = nullptr;
     eGameState m_gameState    = eGameState::Attract;
 };
