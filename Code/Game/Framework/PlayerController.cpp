@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Framework/PlayerController.hpp"
 
+#include "GameCommon.hpp"
 #include "Game/Gameplay/Game.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
@@ -15,8 +16,8 @@
 #include "Engine/Renderer/Window.hpp"
 
 //----------------------------------------------------------------------------------------------------
-Player::Player(Game* owner)
-    : Actor(owner)
+PlayerController::PlayerController(Game* owner)
+    : Controller(owner)
 {
     m_worldCamera = new Camera();
 
@@ -39,20 +40,20 @@ Player::Player(Game* owner)
 }
 
 //----------------------------------------------------------------------------------------------------
-Player::~Player()
+PlayerController::~PlayerController()
 {
     delete m_worldCamera;
     m_worldCamera = nullptr;
 }
 
 //----------------------------------------------------------------------------------------------------
-void Player::Update(float deltaSeconds)
+void PlayerController::Update(float deltaSeconds)
 {
     XboxController const& controller = g_theInput->GetController(0);
 
     if (g_theInput->WasKeyJustPressed(KEYCODE_H) || controller.WasButtonJustPressed(XBOX_BUTTON_START))
     {
-        if (m_game->IsAttractMode() == false)
+        if (g_theGame->GetCurrentGameState()!=eGameState::ATTRACT)
         {
             m_position    = Vec3::ZERO;
             m_orientation = EulerAngles::ZERO;
@@ -114,22 +115,33 @@ void Player::Update(float deltaSeconds)
 }
 
 //----------------------------------------------------------------------------------------------------
-void Player::Render() const
+void PlayerController::Render() const
 {
 }
 
 //----------------------------------------------------------------------------------------------------
-void Player::UpdateFromKeyBoard()
+void PlayerController::UpdateFromKeyBoard()
 {
 }
 
 //----------------------------------------------------------------------------------------------------
-void Player::UpdateFromController()
+void PlayerController::UpdateFromController()
 {
 }
 
 //----------------------------------------------------------------------------------------------------
-Camera* Player::GetCamera() const
+Camera* PlayerController::GetCamera() const
 {
     return m_worldCamera;
+}
+
+Mat44 PlayerController::GetModelToWorldTransform() const
+{
+    Mat44 m2w;
+
+    m2w.SetTranslation3D(m_position);
+
+    m2w.Append(m_orientation.GetAsMatrix_IFwd_JLeft_KUp());
+
+    return m2w;
 }

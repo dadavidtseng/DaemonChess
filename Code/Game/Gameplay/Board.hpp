@@ -1,25 +1,25 @@
 //----------------------------------------------------------------------------------------------------
-// Prop.hpp
+// Board.hpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
 #include <vector>
 
-#include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Game/Gameplay/Actor.hpp"
 
+class Match;
 //----------------------------------------------------------------------------------------------------
 class Texture;
 struct Vertex_PCU;
 
 //----------------------------------------------------------------------------------------------------
-class Piece : public Actor
+class Board final : public Actor
 {
 public:
-    Piece(Game* owner, Texture const* texture = nullptr);
+    explicit Board(Match* owner, Texture const* texture = nullptr);
 
     void Update(float deltaSeconds) override;
     void Render() const override;

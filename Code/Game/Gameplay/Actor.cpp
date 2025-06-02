@@ -6,8 +6,8 @@
 #include "Game/Gameplay/Actor.hpp"
 
 //----------------------------------------------------------------------------------------------------
-Actor::Actor(Game* owner)
-    : m_game(owner)
+Actor::Actor(Match* owner)
+    : m_match(owner)
 {
 }
 

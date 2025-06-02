@@ -221,7 +221,8 @@ void App::EndFrame() const
 void App::UpdateCursorMode()
 {
     bool const doesWindowHasFocus   = GetActiveWindow() == g_theWindow->GetWindowHandle();
-    bool const shouldUsePointerMode = !doesWindowHasFocus || g_theDevConsole->IsOpen() || g_theGame->IsAttractMode();
+    bool const isAttractState = g_theGame->GetCurrentGameState()==eGameState::ATTRACT;
+    bool const shouldUsePointerMode = !doesWindowHasFocus || g_theDevConsole->IsOpen() || isAttractState;
 
     if (shouldUsePointerMode == true)
     {

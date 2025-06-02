@@ -1,0 +1,159 @@
+//----------------------------------------------------------------------------------------------------
+// Match.cpp
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
+#include "Game/Gameplay/Match.hpp"
+
+#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Input/InputSystem.hpp"
+#include "Engine/Input/XboxController.hpp"
+#include "Engine/Renderer/DebugRenderSystem.hpp"
+#include "Engine/Renderer/Renderer.hpp"
+#include "Game/Framework/GameCommon.hpp"
+#include "Game/Gameplay/Game.hpp"
+#include "Game/Gameplay/Piece.hpp"
+
+Match::Match()
+{
+    m_screenCamera = new Camera();
+
+    Vec2 const bottomLeft     = Vec2::ZERO;
+    Vec2 const screenTopRight = Vec2(SCREEN_SIZE_X, SCREEN_SIZE_Y);
+
+    m_screenCamera->SetOrthoGraphicView(bottomLeft, screenTopRight);
+    m_screenCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
+    m_gameClock = new Clock(Clock::GetSystemClock());
+
+
+
+    DebugAddWorldBasis(Mat44(), -1.f);
+
+    Mat44 transform;
+
+    transform.SetIJKT3D(-Vec3::Y_BASIS, Vec3::X_BASIS, Vec3::Z_BASIS, Vec3(0.25f, 0.f, 0.25f));
+    DebugAddWorldText("X-Forward", transform, 0.25f, Vec2::ONE, -1.f , Rgba8::RED);
+
+    transform.SetIJKT3D(-Vec3::X_BASIS, -Vec3::Y_BASIS, Vec3::Z_BASIS, Vec3(0.f, 0.25f, 0.5f));
+    DebugAddWorldText("Y-Left", transform, 0.25f, Vec2::ZERO, -1.f , Rgba8::GREEN);
+
+    transform.SetIJKT3D(-Vec3::X_BASIS, Vec3::Z_BASIS, Vec3::Y_BASIS, Vec3(0.f, -0.25f, 0.25f));
+    DebugAddWorldText("Z-Up", transform, 0.25f, Vec2(1.f, 0.f), -1.f , Rgba8::BLUE);
+
+    SpawnProp();
+    m_firstCube->m_position  = Vec3(2.f, 2.f, 0.f);
+    m_secondCube->m_position = Vec3(-2.f, -2.f, 0.f);
+    m_sphere->m_position     = Vec3(10, -5, 1);
+    m_grid->m_position       = Vec3::ZERO;
+    m_clock = new Clock(Clock::GetSystemClock());
+}
+
+Match::~Match()
+{
+    delete m_grid;
+    m_grid = nullptr;
+
+    delete m_sphere;
+    m_sphere = nullptr;
+
+    delete m_secondCube;
+    m_secondCube = nullptr;
+
+    delete m_firstCube;
+    m_firstCube = nullptr;
+
+    delete m_gameClock;
+    m_gameClock = nullptr;
+
+    delete m_screenCamera;
+    m_screenCamera = nullptr;
+}
+
+
+
+//----------------------------------------------------------------------------------------------------
+void Match::SpawnProp()
+{
+    Texture const* texture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/TestUV.png");
+
+    m_firstCube  = new Piece(this);
+    m_secondCube = new Piece(this);
+    m_sphere     = new Piece(this, texture);
+    m_grid       = new Piece(this);
+
+    m_firstCube->InitializeLocalVertsForCube();
+    m_secondCube->InitializeLocalVertsForCube();
+    m_sphere->InitializeLocalVertsForSphere();
+    m_grid->InitializeLocalVertsForGrid();
+}
+
+void Match::Update(float const deltaSeconds)
+{
+    m_firstCube->Update(deltaSeconds);
+    m_secondCube->Update(deltaSeconds);
+    m_sphere->Update(deltaSeconds);
+    m_grid->Update(deltaSeconds);
+
+    m_firstCube->m_orientation.m_pitchDegrees += 30.f * deltaSeconds;
+    m_firstCube->m_orientation.m_rollDegrees += 30.f * deltaSeconds;
+    float const time       = static_cast<float>(m_clock->GetTotalSeconds());
+    float const colorValue = (sinf(time) + 1.0f) * 0.5f * 255.0f;
+    m_secondCube->m_color.r = static_cast<unsigned char>(colorValue);
+    m_secondCube->m_color.g = static_cast<unsigned char>(colorValue);
+    m_secondCube->m_color.b = static_cast<unsigned char>(colorValue);
+
+    m_sphere->m_orientation.m_yawDegrees += 45.f * deltaSeconds;
+
+    DebugAddScreenText(Stringf("Time: %.2f\nFPS: %.2f\nScale: %.1f", m_gameClock->GetTotalSeconds(), 1.f / m_gameClock->GetDeltaSeconds(), m_gameClock->GetTimeScale()), m_screenCamera->GetOrthographicTopRight() - Vec2(250.f, 60.f), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
+    UpdateFromInput(deltaSeconds);
+}
+
+// TODO: controller keybinding
+void Match::UpdateFromInput(float deltaSeconds)
+{
+    XboxController const& controller = g_theInput->GetController(0);
+
+    if (g_theGame->GetCurrentGameState() == eGameState::MATCH)
+    {
+        if (controller.WasButtonJustPressed(XBOX_BUTTON_BACK))
+        {
+            g_theGame->ChangeGameState(eGameState::ATTRACT);
+        }
+
+        if (g_theInput->WasKeyJustPressed(KEYCODE_P)||
+            controller.WasButtonJustPressed(XBOX_BUTTON_B))
+        {
+            m_gameClock->TogglePause();
+        }
+
+        if (g_theInput->WasKeyJustPressed(KEYCODE_O)||
+            controller.WasButtonJustPressed(XBOX_BUTTON_Y))
+        {
+            m_gameClock->StepSingleFrame();
+        }
+
+        if (g_theInput->IsKeyDown(KEYCODE_T)||
+            controller.WasButtonJustPressed(XBOX_BUTTON_X))
+        {
+            m_gameClock->SetTimeScale(0.1f);
+        }
+
+        if (g_theInput->WasKeyJustReleased(KEYCODE_T)||
+            controller.WasButtonJustReleased(XBOX_BUTTON_X))
+        {
+            m_gameClock->SetTimeScale(1.f);
+        }
+    }
+}
+
+
+
+void Match::Render() const
+{
+    m_firstCube->Render();
+    m_secondCube->Render();
+    m_sphere->Render();
+    m_grid->Render();
+
+
+}

@@ -15,7 +15,7 @@
 #include "ThirdParty/stb/stb_image.h"
 
 //----------------------------------------------------------------------------------------------------
-Piece::Piece(Game* owner, Texture const* texture)
+Piece::Piece(Match* owner, Texture const* texture)
     : Actor(owner),
       m_texture(texture)
 {

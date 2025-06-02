@@ -16,10 +16,12 @@ class Texture;
 struct Vertex_PCU;
 
 //----------------------------------------------------------------------------------------------------
-class Piece : public Actor
+/// @brief
+/// Owned by Match, inherits Actor
+class Piece final : public Actor
 {
 public:
-    Piece(Game* owner, Texture const* texture = nullptr);
+    explicit Piece(Match* owner, Texture const* texture = nullptr);
 
     void Update(float deltaSeconds) override;
     void Render() const override;

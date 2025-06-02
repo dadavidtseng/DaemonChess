@@ -1,28 +1,32 @@
-// //----------------------------------------------------------------------------------------------------
-// // Player.hpp
-// //----------------------------------------------------------------------------------------------------
-//
-// //----------------------------------------------------------------------------------------------------
-// #pragma once
-// #include "Game/Actor.hpp"
-//
-// //----------------------------------------------------------------------------------------------------
-// class Camera;
-//
-// //----------------------------------------------------------------------------------------------------
-// class Player : public Actor
-// {
-// public:
-//     explicit Player(Game* owner);
-//     ~Player() override;
-//
-//     void Update(float deltaSeconds) override;
-//     void Render() const override;
-//     void UpdateFromKeyBoard();
-//     void UpdateFromController();
-//
-//     Camera* GetCamera() const;
-//
-// private:
-//     Camera* m_worldCamera = nullptr;
-// };
+//----------------------------------------------------------------------------------------------------
+// Controller.hpp
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
+#pragma once
+#include "Engine/Math/AABB2.hpp"
+#include "Engine/Math/EulerAngles.hpp"
+
+class Game;
+class Camera;
+
+//----------------------------------------------------------------------------------------------------
+class Controller
+{
+public:
+    // Construction / Destruction
+    explicit Controller(Game* owner);
+    virtual  ~Controller() = default;
+
+    virtual void Update(float deltaSeconds) = 0;
+
+    Game* m_owner = nullptr;
+
+    Camera* m_viewCamera = nullptr; // Handle screen message and hud
+    AABB2   m_screenViewport;
+    AABB2   m_viewport; // viewport size
+
+    Camera*     m_worldCamera = nullptr; // Our camera. Used as the world camera when rendering.
+    Vec3        m_position; // 3D position, separate from our actor so that we have a transform for the free-fly camera, as a Vec3, in world units.
+    EulerAngles m_orientation; // 3D orientation, separate from our actor so that we have a transform for the free-fly camera, as EulerAngles, in degrees.
+};

@@ -4,18 +4,22 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+#include <cstdint>
 
+#include "Engine/Math/AABB2.hpp"
+
+class Clock;
 //----------------------------------------------------------------------------------------------------
 class Camera;
-class Clock;
-class Player;
-class Piece;
+class Match;
+class PlayerController;
 
 //----------------------------------------------------------------------------------------------------
-enum class eGameState
+enum class eGameState : int8_t
 {
-    Attract,
-    Game
+    ATTRACT,
+    LOBBY,
+    MATCH
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -27,24 +31,22 @@ public:
 
     void Update();
     void Render() const;
-    bool IsAttractMode() const;
+
+    eGameState GetCurrentGameState() const;
+    void       ChangeGameState(eGameState newGameState);
 
 private:
-    void UpdateFromKeyBoard();
-    void UpdateFromController();
+    void UpdateFromInput();
     void UpdateEntities(float gameDeltaSeconds, float systemDeltaSeconds) const;
     void RenderAttractMode() const;
     void RenderEntities() const;
 
-    void SpawnPlayer();
-    void SpawnProp();
+    void CreatePlayerController();
 
     Camera*    m_screenCamera = nullptr;
-    Player*    m_player       = nullptr;
-    Piece*      m_firstCube    = nullptr;
-    Piece*      m_secondCube   = nullptr;
-    Piece*      m_sphere       = nullptr;
-    Piece*      m_grid         = nullptr;
-    Clock*     m_gameClock    = nullptr;
-    eGameState m_gameState    = eGameState::Attract;
+    AABB2      m_screenSpace  = AABB2::ZERO_TO_ONE;
+    eGameState m_gameState    = eGameState::ATTRACT;
+    Match*     m_match        = nullptr;
+    Clock* m_gameClock = nullptr;
+    PlayerController*   m_playerController = nullptr;
 };
