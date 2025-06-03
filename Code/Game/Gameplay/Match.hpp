@@ -24,8 +24,7 @@ public:
 
     void Update(float deltaSeconds);
     void UpdateFromInput(float deltaSeconds);
-    // void ChessMove();
-    // void OnEventChessMove(EventArg& args);
+
     void        Render() const;
     void        OnChessMove(int from, int to);
     static bool OnChessMove(EventArgs& args);
@@ -33,12 +32,8 @@ public:
     Camera* m_screenCamera = nullptr;
     Clock*  m_gameClock    = nullptr;
 
-
     Board*              m_board = nullptr;
     std::vector<Piece*> m_pieceList;
-    Piece*              m_firstCube  = nullptr;
-    Piece*              m_secondCube = nullptr;
-    Piece*              m_sphere     = nullptr;
     Piece*              m_grid       = nullptr;
     Clock*              m_clock      = nullptr;
 

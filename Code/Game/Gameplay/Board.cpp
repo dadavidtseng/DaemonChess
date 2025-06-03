@@ -61,44 +61,12 @@ void Board::InitializeLocalVertsForAABB3s()
             bool  isBlack = (x + y) % 2 == 0;
             Rgba8 color   = isBlack ? Rgba8::BLACK : Rgba8::WHITE;
 
-            // AddVertsForAABB3D(m_vertexes, m_indexes, box, color);
+            AddVertsForAABB3D(m_vertexes, m_indexes, box, color);
             AddVertsForCylinder3D(m_vertexes, m_indexes, mins,mins+Vec3::Z_BASIS, 0.5f, Rgba8::WHITE, AABB2::ZERO_TO_ONE, 1024 );
-            // AddVertsForSphere3D(m_vertexes, m_indexes, mins, 0.5f);
+            AddVertsForSphere3D(m_vertexes, m_indexes, mins, 0.5f);
 
         }
     }
-}
-
-//----------------------------------------------------------------------------------------------------
-void Board::InitializeLocalVertsForCube()
-{
-    Vec3 const frontBottomLeft(0.5f, -0.5f, -0.5f);
-    Vec3 const frontBottomRight(0.5f, 0.5f, -0.5f);
-    Vec3 const frontTopLeft(0.5f, -0.5f, 0.5f);
-    Vec3 const frontTopRight(0.5f, 0.5f, 0.5f);
-    Vec3 const backBottomLeft(-0.5f, 0.5f, -0.5f);
-    Vec3 const backBottomRight(-0.5f, -0.5f, -0.5f);
-    Vec3 const backTopLeft(-0.5f, 0.5f, 0.5f);
-    Vec3 const backTopRight(-0.5f, -0.5f, 0.5f);
-
-    AddVertsForQuad3D(m_vertexes, frontBottomLeft, frontBottomRight, frontTopLeft, frontTopRight, Rgba8::RED);          // +X Red
-    AddVertsForQuad3D(m_vertexes, backBottomLeft, backBottomRight, backTopLeft, backTopRight, Rgba8::CYAN);             // -X -Red (Cyan)
-    AddVertsForQuad3D(m_vertexes, frontBottomRight, backBottomLeft, frontTopRight, backTopLeft, Rgba8::GREEN);          // -Y -Green (Magenta)
-    AddVertsForQuad3D(m_vertexes, backBottomRight, frontBottomLeft, backTopRight, frontTopLeft, Rgba8::MAGENTA);        // +Y Green
-    AddVertsForQuad3D(m_vertexes, frontTopLeft, frontTopRight, backTopRight, backTopLeft, Rgba8::BLUE);                 // +Z Blue
-    AddVertsForQuad3D(m_vertexes, backBottomRight, backBottomLeft, frontBottomLeft, frontBottomRight, Rgba8::YELLOW);   // -Z -Blue (Yellow)
-}
-
-//----------------------------------------------------------------------------------------------------
-void Board::InitializeLocalVertsForSphere()
-{
-    float constexpr radius    = 0.5f;
-    int constexpr   numSlices = 32;
-    int constexpr   numStacks = 16;
-    Rgba8 const     color     = Rgba8::WHITE;
-    AABB2 const     UVs       = AABB2::ZERO_TO_ONE;
-
-    // AddVertsForSphere3D(m_vertexes, m_position, radius, color, UVs, numSlices, numStacks);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -128,17 +96,3 @@ void Board::InitializeLocalVertsForGrid()
     }
 }
 
-//----------------------------------------------------------------------------------------------------
-void Board::InitializeLocalVertsForWorldCoordinateArrows()
-{
-    // AddVertsForArrow3D(m_vertexes, m_position, m_position + Vec3::X_BASIS * 2.f, 0.6f, 0.25f, 0.4f, Rgba8::RED);
-    // AddVertsForArrow3D(m_vertexes, m_position, m_position + Vec3::Y_BASIS * 2.f, 0.6f, 0.25f, 0.4f, Rgba8::GREEN);
-    // AddVertsForArrow3D(m_vertexes, m_position, m_position + Vec3::Z_BASIS * 2.f, 0.6f, 0.25f, 0.4f, Rgba8::BLUE);
-}
-
-//----------------------------------------------------------------------------------------------------
-void Board::InitializeLocalVertsForText2D()
-{
-    // g_theBitmapFont->AddVertsForTextInBox2D(m_vertexes, "XXX", AABB2::ZERO_TO_ONE, 10.f);
-    // g_theBitmapFont->AddVertsForText3DAtOriginXForward(m_vertexes, "ABCDEFGHIJKL", 1.f);
-}

@@ -32,12 +32,7 @@ public:
     Vec3    GetWorldPositionByCoords(IntVec2 const& coords);
 
     void InitializeLocalVertsForAABB3s();
-    void InitializeLocalVertsForCube();
-    void InitializeLocalVertsForSphere();
     void InitializeLocalVertsForGrid();
-    void InitializeLocalVertsForCylinder();
-    void InitializeLocalVertsForWorldCoordinateArrows();
-    void InitializeLocalVertsForText2D();
 
 private:
     VertexList_PCUTBN m_vertexes;

@@ -44,9 +44,7 @@ Match::Match()
     DebugAddWorldText("Z-Up", transform, 0.25f, Vec2(1.f, 0.f), -1.f, Rgba8::BLUE);
 
     SpawnProp();
-    m_firstCube->m_position  = Vec3(2.f, 2.f, 0.f);
-    m_secondCube->m_position = Vec3(-2.f, -2.f, 0.f);
-    m_sphere->m_position     = Vec3(10, -5, 1);
+
     m_grid->m_position       = Vec3::ZERO;
     m_clock                  = new Clock(Clock::GetSystemClock());
 
@@ -57,15 +55,6 @@ Match::~Match()
 {
     delete m_grid;
     m_grid = nullptr;
-
-    delete m_sphere;
-    m_sphere = nullptr;
-
-    delete m_secondCube;
-    m_secondCube = nullptr;
-
-    delete m_firstCube;
-    m_firstCube = nullptr;
 
     delete m_gameClock;
     m_gameClock = nullptr;
@@ -81,34 +70,15 @@ void Match::SpawnProp()
     Texture const* texture  = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/TestUV.png");
     Texture const* texture2 = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Test_StbiFlippedAndOpenGL.png");
 
-    m_firstCube  = new Piece(this);
-    m_secondCube = new Piece(this);
-    m_sphere     = new Piece(this, texture);
     m_grid       = new Piece(this);
     m_board      = new Board(this);
-
-    m_firstCube->InitializeLocalVertsForCube();
-    m_secondCube->InitializeLocalVertsForCube();
-    m_sphere->InitializeLocalVertsForSphere();
     m_grid->InitializeLocalVertsForGrid();
 }
 
 void Match::Update(float const deltaSeconds)
 {
-    m_firstCube->Update(deltaSeconds);
-    m_secondCube->Update(deltaSeconds);
-    m_sphere->Update(deltaSeconds);
+
     m_grid->Update(deltaSeconds);
-
-    m_firstCube->m_orientation.m_pitchDegrees += 30.f * deltaSeconds;
-    m_firstCube->m_orientation.m_rollDegrees += 30.f * deltaSeconds;
-    float const time        = static_cast<float>(m_clock->GetTotalSeconds());
-    float const colorValue  = (sinf(time) + 1.0f) * 0.5f * 255.0f;
-    m_secondCube->m_color.r = static_cast<unsigned char>(colorValue);
-    m_secondCube->m_color.g = static_cast<unsigned char>(colorValue);
-    m_secondCube->m_color.b = static_cast<unsigned char>(colorValue);
-
-    m_sphere->m_orientation.m_yawDegrees += 45.f * deltaSeconds;
 
     DebugAddScreenText(Stringf("Time: %.2f\nFPS: %.2f\nScale: %.1f", m_gameClock->GetTotalSeconds(), 1.f / m_gameClock->GetDeltaSeconds(), m_gameClock->GetTimeScale()), m_screenCamera->GetOrthographicTopRight() - Vec2(250.f, 60.f), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
     UpdateFromInput(deltaSeconds);
@@ -215,9 +185,6 @@ void Match::UpdateFromInput(float deltaSeconds)
 void Match::Render() const
 {
     g_theRenderer->SetLightConstants(m_sunDirection, m_sunIntensity, m_ambientIntensity);
-    m_firstCube->Render();
-    m_secondCube->Render();
-    m_sphere->Render();
     m_grid->Render();
 
     m_board->Render();

@@ -28,8 +28,7 @@ public:
     void UpdateCoords(IntVec2 const& newCoords);
 
     void Render() const override;
-    void InitializeLocalVertsForCube();
-    void InitializeLocalVertsForSphere();
+
     void InitializeLocalVertsForGrid();
     void InitializeLocalVertsForCylinder();
     void InitializeLocalVertsForWorldCoordinateArrows();
