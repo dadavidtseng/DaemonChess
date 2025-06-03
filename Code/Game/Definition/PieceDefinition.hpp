@@ -6,8 +6,10 @@
 #pragma once
 #include <cstdint>
 
+#include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/XmlUtils.hpp"
+#include "Engine/Math/Vec3.hpp"
 #include "Engine/Renderer/IndexBuffer.hpp"
 #include "Engine/Renderer/VertexBuffer.hpp"
 
@@ -23,6 +25,15 @@ enum class ePieceType : int8_t
     KING
 };
 
+struct sPiecePart
+{
+    String m_name          = "DEFAULT";
+    Vec3   m_startPosition = Vec3::ZERO;
+    Vec3   m_endPosition   = Vec3::ZERO;
+    float  m_radius        = 0.f;
+    Rgba8  m_color         = Rgba8::WHITE;
+};
+
 //----------------------------------------------------------------------------------------------------
 struct PieceDefinition
 {
@@ -32,12 +43,13 @@ struct PieceDefinition
     bool LoadFromXmlElement(XmlElement const* element);
     void CreateMeshForEachPlayer(int playerIndex);
 
-    static void InitializePieceDefs(char const* path);
+    static void                          InitializePieceDefs(char const* path);
     static std::vector<PieceDefinition*> s_pieceDefinitions;
 
-    ePieceType    m_type            = ePieceType::NONE;
-    String        m_name            = "DEFAULT";
-    char          m_glyph           = '?';
-    IndexBuffer*  m_indexBuffer[2]  = {};
-    VertexBuffer* m_vertexBuffer[2] = {};
+    String                   m_name = "DEFAULT";
+    ePieceType               m_type = ePieceType::NONE;
+    std::vector<sPiecePart> m_pieceParts;
+    char                     m_glyph           = '?';
+    IndexBuffer*             m_indexBuffer[2]  = {};
+    VertexBuffer*            m_vertexBuffer[2] = {};
 };

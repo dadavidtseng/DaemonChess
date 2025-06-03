@@ -6,6 +6,7 @@
 #pragma once
 #include "Board.hpp"
 #include "Engine/Core/Clock.hpp"
+#include "Engine/Core/EventSystem.hpp"
 
 class Camera;
 class PlayerController;
@@ -21,16 +22,19 @@ public:
     ~Match();
     void SpawnProp();
 
-    void    Update(float deltaSeconds) ;
+    void Update(float deltaSeconds);
     void UpdateFromInput(float deltaSeconds);
     // void ChessMove();
-// void OnEventChessMove(EventArg& args);
-    void    Render() const;
+    // void OnEventChessMove(EventArg& args);
+    void        Render() const;
+    void        OnChessMove(int from, int to);
+    static bool OnChessMove(EventArgs& args);
+
     Camera* m_screenCamera = nullptr;
     Clock*  m_gameClock    = nullptr;
 
 
-    Board*              m_board            = nullptr;
+    Board*              m_board = nullptr;
     std::vector<Piece*> m_pieceList;
     Piece*              m_firstCube  = nullptr;
     Piece*              m_secondCube = nullptr;

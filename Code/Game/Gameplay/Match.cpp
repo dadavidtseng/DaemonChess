@@ -6,6 +6,7 @@
 #include "Game/Gameplay/Match.hpp"
 
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Input/XboxController.hpp"
 #include "Engine/Math/MathUtils.hpp"
@@ -18,6 +19,7 @@
 
 Match::Match()
 {
+    g_theEventSystem->SubscribeEventCallbackFunction("ChessMove", OnChessMove);
     m_screenCamera = new Camera();
 
     Vec2 const bottomLeft     = Vec2::ZERO;
@@ -151,61 +153,61 @@ void Match::UpdateFromInput(float deltaSeconds)
         }
 
         if (g_theInput->WasKeyJustPressed(KEYCODE_I))
-    {
-        DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
-    }
+        {
+            DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
+        }
 
-    if (g_theInput->WasKeyJustPressed(KEYCODE_F2))
-    {
-        m_sunDirection.x -= 1.f;
-        DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
-    }
+        if (g_theInput->WasKeyJustPressed(KEYCODE_F2))
+        {
+            m_sunDirection.x -= 1.f;
+            DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
+        }
 
-    if (g_theInput->WasKeyJustPressed(KEYCODE_F3))
-    {
-        m_sunDirection.x += 1.f;
-        DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
-    }
+        if (g_theInput->WasKeyJustPressed(KEYCODE_F3))
+        {
+            m_sunDirection.x += 1.f;
+            DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
+        }
 
-    if (g_theInput->WasKeyJustPressed(KEYCODE_F4))
-    {
-        m_sunDirection.y -= 1.f;
-        DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
-    }
+        if (g_theInput->WasKeyJustPressed(KEYCODE_F4))
+        {
+            m_sunDirection.y -= 1.f;
+            DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
+        }
 
-    if (g_theInput->WasKeyJustPressed(KEYCODE_F5))
-    {
-        m_sunDirection.y += 1.f;
-        DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
-    }
+        if (g_theInput->WasKeyJustPressed(KEYCODE_F5))
+        {
+            m_sunDirection.y += 1.f;
+            DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
+        }
 
-    if (g_theInput->WasKeyJustPressed(KEYCODE_F6))
-    {
-        m_sunIntensity -= 0.05f;
-        m_sunIntensity = GetClampedZeroToOne(m_sunIntensity);
-        DebugAddMessage(Stringf("Sun Intensity: (%.2f)", m_sunIntensity), 5.f);
-    }
+        if (g_theInput->WasKeyJustPressed(KEYCODE_F6))
+        {
+            m_sunIntensity -= 0.05f;
+            m_sunIntensity = GetClampedZeroToOne(m_sunIntensity);
+            DebugAddMessage(Stringf("Sun Intensity: (%.2f)", m_sunIntensity), 5.f);
+        }
 
-    if (g_theInput->WasKeyJustPressed(KEYCODE_F7))
-    {
-        m_sunIntensity += 0.05f;
-        m_sunIntensity = GetClampedZeroToOne(m_sunIntensity);
-        DebugAddMessage(Stringf("Sun Intensity: (%.2f)", m_sunIntensity), 5.f);
-    }
+        if (g_theInput->WasKeyJustPressed(KEYCODE_F7))
+        {
+            m_sunIntensity += 0.05f;
+            m_sunIntensity = GetClampedZeroToOne(m_sunIntensity);
+            DebugAddMessage(Stringf("Sun Intensity: (%.2f)", m_sunIntensity), 5.f);
+        }
 
-    if (g_theInput->WasKeyJustPressed(KEYCODE_F8))
-    {
-        m_ambientIntensity -= 0.05f;
-        m_ambientIntensity = GetClampedZeroToOne(m_ambientIntensity);
-        DebugAddMessage(Stringf("Ambient Intensity: (%.2f)", m_ambientIntensity), 5.f);
-    }
+        if (g_theInput->WasKeyJustPressed(KEYCODE_F8))
+        {
+            m_ambientIntensity -= 0.05f;
+            m_ambientIntensity = GetClampedZeroToOne(m_ambientIntensity);
+            DebugAddMessage(Stringf("Ambient Intensity: (%.2f)", m_ambientIntensity), 5.f);
+        }
 
-    if (g_theInput->WasKeyJustPressed(KEYCODE_F9))
-    {
-        m_ambientIntensity += 0.05f;
-        m_ambientIntensity = GetClampedZeroToOne(m_ambientIntensity);
-        DebugAddMessage(Stringf("Ambient Intensity: (%.2f)", m_ambientIntensity), 5.f);
-    }
+        if (g_theInput->WasKeyJustPressed(KEYCODE_F9))
+        {
+            m_ambientIntensity += 0.05f;
+            m_ambientIntensity = GetClampedZeroToOne(m_ambientIntensity);
+            DebugAddMessage(Stringf("Ambient Intensity: (%.2f)", m_ambientIntensity), 5.f);
+        }
     }
 }
 
@@ -219,4 +221,20 @@ void Match::Render() const
     m_grid->Render();
 
     m_board->Render();
+}
+
+void Match::OnChessMove(int const from,
+                        int const to)
+{
+    DebuggerPrintf(Stringf("OnChessMove from=%d to=%d\n", from, to).c_str());
+}
+
+bool Match::OnChessMove(EventArgs& args)
+{
+    int from = args.GetValue("from", -1);
+    int to   = args.GetValue("to", -1);
+
+
+    g_theGame->m_match->OnChessMove(from, to);
+    return true;
 }

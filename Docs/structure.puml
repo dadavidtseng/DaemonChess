@@ -38,8 +38,9 @@ Board --|> Actor
 App *-- Game
 Game *-- Match
 Game *-- PlayerController
-Board *-- Piece
 PlayerController *-- Piece
 Piece *-- PieceDefinition
+Match *-- Board
+Match *-- Piece
 
 @enduml

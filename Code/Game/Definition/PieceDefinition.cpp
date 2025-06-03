@@ -12,9 +12,44 @@
 STATIC std::vector<PieceDefinition*> PieceDefinition::s_pieceDefinitions;
 
 
+//----------------------------------------------------------------------------------------------------
+PieceDefinition::~PieceDefinition()
+{
+    for (PieceDefinition const* pieceDef : s_pieceDefinitions)
+    {
+        delete pieceDef;
+    }
+
+    s_pieceDefinitions.clear();
+}
+
 bool PieceDefinition::LoadFromXmlElement(XmlElement const* element)
 {
-    m_name           = ParseXmlAttribute(*element, "name", "DEFAULT");
+    m_name            = ParseXmlAttribute(*element, "name", "DEFAULT");
+    String const type = ParseXmlAttribute(*element, "type", "DEFAULT");
+    if (type == "PAWN") m_type = ePieceType::PAWN;
+    else if (type == "BISHOP") m_type = ePieceType::BISHOP;
+    else if (type == "KNIGHT") m_type = ePieceType::KNIGHT;
+    else if (type == "ROOK") m_type = ePieceType::ROOK;
+    else if (type == "QUEEN") m_type = ePieceType::QUEEN;
+    else if (type == "KING") m_type = ePieceType::KING;
+
+    XmlElement const* partElement = element->FirstChildElement("PiecePart");
+
+    if (partElement != nullptr)
+    {
+        while (partElement != nullptr)
+        {
+            sPiecePart piecePart;
+            piecePart.m_name          = ParseXmlAttribute(*partElement, "name", "DEFAULT");
+            piecePart.m_startPosition = ParseXmlAttribute(*partElement, "startPosition", Vec3::ZERO);
+            piecePart.m_endPosition   = ParseXmlAttribute(*partElement, "endPosition", Vec3::ZERO);
+            piecePart.m_radius        = ParseXmlAttribute(*partElement, "radius", 0.f);
+            piecePart.m_color         = ParseXmlAttribute(*partElement, "color", Rgba8::WHITE);
+            m_pieceParts.push_back(piecePart);
+            partElement = partElement->NextSiblingElement();
+        }
+    }
 
     return true;
 }

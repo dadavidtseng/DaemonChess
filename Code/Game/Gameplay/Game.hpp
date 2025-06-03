@@ -34,7 +34,7 @@ public:
 
     eGameState GetCurrentGameState() const;
     void       ChangeGameState(eGameState newGameState);
-
+    Match*            m_match            = nullptr;
 private:
     void UpdateFromInput();
     void UpdateEntities(float gameDeltaSeconds, float systemDeltaSeconds) const;
@@ -46,7 +46,6 @@ private:
     Camera*           m_screenCamera     = nullptr;
     AABB2             m_screenSpace      = AABB2::ZERO_TO_ONE;
     eGameState        m_gameState        = eGameState::ATTRACT;
-    Match*            m_match            = nullptr;
     Clock*            m_gameClock        = nullptr;
     PlayerController* m_playerController = nullptr;
 };

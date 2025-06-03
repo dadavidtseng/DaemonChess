@@ -63,7 +63,7 @@ void Board::InitializeLocalVertsForAABB3s()
 
             // AddVertsForAABB3D(m_vertexes, m_indexes, box, color);
             // AddVertsForCylinder3D(m_vertexes, m_indexes, mins,mins+Vec3::Z_BASIS, 0.5f, Rgba8::WHITE, AABB2::ZERO_TO_ONE, 1024 );
-            AddVertsForSphere3D(m_vertexes, m_indexes, mins, 0.5f, Rgba8::WHITE, AABB2::ZERO_TO_ONE, 128,128);
+            AddVertsForSphere3D(m_vertexes, m_indexes, mins, 0.5f);
 
         }
     }

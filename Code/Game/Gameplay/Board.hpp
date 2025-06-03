@@ -27,6 +27,10 @@ public:
     void Update(float deltaSeconds) override;
     void Render() const override;
 
+    /// Query
+    IntVec2 GetCoordsByWorldPosition(Vec3 const& worldPosition);
+    Vec3    GetWorldPositionByCoords(IntVec2 const& coords);
+
     void InitializeLocalVertsForAABB3s();
     void InitializeLocalVertsForCube();
     void InitializeLocalVertsForSphere();

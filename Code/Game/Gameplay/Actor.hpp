@@ -6,6 +6,7 @@
 #pragma once
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Math/EulerAngles.hpp"
+#include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/Vec3.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -23,6 +24,7 @@ public:
     virtual Mat44 GetModelToWorldTransform() const;
 
     Match*      m_match           = nullptr;
+    IntVec2     m_coords          = IntVec2::ZERO;
     Vec3        m_position        = Vec3::ZERO;
     Vec3        m_velocity        = Vec3::ZERO;
     EulerAngles m_orientation     = EulerAngles::ZERO;

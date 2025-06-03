@@ -25,6 +25,8 @@ public:
     explicit Piece(Match* owner, Texture const* texture = nullptr);
 
     void Update(float deltaSeconds) override;
+    void UpdateCoords(IntVec2 const& newCoords);
+
     void Render() const override;
     void InitializeLocalVertsForCube();
     void InitializeLocalVertsForSphere();
