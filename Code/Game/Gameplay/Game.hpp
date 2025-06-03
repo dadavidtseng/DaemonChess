@@ -8,9 +8,9 @@
 
 #include "Engine/Math/AABB2.hpp"
 
-class Clock;
 //----------------------------------------------------------------------------------------------------
 class Camera;
+class Clock;
 class Match;
 class PlayerController;
 
@@ -43,10 +43,10 @@ private:
 
     void CreatePlayerController();
 
-    Camera*    m_screenCamera = nullptr;
-    AABB2      m_screenSpace  = AABB2::ZERO_TO_ONE;
-    eGameState m_gameState    = eGameState::ATTRACT;
-    Match*     m_match        = nullptr;
-    Clock* m_gameClock = nullptr;
-    PlayerController*   m_playerController = nullptr;
+    Camera*           m_screenCamera     = nullptr;
+    AABB2             m_screenSpace      = AABB2::ZERO_TO_ONE;
+    eGameState        m_gameState        = eGameState::ATTRACT;
+    Match*            m_match            = nullptr;
+    Clock*            m_gameClock        = nullptr;
+    PlayerController* m_playerController = nullptr;
 };

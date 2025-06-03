@@ -19,6 +19,8 @@ Board::Board(Match* owner, Texture const* texture)
     : Actor(owner),
       m_texture(texture)
 {
+    m_shader = g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Diffuse", eVertexType::VERTEX_PCUTBN);
+    InitializeLocalVertsForAABB3s();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -38,7 +40,30 @@ void Board::Render() const
     g_theRenderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
     g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);  //DISABLE
     g_theRenderer->BindTexture(m_texture);
-    g_theRenderer->DrawVertexArray(static_cast<int>(m_vertexes.size()), m_vertexes.data());
+    g_theRenderer->BindShader(m_shader);
+    // g_theRenderer->DrawVertexArray(static_cast<int>(m_vertexes.size()), m_vertexes.data());
+    g_theRenderer->DrawVertexArray(m_vertexes, m_indexes);
+}
+
+void Board::InitializeLocalVertsForAABB3s()
+{
+    AABB3 bound = AABB3::ZERO_TO_ONE;
+    // AddVertsForAABB3D(m_vertexes, m_indexes, bound);
+
+    for (int y = 0; y < 8; ++y)
+    {
+        for (int x = 0; x < 8; ++x)
+        {
+            Vec3  mins = Vec3(static_cast<float>(x), static_cast<float>(y), 0.f);
+            Vec3  maxs = mins + Vec3(1.f, 1.f, 0.2f);
+            AABB3 box(mins, maxs);
+
+            bool  isBlack = (x + y) % 2 == 0;
+            Rgba8 color   = isBlack ? Rgba8::BLACK : Rgba8::WHITE;
+
+            AddVertsForAABB3D(m_vertexes, m_indexes, box, color);
+        }
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -70,7 +95,7 @@ void Board::InitializeLocalVertsForSphere()
     Rgba8 const     color     = Rgba8::WHITE;
     AABB2 const     UVs       = AABB2::ZERO_TO_ONE;
 
-    AddVertsForSphere3D(m_vertexes, m_position, radius, color, UVs, numSlices, numStacks);
+    // AddVertsForSphere3D(m_vertexes, m_position, radius, color, UVs, numSlices, numStacks);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -95,22 +120,22 @@ void Board::InitializeLocalVertsForGrid()
             colorY = Rgba8::GREEN;
         }
 
-        AddVertsForAABB3D(m_vertexes, boundsX, colorX);
-        AddVertsForAABB3D(m_vertexes, boundsY, colorY);
+        AddVertsForAABB3D(m_vertexes, m_indexes, boundsX, colorX);
+        AddVertsForAABB3D(m_vertexes, m_indexes, boundsY, colorY);
     }
 }
 
 //----------------------------------------------------------------------------------------------------
 void Board::InitializeLocalVertsForWorldCoordinateArrows()
 {
-    AddVertsForArrow3D(m_vertexes, m_position, m_position + Vec3::X_BASIS * 2.f, 0.6f, 0.25f, 0.4f, Rgba8::RED);
-    AddVertsForArrow3D(m_vertexes, m_position, m_position + Vec3::Y_BASIS * 2.f, 0.6f, 0.25f, 0.4f, Rgba8::GREEN);
-    AddVertsForArrow3D(m_vertexes, m_position, m_position + Vec3::Z_BASIS * 2.f, 0.6f, 0.25f, 0.4f, Rgba8::BLUE);
+    // AddVertsForArrow3D(m_vertexes, m_position, m_position + Vec3::X_BASIS * 2.f, 0.6f, 0.25f, 0.4f, Rgba8::RED);
+    // AddVertsForArrow3D(m_vertexes, m_position, m_position + Vec3::Y_BASIS * 2.f, 0.6f, 0.25f, 0.4f, Rgba8::GREEN);
+    // AddVertsForArrow3D(m_vertexes, m_position, m_position + Vec3::Z_BASIS * 2.f, 0.6f, 0.25f, 0.4f, Rgba8::BLUE);
 }
 
 //----------------------------------------------------------------------------------------------------
 void Board::InitializeLocalVertsForText2D()
 {
     // g_theBitmapFont->AddVertsForTextInBox2D(m_vertexes, "XXX", AABB2::ZERO_TO_ONE, 10.f);
-    g_theBitmapFont->AddVertsForText3DAtOriginXForward(m_vertexes, "ABCDEFGHIJKL", 1.f);
+    // g_theBitmapFont->AddVertsForText3DAtOriginXForward(m_vertexes, "ABCDEFGHIJKL", 1.f);
 }

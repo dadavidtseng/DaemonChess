@@ -21,9 +21,9 @@
 Game::Game()
 {
     m_gameClock = new Clock(Clock::GetSystemClock());
-    m_match = new Match();
+    m_match     = new Match();
     CreatePlayerController();
-    m_screenCamera = new Camera();
+    m_screenCamera            = new Camera();
     Vec2 const bottomLeft     = Vec2::ZERO;
     Vec2 const screenTopRight = Vec2(SCREEN_SIZE_X, SCREEN_SIZE_Y);
     m_screenCamera->SetOrthoGraphicView(bottomLeft, screenTopRight);
@@ -101,18 +101,14 @@ void Game::ChangeGameState(eGameState const newGameState)
 //----------------------------------------------------------------------------------------------------
 void Game::UpdateFromInput()
 {
-    XboxController const& controller = g_theInput->GetController(0);
-
     if (m_gameState == eGameState::ATTRACT)
     {
-        if (g_theInput->WasKeyJustPressed(KEYCODE_ESC)||
-            controller.WasButtonJustPressed(XBOX_BUTTON_BACK))
+        if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
         {
             App::RequestQuit();
         }
 
-        if (g_theInput->WasKeyJustPressed(KEYCODE_SPACE)||
-            controller.WasButtonJustPressed(XBOX_BUTTON_START))
+        if (g_theInput->WasKeyJustPressed(KEYCODE_SPACE))
         {
             m_gameState = eGameState::MATCH;
         }
@@ -125,36 +121,22 @@ void Game::UpdateFromInput()
             m_gameState = eGameState::ATTRACT;
         }
 
-
-    }
-
-    if (g_theGame->GetCurrentGameState() == eGameState::MATCH)
-    {
-        if (controller.WasButtonJustPressed(XBOX_BUTTON_BACK))
-        {
-            g_theGame->ChangeGameState(eGameState::ATTRACT);
-        }
-
-        if (g_theInput->WasKeyJustPressed(KEYCODE_P)||
-            controller.WasButtonJustPressed(XBOX_BUTTON_B))
+        if (g_theInput->WasKeyJustPressed(KEYCODE_P))
         {
             m_gameClock->TogglePause();
         }
 
-        if (g_theInput->WasKeyJustPressed(KEYCODE_O)||
-            controller.WasButtonJustPressed(XBOX_BUTTON_Y))
+        if (g_theInput->WasKeyJustPressed(KEYCODE_O))
         {
             m_gameClock->StepSingleFrame();
         }
 
-        if (g_theInput->IsKeyDown(KEYCODE_T)||
-            controller.WasButtonJustPressed(XBOX_BUTTON_X))
+        if (g_theInput->IsKeyDown(KEYCODE_T))
         {
             m_gameClock->SetTimeScale(0.1f);
         }
 
-        if (g_theInput->WasKeyJustReleased(KEYCODE_T)||
-            controller.WasButtonJustReleased(XBOX_BUTTON_X))
+        if (g_theInput->WasKeyJustReleased(KEYCODE_T))
         {
             m_gameClock->SetTimeScale(1.f);
         }
@@ -231,6 +213,7 @@ void Game::UpdateFromInput()
 void Game::UpdateEntities(float const gameDeltaSeconds, float const systemDeltaSeconds) const
 {
     m_match->Update(gameDeltaSeconds);
+    m_playerController->Update(systemDeltaSeconds);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -242,11 +225,12 @@ void Game::RenderAttractMode() const
 //----------------------------------------------------------------------------------------------------
 void Game::RenderEntities() const
 {
+    m_match->Render();
     g_theRenderer->SetModelConstants(m_playerController->GetModelToWorldTransform());
     m_playerController->Render();
 }
 
 void Game::CreatePlayerController()
 {
- m_playerController = new PlayerController(this);
+    m_playerController = new PlayerController(this);
 }

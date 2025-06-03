@@ -35,5 +35,11 @@ class Actor
 
 Piece --|> Actor
 Board --|> Actor
+App *-- Game
+Game *-- Match
+Game *-- PlayerController
+Board *-- Piece
+PlayerController *-- Piece
+Piece *-- PieceDefinition
 
 @enduml

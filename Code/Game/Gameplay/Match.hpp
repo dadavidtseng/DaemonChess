@@ -23,7 +23,8 @@ public:
 
     void    Update(float deltaSeconds) ;
     void UpdateFromInput(float deltaSeconds);
-
+    // void ChessMove();
+// void OnEventChessMove(EventArg& args);
     void    Render() const;
     Camera* m_screenCamera = nullptr;
     Clock*  m_gameClock    = nullptr;
@@ -36,4 +37,9 @@ public:
     Piece*              m_sphere     = nullptr;
     Piece*              m_grid       = nullptr;
     Clock*              m_clock      = nullptr;
+
+    // DEBUG LIGHT
+    Vec3  m_sunDirection     = Vec3(2.f, 1.f, -1.f).GetNormalized();
+    float m_sunIntensity     = 0.85f;
+    float m_ambientIntensity = 0.35f;
 };

@@ -6,14 +6,17 @@
 #pragma once
 #include <vector>
 
-#include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
+#include "Engine/Renderer/Shader.hpp"
 #include "Game/Gameplay/Actor.hpp"
 
-class Match;
 //----------------------------------------------------------------------------------------------------
+class Match;
+class Piece;
 class Texture;
-struct Vertex_PCU;
+
+//----------------------------------------------------------------------------------------------------
+typedef std::vector<Piece*> PieceList;
 
 //----------------------------------------------------------------------------------------------------
 class Board final : public Actor
@@ -23,6 +26,8 @@ public:
 
     void Update(float deltaSeconds) override;
     void Render() const override;
+
+    void InitializeLocalVertsForAABB3s();
     void InitializeLocalVertsForCube();
     void InitializeLocalVertsForSphere();
     void InitializeLocalVertsForGrid();
@@ -31,6 +36,9 @@ public:
     void InitializeLocalVertsForText2D();
 
 private:
-    std::vector<Vertex_PCU> m_vertexes;
-    Texture const* m_texture = nullptr;
+    VertexList_PCUTBN m_vertexes;
+    IndexList         m_indexes;
+    PieceList         m_pieces;
+    Texture const*    m_texture = nullptr;
+    Shader const*     m_shader  = nullptr;
 };
