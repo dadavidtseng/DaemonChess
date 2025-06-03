@@ -11,6 +11,7 @@
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Game/Gameplay/Actor.hpp"
 
+struct PieceDefinition;
 //----------------------------------------------------------------------------------------------------
 class Texture;
 struct Vertex_PCU;
@@ -34,5 +35,6 @@ public:
 
 private:
     std::vector<Vertex_PCU> m_vertexes;
-    Texture const* m_texture = nullptr;
+    Texture const*          m_texture    = nullptr;
+    PieceDefinition*        m_definition = nullptr;
 };

@@ -11,6 +11,7 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "Game/Definition/PieceDefinition.hpp"
 #include "Game/Framework/GameCommon.hpp"
 #include "Game/Gameplay/Game.hpp"
 #include "Game/Gameplay/Piece.hpp"
@@ -46,6 +47,8 @@ Match::Match()
     m_sphere->m_position     = Vec3(10, -5, 1);
     m_grid->m_position       = Vec3::ZERO;
     m_clock                  = new Clock(Clock::GetSystemClock());
+
+    PieceDefinition::InitializePieceDefs("Data/Definitions/PieceDefinition.xml");
 }
 
 Match::~Match()

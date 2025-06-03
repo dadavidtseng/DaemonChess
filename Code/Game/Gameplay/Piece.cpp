@@ -19,6 +19,7 @@ Piece::Piece(Match* owner, Texture const* texture)
     : Actor(owner),
       m_texture(texture)
 {
+
 }
 
 //----------------------------------------------------------------------------------------------------

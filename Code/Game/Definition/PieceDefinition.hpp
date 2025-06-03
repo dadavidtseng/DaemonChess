@@ -7,6 +7,7 @@
 #include <cstdint>
 
 #include "Engine/Core/StringUtils.hpp"
+#include "Engine/Core/XmlUtils.hpp"
 #include "Engine/Renderer/IndexBuffer.hpp"
 #include "Engine/Renderer/VertexBuffer.hpp"
 
@@ -23,10 +24,16 @@ enum class ePieceType : int8_t
 };
 
 //----------------------------------------------------------------------------------------------------
-class PieceDefinition
+struct PieceDefinition
 {
-public:
+    PieceDefinition() = default;
+    ~PieceDefinition();
+
+    bool LoadFromXmlElement(XmlElement const* element);
     void CreateMeshForEachPlayer(int playerIndex);
+
+    static void InitializePieceDefs(char const* path);
+    static std::vector<PieceDefinition*> s_pieceDefinitions;
 
     ePieceType    m_type            = ePieceType::NONE;
     String        m_name            = "DEFAULT";
