@@ -26,7 +26,6 @@ public:
     Mat44   GetModelToWorldTransform() const;
 
 private:
-    Camera*     m_worldCamera     = nullptr;
     Vec3        m_velocity        = Vec3::ZERO;
     EulerAngles m_angularVelocity = EulerAngles::ZERO;
     int         m_index           = 0;

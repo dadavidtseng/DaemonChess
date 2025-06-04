@@ -25,17 +25,12 @@ PlayerController::PlayerController(Game* owner)
 
     m_worldCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
 
-    m_worldCamera->SetPosition(Vec3(-2, 0, 0));
+    m_worldCamera->SetPosition(Vec3(4, -2, 4));
+    m_position    = Vec3(4, -2, 4);
+    m_orientation = EulerAngles(90.f, 40.f, 0.f);
 
     Mat44 c2r;
-
-    c2r.m_values[Mat44::Ix] = 0.f;
-    c2r.m_values[Mat44::Iz] = 1.f;
-    c2r.m_values[Mat44::Jx] = -1.f;
-    c2r.m_values[Mat44::Jy] = 0.f;
-    c2r.m_values[Mat44::Ky] = 1.f;
-    c2r.m_values[Mat44::Kz] = 0.f;
-
+    c2r.SetIJK3D(Vec3::Z_BASIS, -Vec3::X_BASIS, Vec3::Y_BASIS);
     m_worldCamera->SetCameraToRenderTransform(c2r);
 }
 
@@ -53,7 +48,7 @@ void PlayerController::Update(float deltaSeconds)
 
     if (g_theInput->WasKeyJustPressed(KEYCODE_H) || controller.WasButtonJustPressed(XBOX_BUTTON_START))
     {
-        if (g_theGame->GetCurrentGameState()!=eGameState::ATTRACT)
+        if (g_theGame->GetCurrentGameState() != eGameState::ATTRACT)
         {
             m_position    = Vec3::ZERO;
             m_orientation = EulerAngles::ZERO;

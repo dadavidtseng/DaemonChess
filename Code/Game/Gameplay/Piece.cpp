@@ -15,6 +15,7 @@
 #include "Game/Gameplay/Match.hpp"
 #include "ThirdParty/stb/stb_image.h"
 
+// TODO: AddVertsForOBB3D();
 //----------------------------------------------------------------------------------------------------
 Piece::Piece(Match* owner, sSquareInfo const& squareInfo, Texture const* texture)
     : Actor(owner),

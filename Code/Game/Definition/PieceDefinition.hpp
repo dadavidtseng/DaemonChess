@@ -32,6 +32,7 @@ struct sPiecePart
     String m_name          = "DEFAULT";
     Vec3   m_startPosition = Vec3::ZERO;
     Vec3   m_endPosition   = Vec3::ZERO;
+
     float  m_radius        = 0.f;
     Rgba8  m_color         = Rgba8::WHITE;
 };

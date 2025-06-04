@@ -1,12 +1,10 @@
 //----------------------------------------------------------------------------------------------------
-// Prop.cpp
+// Board.cpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Board.hpp"
 
-#include "Piece.hpp"
-#include "Engine/Core/Clock.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Math/AABB3.hpp"
@@ -16,6 +14,7 @@
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game/Definition/BoardDefinition.hpp"
 #include "Game/Framework/GameCommon.hpp"
+#include "Game/Gameplay/Piece.hpp"
 #include "ThirdParty/stb/stb_image.h"
 
 //----------------------------------------------------------------------------------------------------
@@ -26,17 +25,16 @@ Board::Board(Match* owner, Texture const* texture)
     m_shader = g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Diffuse", eVertexType::VERTEX_PCUTBN);
     InitializeLocalVertsForAABB3s();
 
-    // for (BoardDefinition* boardDefs : BoardDefinition::s_boardDefinitions)
-    // {
-    //     for (sSquareInfo squareInfo : boardDefs->m_squareInfos)
-    //     {
-    //         Piece* piece = new Piece(m_match, squareInfo);
-    //         piece->UpdatePositionByCoords(squareInfo.m_coord);
-    //         piece->m_coords = squareInfo.m_coord;
-    //         m_pieceList.push_back(piece);
-    //
-    //     }
-    // }
+    for (BoardDefinition const* boardDefs : BoardDefinition::s_boardDefinitions)
+    {
+        for (sSquareInfo const& squareInfo : boardDefs->m_squareInfos)
+        {
+            Piece* piece = new Piece(m_match, squareInfo);
+            piece->UpdatePositionByCoords(squareInfo.m_coord);
+            piece->m_coords = squareInfo.m_coord;
+            m_pieceList.push_back(piece);
+        }
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -75,6 +73,8 @@ Piece* Board::GetPieceByCoords(IntVec2 const& coords)
             return piece;
         }
     }
+
+    return nullptr;
 }
 
 IntVec2 Board::StringToChessCoord(String const& chessPos)
@@ -94,16 +94,13 @@ IntVec2 Board::StringToChessCoord(String const& chessPos)
 
 void Board::InitializeLocalVertsForAABB3s()
 {
-    AABB3 bound = AABB3::ZERO_TO_ONE;
-    // AddVertsForAABB3D(m_vertexes, m_indexes, bound);
-
     for (int y = 0; y < 8; ++y)
     {
         for (int x = 0; x < 8; ++x)
         {
-            Vec3 mins = Vec3(static_cast<float>(x), static_cast<float>(y), 0.f);
-            Vec3 maxs = mins + Vec3(1.f, 1.f, 0.2f);
-            AABB3 box = AABB3(mins, maxs);
+            Vec3  mins = Vec3(static_cast<float>(x), static_cast<float>(y), 0.f);
+            Vec3  maxs = mins + Vec3(1.f, 1.f, 0.2f);
+            AABB3 box  = AABB3(mins, maxs);
 
             Vec3 center         = (mins + maxs) * 0.5f;
             Vec3 halfDimensions = (maxs - mins) * 0.1f;
@@ -122,11 +119,11 @@ void Board::InitializeLocalVertsForAABB3s()
 
             OBB3 obb3 = OBB3(center, halfDimensions, iBasis, jBasis, kBasis);
 
-            bool isBlack = (x + y) % 2 == 0;
-            Rgba8 color  = isBlack ? Rgba8::BLACK : Rgba8::WHITE;
+            bool  isBlack = (x + y) % 2 == 0;
+            Rgba8 color   = isBlack ? Rgba8::BLACK : Rgba8::WHITE;
 
-            // AddVertsForAABB3D(m_vertexes, m_indexes, box, color);
-            AddVertsForOBB3D(m_vertexes, m_indexes, obb3, color, AABB2::ZERO_TO_ONE);
+            AddVertsForAABB3D(m_vertexes, m_indexes, box, color);
+            // AddVertsForOBB3D(m_vertexes, m_indexes, obb3, color, AABB2::ZERO_TO_ONE);
             // AddVertsForCylinder3D(m_vertexes, m_indexes, mins, mins + Vec3::Z_BASIS, 0.5f, Rgba8::WHITE, AABB2::ZERO_TO_ONE, 1024);
             // AddVertsForSphere3D(m_vertexes, m_indexes, mins, 0.5f);
         }
