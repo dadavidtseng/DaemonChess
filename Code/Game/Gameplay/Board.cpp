@@ -10,6 +10,8 @@
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Math/AABB3.hpp"
+#include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/OBB3.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game/Definition/BoardDefinition.hpp"
@@ -24,17 +26,17 @@ Board::Board(Match* owner, Texture const* texture)
     m_shader = g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Diffuse", eVertexType::VERTEX_PCUTBN);
     InitializeLocalVertsForAABB3s();
 
-    for (BoardDefinition* boardDefs : BoardDefinition::s_boardDefinitions)
-    {
-        for (sSquareInfo squareInfo : boardDefs->m_squareInfos)
-        {
-            Piece* piece = new Piece(m_match, squareInfo);
-            piece->UpdatePositionByCoords(squareInfo.m_coord);
-            piece->m_coords = squareInfo.m_coord;
-            m_pieceList.push_back(piece);
-
-        }
-    }
+    // for (BoardDefinition* boardDefs : BoardDefinition::s_boardDefinitions)
+    // {
+    //     for (sSquareInfo squareInfo : boardDefs->m_squareInfos)
+    //     {
+    //         Piece* piece = new Piece(m_match, squareInfo);
+    //         piece->UpdatePositionByCoords(squareInfo.m_coord);
+    //         piece->m_coords = squareInfo.m_coord;
+    //         m_pieceList.push_back(piece);
+    //
+    //     }
+    // }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -99,14 +101,32 @@ void Board::InitializeLocalVertsForAABB3s()
     {
         for (int x = 0; x < 8; ++x)
         {
-            Vec3  mins = Vec3(static_cast<float>(x), static_cast<float>(y), 0.f);
-            Vec3  maxs = mins + Vec3(1.f, 1.f, 0.2f);
-            AABB3 box(mins, maxs);
+            Vec3 mins = Vec3(static_cast<float>(x), static_cast<float>(y), 0.f);
+            Vec3 maxs = mins + Vec3(1.f, 1.f, 0.2f);
+            AABB3 box = AABB3(mins, maxs);
 
-            bool  isBlack = (x + y) % 2 == 0;
-            Rgba8 color   = isBlack ? Rgba8::BLACK : Rgba8::WHITE;
+            Vec3 center         = (mins + maxs) * 0.5f;
+            Vec3 halfDimensions = (maxs - mins) * 0.1f;
 
-            AddVertsForAABB3D(m_vertexes, m_indexes, box, color);
+            // 🎯 加入 Z 軸旋轉角度（例：每格增加 10 度）
+            float angleDegrees = static_cast<float>((x + y) * 10);
+            float angleRadians = angleDegrees * (PI / 180.f); // 確保你有定義 PI
+
+            float cosTheta = CosDegrees(angleDegrees);
+            float sinTheta = SinDegrees(angleDegrees);
+
+            // 🔁 基底向量 (只繞 Z 軸旋轉)
+            Vec3 iBasis = Vec3(cosTheta, sinTheta, 0.f);  // X 軸旋轉後的新方向
+            Vec3 jBasis = Vec3(-sinTheta, cosTheta, 0.f); // Y 軸旋轉後的新方向
+            Vec3 kBasis = Vec3(0.f, 0.f, 1.f);            // Z 軸不變
+
+            OBB3 obb3 = OBB3(center, halfDimensions, iBasis, jBasis, kBasis);
+
+            bool isBlack = (x + y) % 2 == 0;
+            Rgba8 color  = isBlack ? Rgba8::BLACK : Rgba8::WHITE;
+
+            // AddVertsForAABB3D(m_vertexes, m_indexes, box, color);
+            AddVertsForOBB3D(m_vertexes, m_indexes, obb3, color, AABB2::ZERO_TO_ONE);
             // AddVertsForCylinder3D(m_vertexes, m_indexes, mins, mins + Vec3::Z_BASIS, 0.5f, Rgba8::WHITE, AABB2::ZERO_TO_ONE, 1024);
             // AddVertsForSphere3D(m_vertexes, m_indexes, mins, 0.5f);
         }

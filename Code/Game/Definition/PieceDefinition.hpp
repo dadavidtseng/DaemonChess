@@ -13,6 +13,8 @@
 #include "Engine/Renderer/IndexBuffer.hpp"
 #include "Engine/Renderer/VertexBuffer.hpp"
 
+class Shader;
+
 //----------------------------------------------------------------------------------------------------
 enum class ePieceType : int8_t
 {
@@ -44,11 +46,12 @@ struct PieceDefinition
     void CreateMeshForEachPlayer(int playerIndex);
 
     static void                          InitializeDefs(char const* path);
-    static PieceDefinition* GetDefByName(String const& name);
+    static PieceDefinition*              GetDefByName(String const& name);
     static std::vector<PieceDefinition*> s_pieceDefinitions;
 
-    String                  m_name = "DEFAULT";
-    ePieceType              m_type = ePieceType::NONE;
+    String                  m_name   = "DEFAULT";
+    ePieceType              m_type   = ePieceType::NONE;
+    Shader*                 m_shader = nullptr;
     std::vector<sPiecePart> m_pieceParts;
     char                    m_glyph           = '?';
     IndexBuffer*            m_indexBuffer[2]  = {};

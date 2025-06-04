@@ -7,6 +7,8 @@
 
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Renderer/Renderer.hpp"
+#include "Game/Framework/GameCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
 STATIC std::vector<PieceDefinition*> PieceDefinition::s_pieceDefinitions;
@@ -33,6 +35,9 @@ bool PieceDefinition::LoadFromXmlElement(XmlElement const* element)
     else if (type == "ROOK") m_type = ePieceType::ROOK;
     else if (type == "QUEEN") m_type = ePieceType::QUEEN;
     else if (type == "KING") m_type = ePieceType::KING;
+
+    String const shader = ParseXmlAttribute(*element, "shader", "DEFAULT");
+    m_shader            = g_theRenderer->CreateOrGetShaderFromFile(shader.c_str(), eVertexType::VERTEX_PCUTBN);
 
     XmlElement const* partElement = element->FirstChildElement("PiecePart");
 
