@@ -5,21 +5,29 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Piece.hpp"
 
+#include "Match.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "Game/Definition/BoardDefinition.hpp"
 #include "Game/Framework/GameCommon.hpp"
 #include "ThirdParty/stb/stb_image.h"
 
 //----------------------------------------------------------------------------------------------------
-Piece::Piece(Match* owner, Texture const* texture)
+Piece::Piece(Match* owner, sSquareInfo const& squareInfo, Texture const* texture)
     : Actor(owner),
       m_texture(texture)
 {
+    m_shader     = g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Diffuse", eVertexType::VERTEX_PCUTBN);
+    m_definition = PieceDefinition::GetDefByName(squareInfo.m_name);
 
+    for (sPiecePart const& piecePart : m_definition->m_pieceParts)
+    {
+        if (piecePart.m_name == "sphere") AddVertsForSphere3D(m_vertexes, m_indexes, piecePart.m_startPosition, piecePart.m_radius);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -28,6 +36,11 @@ void Piece::Update(float const deltaSeconds)
     m_orientation.m_yawDegrees += m_angularVelocity.m_yawDegrees * deltaSeconds;
     m_orientation.m_pitchDegrees += m_angularVelocity.m_pitchDegrees * deltaSeconds;
     m_orientation.m_rollDegrees += m_angularVelocity.m_rollDegrees * deltaSeconds;
+}
+
+void Piece::UpdatePositionByCoords(IntVec2 const& newCoords)
+{
+    m_position = m_match->m_board->GetWorldPositionByCoords(newCoords);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -39,47 +52,48 @@ void Piece::Render() const
     g_theRenderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
     g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);  //DISABLE
     g_theRenderer->BindTexture(m_texture);
-    g_theRenderer->DrawVertexArray(static_cast<int>(m_vertexes.size()), m_vertexes.data());
+    g_theRenderer->BindShader(m_shader);
+    g_theRenderer->DrawVertexArray(m_vertexes, m_indexes);
 }
 
-//----------------------------------------------------------------------------------------------------
-void Piece::InitializeLocalVertsForGrid()
-{
-    float gridLineLength = 100.f;
-
-    for (int i = -(int)gridLineLength / 2; i < (int)gridLineLength / 2; i++)
-    {
-        float lineWidth = 0.05f;
-        if (i == 0) lineWidth = 0.3f;
-
-        AABB3 boundsX = AABB3(Vec3(-gridLineLength / 2.f, -lineWidth / 2.f + (float)i, -lineWidth / 2.f), Vec3(gridLineLength / 2.f, lineWidth / 2.f + (float)i, lineWidth / 2.f));
-        AABB3 boundsY = AABB3(Vec3(-lineWidth / 2.f + (float)i, -gridLineLength / 2.f, -lineWidth / 2.f), Vec3(lineWidth / 2.f + (float)i, gridLineLength / 2.f, lineWidth / 2.f));
-
-        Rgba8 colorX = Rgba8::DARK_GREY;
-        Rgba8 colorY = Rgba8::DARK_GREY;
-
-        if (i % 5 == 0)
-        {
-            colorX = Rgba8::RED;
-            colorY = Rgba8::GREEN;
-        }
-
-        AddVertsForAABB3D(m_vertexes, boundsX, colorX);
-        AddVertsForAABB3D(m_vertexes, boundsY, colorY);
-    }
-}
-
-//----------------------------------------------------------------------------------------------------
-void Piece::InitializeLocalVertsForWorldCoordinateArrows()
-{
-    AddVertsForArrow3D(m_vertexes, m_position, m_position + Vec3::X_BASIS * 2.f, 0.6f, 0.25f, 0.4f, Rgba8::RED);
-    AddVertsForArrow3D(m_vertexes, m_position, m_position + Vec3::Y_BASIS * 2.f, 0.6f, 0.25f, 0.4f, Rgba8::GREEN);
-    AddVertsForArrow3D(m_vertexes, m_position, m_position + Vec3::Z_BASIS * 2.f, 0.6f, 0.25f, 0.4f, Rgba8::BLUE);
-}
-
-//----------------------------------------------------------------------------------------------------
-void Piece::InitializeLocalVertsForText2D()
-{
-    // g_theBitmapFont->AddVertsForTextInBox2D(m_vertexes, "XXX", AABB2::ZERO_TO_ONE, 10.f);
-    g_theBitmapFont->AddVertsForText3DAtOriginXForward(m_vertexes, "ABCDEFGHIJKL", 1.f);
-}
+// //----------------------------------------------------------------------------------------------------
+// void Piece::InitializeLocalVertsForGrid()
+// {
+//     float gridLineLength = 100.f;
+//
+//     for (int i = -(int)gridLineLength / 2; i < (int)gridLineLength / 2; i++)
+//     {
+//         float lineWidth = 0.05f;
+//         if (i == 0) lineWidth = 0.3f;
+//
+//         AABB3 boundsX = AABB3(Vec3(-gridLineLength / 2.f, -lineWidth / 2.f + (float)i, -lineWidth / 2.f), Vec3(gridLineLength / 2.f, lineWidth / 2.f + (float)i, lineWidth / 2.f));
+//         AABB3 boundsY = AABB3(Vec3(-lineWidth / 2.f + (float)i, -gridLineLength / 2.f, -lineWidth / 2.f), Vec3(lineWidth / 2.f + (float)i, gridLineLength / 2.f, lineWidth / 2.f));
+//
+//         Rgba8 colorX = Rgba8::DARK_GREY;
+//         Rgba8 colorY = Rgba8::DARK_GREY;
+//
+//         if (i % 5 == 0)
+//         {
+//             colorX = Rgba8::RED;
+//             colorY = Rgba8::GREEN;
+//         }
+//
+//         AddVertsForAABB3D(m_vertexes, boundsX, colorX);
+//         AddVertsForAABB3D(m_vertexes, boundsY, colorY);
+//     }
+// }
+//
+// //----------------------------------------------------------------------------------------------------
+// void Piece::InitializeLocalVertsForWorldCoordinateArrows()
+// {
+//     AddVertsForArrow3D(m_vertexes, m_position, m_position + Vec3::X_BASIS * 2.f, 0.6f, 0.25f, 0.4f, Rgba8::RED);
+//     AddVertsForArrow3D(m_vertexes, m_position, m_position + Vec3::Y_BASIS * 2.f, 0.6f, 0.25f, 0.4f, Rgba8::GREEN);
+//     AddVertsForArrow3D(m_vertexes, m_position, m_position + Vec3::Z_BASIS * 2.f, 0.6f, 0.25f, 0.4f, Rgba8::BLUE);
+// }
+//
+// //----------------------------------------------------------------------------------------------------
+// void Piece::InitializeLocalVertsForText2D()
+// {
+//     // g_theBitmapFont->AddVertsForTextInBox2D(m_vertexes, "XXX", AABB2::ZERO_TO_ONE, 10.f);
+//     g_theBitmapFont->AddVertsForText3DAtOriginXForward(m_vertexes, "ABCDEFGHIJKL", 1.f);
+// }

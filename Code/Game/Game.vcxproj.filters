@@ -14,6 +14,15 @@
     <Filter Include="Definition">
       <UniqueIdentifier>{c6793b6f-4156-4441-8bd0-8394ed472ec3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Subsystem">
+      <UniqueIdentifier>{a4b1c284-09d2-4923-8042-614644b1ea89}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Subsystem\Console">
+      <UniqueIdentifier>{9181bbf9-cff0-4927-b24c-bab466745d49}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Subsystem\Widget">
+      <UniqueIdentifier>{1113438c-2275-4483-bb2c-904d85c5ca4c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Gameplay\Actor.cpp">
@@ -52,6 +61,12 @@
     <ClCompile Include="Gameplay\Piece.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
+    <ClCompile Include="Subsystem\Console\ConsoleSubsystem.cpp">
+      <Filter>Subsystem\Console</Filter>
+    </ClCompile>
+    <ClCompile Include="Subsystem\Widget\WidgetSubsystem.cpp">
+      <Filter>Subsystem\Widget</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Gameplay\Actor.hpp">
@@ -89,6 +104,12 @@
     </ClInclude>
     <ClInclude Include="Gameplay\Piece.hpp">
       <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Subsystem\Console\ConsoleSubsystem.hpp">
+      <Filter>Subsystem\Console</Filter>
+    </ClInclude>
+    <ClInclude Include="Subsystem\Widget\WidgetSubsystem.hpp">
+      <Filter>Subsystem\Widget</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

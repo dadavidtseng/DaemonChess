@@ -1,0 +1,82 @@
+//----------------------------------------------------------------------------------------------------
+// BoardDefinition.cpp
+//----------------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------------
+#include "Game/Definition/BoardDefinition.hpp"
+
+#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
+
+//----------------------------------------------------------------------------------------------------
+STATIC std::vector<BoardDefinition*> BoardDefinition::s_boardDefinitions;
+
+
+//----------------------------------------------------------------------------------------------------
+BoardDefinition::~BoardDefinition()
+{
+    for (BoardDefinition const* boardDef : s_boardDefinitions)
+    {
+        delete boardDef;
+    }
+
+    s_boardDefinitions.clear();
+}
+
+bool BoardDefinition::LoadFromXmlElement(XmlElement const* element)
+{
+    XmlElement const* boardElement = element->FirstChildElement("SquareInfo");
+
+    if (boardElement != nullptr)
+    {
+        while (boardElement != nullptr)
+        {
+            sSquareInfo squareInfo;
+            squareInfo.m_name     = ParseXmlAttribute(*boardElement, "name", "DEFAULT");
+            squareInfo.m_notation = ParseXmlAttribute(*boardElement, "notation", "DEFAULT");
+            squareInfo.m_coord    = ParseXmlAttribute(*boardElement, "coord", IntVec2::ZERO);
+            m_squareInfos.push_back(squareInfo);
+            boardElement = boardElement->NextSiblingElement();
+        }
+    }
+
+    return true;
+}
+
+void BoardDefinition::InitializeDefs(char const* path)
+{
+    XmlDocument     document;
+    XmlResult const result = document.LoadFile(path);
+
+    if (result != XmlResult::XML_SUCCESS)
+    {
+        ERROR_AND_DIE("Failed to load XML file")
+    }
+
+    XmlElement const* rootElement = document.RootElement();
+
+    if (rootElement == nullptr)
+    {
+        ERROR_AND_DIE("XML file %s is missing a root element.")
+    }
+
+    XmlElement const* boardDefinitionElement = rootElement->FirstChildElement();
+
+    while (boardDefinitionElement != nullptr)
+    {
+        String           elementName     = boardDefinitionElement->Name();
+        BoardDefinition* boardDefinition = new BoardDefinition();
+
+        if (boardDefinition->LoadFromXmlElement(boardDefinitionElement))
+        {
+            s_boardDefinitions.push_back(boardDefinition);
+        }
+        else
+        {
+            delete &boardDefinition;
+            ERROR_AND_DIE("Failed to load piece definition")
+        }
+
+        boardDefinitionElement = boardDefinitionElement->NextSiblingElement();
+    }
+}

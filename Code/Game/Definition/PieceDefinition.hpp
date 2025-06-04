@@ -43,13 +43,14 @@ struct PieceDefinition
     bool LoadFromXmlElement(XmlElement const* element);
     void CreateMeshForEachPlayer(int playerIndex);
 
-    static void                          InitializePieceDefs(char const* path);
+    static void                          InitializeDefs(char const* path);
+    static PieceDefinition* GetDefByName(String const& name);
     static std::vector<PieceDefinition*> s_pieceDefinitions;
 
-    String                   m_name = "DEFAULT";
-    ePieceType               m_type = ePieceType::NONE;
+    String                  m_name = "DEFAULT";
+    ePieceType              m_type = ePieceType::NONE;
     std::vector<sPiecePart> m_pieceParts;
-    char                     m_glyph           = '?';
-    IndexBuffer*             m_indexBuffer[2]  = {};
-    VertexBuffer*            m_vertexBuffer[2] = {};
+    char                    m_glyph           = '?';
+    IndexBuffer*            m_indexBuffer[2]  = {};
+    VertexBuffer*           m_vertexBuffer[2] = {};
 };

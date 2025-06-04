@@ -12,6 +12,8 @@
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Renderer/Window.hpp"
+#include "Game/Definition/BoardDefinition.hpp"
+#include "Game/Definition/PieceDefinition.hpp"
 #include "Game/Framework/App.hpp"
 #include "Game/Framework/GameCommon.hpp"
 #include "Game/Framework/PlayerController.hpp"
@@ -20,14 +22,18 @@
 //----------------------------------------------------------------------------------------------------
 Game::Game()
 {
+    g_theEventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
     m_gameClock = new Clock(Clock::GetSystemClock());
-    m_match     = new Match();
+
     CreatePlayerController();
     m_screenCamera            = new Camera();
     Vec2 const bottomLeft     = Vec2::ZERO;
     Vec2 const screenTopRight = Vec2(SCREEN_SIZE_X, SCREEN_SIZE_Y);
     m_screenCamera->SetOrthoGraphicView(bottomLeft, screenTopRight);
     m_screenCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
+
+    PieceDefinition::InitializeDefs("Data/Definitions/PieceDefinition.xml");
+    BoardDefinition::InitializeDefs("Data/Definitions/BoardDefinition.xml");
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -86,6 +92,13 @@ void Game::Render() const
     }
 }
 
+bool Game::OnGameStateChanged(EventArgs& args)
+{
+    if (args.GetValue("OnGameStateChanged", "DEFAULT") == "MATCH") g_theGame->m_match = new Match();
+
+    return true;
+}
+
 eGameState Game::GetCurrentGameState() const
 {
     return m_gameState;
@@ -95,7 +108,14 @@ void Game::ChangeGameState(eGameState const newGameState)
 {
     if (newGameState == m_gameState) return;
 
+    EventArgs args;
+
+    if (newGameState == eGameState::ATTRACT) args.SetValue("OnGameStateChanged", "ATTRACT");
+    else if (newGameState == eGameState::MATCH) args.SetValue("OnGameStateChanged", "MATCH");
+
     m_gameState = newGameState;
+
+    g_theEventSystem->FireEvent("OnGameStateChanged", args);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -110,7 +130,7 @@ void Game::UpdateFromInput()
 
         if (g_theInput->WasKeyJustPressed(KEYCODE_SPACE))
         {
-            m_gameState = eGameState::MATCH;
+            ChangeGameState(eGameState::MATCH);
         }
     }
 
@@ -212,6 +232,7 @@ void Game::UpdateFromInput()
 //----------------------------------------------------------------------------------------------------
 void Game::UpdateEntities(float const gameDeltaSeconds, float const systemDeltaSeconds) const
 {
+    if (m_match == nullptr) return;
     m_match->Update(gameDeltaSeconds);
     m_playerController->Update(systemDeltaSeconds);
 }
@@ -225,6 +246,7 @@ void Game::RenderAttractMode() const
 //----------------------------------------------------------------------------------------------------
 void Game::RenderEntities() const
 {
+    if (m_match == nullptr) return;
     m_match->Render();
     g_theRenderer->SetModelConstants(m_playerController->GetModelToWorldTransform());
     m_playerController->Render();

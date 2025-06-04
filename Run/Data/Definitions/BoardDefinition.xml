@@ -1,0 +1,40 @@
+<Definitions>
+    <!-- PieceInfo -->
+    <BoardDefinition>
+        <SquareInfo name="rook" notation="R" coord="1,1"/>
+        <SquareInfo name="knight" notation="N" coord="2,1"/>
+        <SquareInfo name="bishop" notation="B" coord="3,1"/>
+        <SquareInfo name="queen" notation="Q" coord="4,1"/>
+        <SquareInfo name="king" notation="K" coord="5,1"/>
+        <SquareInfo name="bishop" notation="B" coord="6,1"/>
+        <SquareInfo name="knight" notation="N" coord="7,1"/>
+        <SquareInfo name="rook" notation="R" coord="8,1"/>
+        <SquareInfo name="pawn" notation="P" coord="1,2"/>
+        <SquareInfo name="pawn" notation="P" coord="2,2"/>
+        <SquareInfo name="pawn" notation="P" coord="3,2"/>
+        <SquareInfo name="pawn" notation="P" coord="4,2"/>
+        <SquareInfo name="pawn" notation="P" coord="5,2"/>
+        <SquareInfo name="pawn" notation="P" coord="6,2"/>
+        <SquareInfo name="pawn" notation="P" coord="7,2"/>
+        <SquareInfo name="pawn" notation="P" coord="8,2"/>
+
+        <SquareInfo name="pawn" notation="p" coord="1,7"/>
+        <SquareInfo name="pawn" notation="p" coord="2,7"/>
+        <SquareInfo name="pawn" notation="p" coord="3,7"/>
+        <SquareInfo name="pawn" notation="p" coord="4,7"/>
+        <SquareInfo name="pawn" notation="p" coord="5,7"/>
+        <SquareInfo name="pawn" notation="p" coord="6,7"/>
+        <SquareInfo name="pawn" notation="p" coord="7,7"/>
+        <SquareInfo name="pawn" notation="p" coord="8,7"/>
+        <SquareInfo name="rook" notation="r" coord="1,8"/>
+        <SquareInfo name="knight" notation="n" coord="2,8"/>
+        <SquareInfo name="bishop" notation="b" coord="3,8"/>
+        <SquareInfo name="queen" notation="q" coord="4,8"/>
+        <SquareInfo name="king" notation="k" coord="5,8"/>
+        <SquareInfo name="bishop" notation="b" coord="6,8"/>
+        <SquareInfo name="knight" notation="n" coord="7,8"/>
+        <SquareInfo name="rook" notation="r" coord="8,8"/>
+
+    </BoardDefinition>
+</Definitions>
+

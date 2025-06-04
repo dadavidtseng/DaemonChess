@@ -5,12 +5,14 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Board.hpp"
 
+#include "Piece.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "Game/Definition/BoardDefinition.hpp"
 #include "Game/Framework/GameCommon.hpp"
 #include "ThirdParty/stb/stb_image.h"
 
@@ -21,6 +23,18 @@ Board::Board(Match* owner, Texture const* texture)
 {
     m_shader = g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Diffuse", eVertexType::VERTEX_PCUTBN);
     InitializeLocalVertsForAABB3s();
+
+    for (BoardDefinition* boardDefs : BoardDefinition::s_boardDefinitions)
+    {
+        for (sSquareInfo squareInfo : boardDefs->m_squareInfos)
+        {
+            Piece* piece = new Piece(m_match, squareInfo);
+            piece->UpdatePositionByCoords(squareInfo.m_coord);
+            piece->m_coords = squareInfo.m_coord;
+            m_pieceList.push_back(piece);
+
+        }
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -45,6 +59,37 @@ void Board::Render() const
     g_theRenderer->DrawVertexArray(m_vertexes, m_indexes);
 }
 
+Vec3 Board::GetWorldPositionByCoords(IntVec2 const& coords)
+{
+    return Vec3((float)(coords.x) - 0.5f, (float)(coords.y) - 0.5f, 0.2f);
+}
+
+Piece* Board::GetPieceByCoords(IntVec2 const& coords)
+{
+    for (Piece* piece : m_pieceList)
+    {
+        if (piece->m_coords == coords)
+        {
+            return piece;
+        }
+    }
+}
+
+IntVec2 Board::StringToChessCoord(String const& chessPos)
+{
+    if (chessPos.length() != 2) return IntVec2(-1, -1);  // 非法輸入
+
+    char file = tolower(chessPos[0]); // 'a'~'h'
+    char rank = chessPos[1];          // '1'~'8'
+
+    if (file < 'a' || file > 'h' || rank < '1' || rank > '8') return IntVec2(-1, -1); // 非法座標
+
+    int col = file - 'a' + 1;  // 'a' -> 1, 'b' -> 2, ..., 'h' -> 8
+    int row = rank - '0';      // '3' -> 3
+
+    return IntVec2(col, row);
+}
+
 void Board::InitializeLocalVertsForAABB3s()
 {
     AABB3 bound = AABB3::ZERO_TO_ONE;
@@ -62,9 +107,8 @@ void Board::InitializeLocalVertsForAABB3s()
             Rgba8 color   = isBlack ? Rgba8::BLACK : Rgba8::WHITE;
 
             AddVertsForAABB3D(m_vertexes, m_indexes, box, color);
-            AddVertsForCylinder3D(m_vertexes, m_indexes, mins,mins+Vec3::Z_BASIS, 0.5f, Rgba8::WHITE, AABB2::ZERO_TO_ONE, 1024 );
-            AddVertsForSphere3D(m_vertexes, m_indexes, mins, 0.5f);
-
+            // AddVertsForCylinder3D(m_vertexes, m_indexes, mins, mins + Vec3::Z_BASIS, 0.5f, Rgba8::WHITE, AABB2::ZERO_TO_ONE, 1024);
+            // AddVertsForSphere3D(m_vertexes, m_indexes, mins, 0.5f);
         }
     }
 }
@@ -95,4 +139,3 @@ void Board::InitializeLocalVertsForGrid()
         AddVertsForAABB3D(m_vertexes, m_indexes, boundsY, colorY);
     }
 }
-

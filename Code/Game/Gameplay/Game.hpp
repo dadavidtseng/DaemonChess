@@ -6,6 +6,7 @@
 #pragma once
 #include <cstdint>
 
+#include "Engine/Core/EventSystem.hpp"
 #include "Engine/Math/AABB2.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -19,7 +20,9 @@ enum class eGameState : int8_t
 {
     ATTRACT,
     LOBBY,
-    MATCH
+    MATCH,
+    FINISHED,
+    PAUSED
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -32,9 +35,12 @@ public:
     void Update();
     void Render() const;
 
+    static bool OnGameStateChanged(EventArgs& args);
+
     eGameState GetCurrentGameState() const;
     void       ChangeGameState(eGameState newGameState);
-    Match*            m_match            = nullptr;
+    Match*     m_match = nullptr;
+
 private:
     void UpdateFromInput();
     void UpdateEntities(float gameDeltaSeconds, float systemDeltaSeconds) const;

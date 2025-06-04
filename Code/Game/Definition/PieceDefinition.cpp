@@ -54,7 +54,7 @@ bool PieceDefinition::LoadFromXmlElement(XmlElement const* element)
     return true;
 }
 
-void PieceDefinition::InitializePieceDefs(char const* path)
+void PieceDefinition::InitializeDefs(char const* path)
 {
     XmlDocument     document;
     XmlResult const result = document.LoadFile(path);
@@ -90,4 +90,17 @@ void PieceDefinition::InitializePieceDefs(char const* path)
 
         pieceDefinitionElement = pieceDefinitionElement->NextSiblingElement();
     }
+}
+
+PieceDefinition* PieceDefinition::GetDefByName(String const& name)
+{
+    for (PieceDefinition* pieceDef : s_pieceDefinitions)
+    {
+        if (pieceDef->m_name == name)
+        {
+            return pieceDef;
+        }
+    }
+
+    return nullptr;
 }

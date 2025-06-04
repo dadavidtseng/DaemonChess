@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Match.hpp"
 
+#include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Input/InputSystem.hpp"
@@ -12,6 +13,7 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "Game/Definition/BoardDefinition.hpp"
 #include "Game/Definition/PieceDefinition.hpp"
 #include "Game/Framework/GameCommon.hpp"
 #include "Game/Gameplay/Game.hpp"
@@ -20,6 +22,9 @@
 Match::Match()
 {
     g_theEventSystem->SubscribeEventCallbackFunction("ChessMove", OnChessMove);
+    g_theEventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnEnterMatchState);
+    g_theEventSystem->SubscribeEventCallbackFunction("OnEnterMatchTurn", OnEnterMatchTurn);
+    g_theEventSystem->SubscribeEventCallbackFunction("OnExitMatchTurn", OnExitMatchTurn);
     m_screenCamera = new Camera();
 
     Vec2 const bottomLeft     = Vec2::ZERO;
@@ -45,16 +50,14 @@ Match::Match()
 
     SpawnProp();
 
-    m_grid->m_position       = Vec3::ZERO;
-    m_clock                  = new Clock(Clock::GetSystemClock());
-
-    PieceDefinition::InitializePieceDefs("Data/Definitions/PieceDefinition.xml");
+    // m_grid->m_position = Vec3::ZERO;
+    m_clock            = new Clock(Clock::GetSystemClock());
 }
 
 Match::~Match()
 {
-    delete m_grid;
-    m_grid = nullptr;
+    // delete m_grid;
+    // m_grid = nullptr;
 
     delete m_gameClock;
     m_gameClock = nullptr;
@@ -70,15 +73,15 @@ void Match::SpawnProp()
     Texture const* texture  = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/TestUV.png");
     Texture const* texture2 = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Test_StbiFlippedAndOpenGL.png");
 
-    m_grid       = new Piece(this);
-    m_board      = new Board(this);
-    m_grid->InitializeLocalVertsForGrid();
+    // m_grid  = new Piece(this);
+    m_board = new Board(this);
+    m_pieceList = m_board->m_pieceList;
+    // m_grid->InitializeLocalVertsForGrid();
 }
 
 void Match::Update(float const deltaSeconds)
 {
-
-    m_grid->Update(deltaSeconds);
+    // m_grid->Update(deltaSeconds);
 
     DebugAddScreenText(Stringf("Time: %.2f\nFPS: %.2f\nScale: %.1f", m_gameClock->GetTotalSeconds(), 1.f / m_gameClock->GetDeltaSeconds(), m_gameClock->GetTimeScale()), m_screenCamera->GetOrthographicTopRight() - Vec2(250.f, 60.f), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
     UpdateFromInput(deltaSeconds);
@@ -185,23 +188,67 @@ void Match::UpdateFromInput(float deltaSeconds)
 void Match::Render() const
 {
     g_theRenderer->SetLightConstants(m_sunDirection, m_sunIntensity, m_ambientIntensity);
-    m_grid->Render();
+    // m_grid->Render();
 
     m_board->Render();
+
+    for (Piece* piece:m_pieceList)
+    {
+        if (piece==nullptr) continue;
+        piece->Render();
+    }
 }
 
-void Match::OnChessMove(int const from,
-                        int const to)
+void Match::OnChessMove(IntVec2 const& from,
+                        IntVec2 const& to)
 {
     DebuggerPrintf(Stringf("OnChessMove from=%d to=%d\n", from, to).c_str());
+    Piece* piece =m_board->GetPieceByCoords(from);
+    piece->UpdatePositionByCoords(to);
+    g_theEventSystem->FireEvent("OnEnterMatchTurn");
 }
 
 bool Match::OnChessMove(EventArgs& args)
 {
-    int from = args.GetValue("from", -1);
-    int to   = args.GetValue("to", -1);
+    String from = args.GetValue("from", "DEFAULT");
+    String to   = args.GetValue("to",  "DEFAULT");
 
+IntVec2 fromCoords = g_theGame->m_match->m_board->StringToChessCoord(from);
+    IntVec2 toCoords = g_theGame->m_match->m_board->StringToChessCoord( to);
 
-    g_theGame->m_match->OnChessMove(from, to);
+    g_theGame->m_match->OnChessMove(fromCoords, toCoords);
     return true;
+}
+
+bool Match::OnEnterMatchState(EventArgs& args)
+{
+    OnEnterMatchTurn(args);
+    return true;
+}
+
+bool Match::OnEnterMatchTurn(EventArgs& args)
+{
+    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("=================================================="));
+    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("Player #%d -- it's your turn!", g_theGame->m_match->m_currenTurnPlayerIndex));
+
+    int const currentTurnPlayerIndex = g_theGame->m_match->m_currenTurnPlayerIndex;
+
+    if (currentTurnPlayerIndex == 0) g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Game state is: First Player's Turn"));
+    else if (currentTurnPlayerIndex == 1) g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Game state is: Second Player's Turn"));
+
+    g_theEventSystem->FireEvent("OnExitMatchTurn");
+    return true;
+}
+
+bool Match::OnExitMatchTurn(EventArgs& args)
+{
+    g_theGame->m_match->SwitchPlayerIndex();
+    // g_theEventSystem->FireEvent("OnEnterMatchTurn");
+    return true;
+}
+
+void Match::SwitchPlayerIndex()
+{
+    if (m_currenTurnPlayerIndex == 0) m_currenTurnPlayerIndex = 1;
+    else if (m_currenTurnPlayerIndex == 1) m_currenTurnPlayerIndex = 0;
 }
