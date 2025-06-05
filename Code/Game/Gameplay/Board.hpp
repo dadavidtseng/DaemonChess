@@ -8,6 +8,7 @@
 
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Shader.hpp"
+#include "Game/Definition/BoardDefinition.hpp"
 #include "Game/Gameplay/Actor.hpp"
 
 struct BoardDefinition;
@@ -31,18 +32,23 @@ public:
     /// Query
     IntVec2 GetCoordsByWorldPosition(Vec3 const& worldPosition);
     Vec3    GetWorldPositionByCoords(IntVec2 const& coords);
-    Piece* GetPieceByCoords(IntVec2 const& coords);
-    IntVec2 StringToChessCoord(String const & chessPos);
+    Piece*  GetPieceByCoords(IntVec2 const& coords);
+    sSquareInfo GetSquareInfoByCoords(IntVec2 const& coords);
+    IntVec2 StringToChessCoord(String const& chessPos);
+    String  ChessCoordToString(IntVec2 const& coords);
+    String  GetBoardContents(int rowNum);
+    bool IsCoordValid(IntVec2 const& coords)const;
 
-    void InitializeLocalVertsForAABB3s();
-    void InitializeLocalVertsForGrid();
-    PieceList         m_pieceList;
+    void                     InitializeLocalVertsForAABB3s();
+    void                     InitializeLocalVertsForGrid();
+    void CapturePiece(IntVec2 const& fromCoords ,IntVec2 const& toCoords);
+    PieceList                m_pieceList;
+    std::vector<sSquareInfo> m_squareInfoList;
+
 private:
     BoardDefinition*  m_definition = nullptr;
     VertexList_PCUTBN m_vertexes;
     IndexList         m_indexes;
-
     Texture const*    m_texture = nullptr;
     Shader const*     m_shader  = nullptr;
-
 };

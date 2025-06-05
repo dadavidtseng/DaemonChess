@@ -29,12 +29,12 @@ bool PieceDefinition::LoadFromXmlElement(XmlElement const* element)
 {
     m_name            = ParseXmlAttribute(*element, "name", "DEFAULT");
     String const type = ParseXmlAttribute(*element, "type", "DEFAULT");
-    if (type == "PAWN") m_type = ePieceType::PAWN;
-    else if (type == "BISHOP") m_type = ePieceType::BISHOP;
-    else if (type == "KNIGHT") m_type = ePieceType::KNIGHT;
-    else if (type == "ROOK") m_type = ePieceType::ROOK;
-    else if (type == "QUEEN") m_type = ePieceType::QUEEN;
-    else if (type == "KING") m_type = ePieceType::KING;
+    if (type == "pawn") m_type = ePieceType::PAWN;
+    else if (type == "bishop") m_type = ePieceType::BISHOP;
+    else if (type == "knight") m_type = ePieceType::KNIGHT;
+    else if (type == "rook") m_type = ePieceType::ROOK;
+    else if (type == "queen") m_type = ePieceType::QUEEN;
+    else if (type == "king") m_type = ePieceType::KING;
 
     String const shader  = ParseXmlAttribute(*element, "shader", "DEFAULT");
     m_shader             = g_theRenderer->CreateOrGetShaderFromFile(shader.c_str(), eVertexType::VERTEX_PCUTBN);

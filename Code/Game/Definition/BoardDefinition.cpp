@@ -25,9 +25,8 @@ BoardDefinition::~BoardDefinition()
 
 bool BoardDefinition::LoadFromXmlElement(XmlElement const* element)
 {
-    m_playerControllerId = ParseXmlAttribute(*element, "id", -1);
-    m_pieceOrientation   = ParseXmlAttribute(*element, "orientation", EulerAngles::ZERO);
-    m_pieceColor         = ParseXmlAttribute(*element, "color", Rgba8::WHITE);
+    m_pieceOrientation = ParseXmlAttribute(*element, "orientation", EulerAngles::ZERO);
+    m_pieceColor       = ParseXmlAttribute(*element, "color", Rgba8::WHITE);
 
     XmlElement const* boardElement = element->FirstChildElement("SquareInfo");
 
@@ -36,9 +35,10 @@ bool BoardDefinition::LoadFromXmlElement(XmlElement const* element)
         while (boardElement != nullptr)
         {
             sSquareInfo squareInfo;
-            squareInfo.m_name     = ParseXmlAttribute(*boardElement, "name", "DEFAULT");
-            squareInfo.m_notation = ParseXmlAttribute(*boardElement, "notation", "DEFAULT");
-            squareInfo.m_coord    = ParseXmlAttribute(*boardElement, "coord", IntVec2::ZERO);
+            squareInfo.m_name               = ParseXmlAttribute(*boardElement, "name", "DEFAULT");
+            squareInfo.m_notation           = ParseXmlAttribute(*boardElement, "notation", "DEFAULT");
+            squareInfo.m_playerControllerId = ParseXmlAttribute(*boardElement, "id", -1);
+            squareInfo.m_coords              = ParseXmlAttribute(*boardElement, "coord", IntVec2::ZERO);
             m_squareInfos.push_back(squareInfo);
             boardElement = boardElement->NextSiblingElement();
         }

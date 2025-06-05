@@ -29,9 +29,18 @@ Board::Board(Match* owner, Texture const* texture)
     {
         for (sSquareInfo const& squareInfo : boardDefs->m_squareInfos)
         {
+            if (squareInfo.m_name == "DEFAULT")
+            {
+                sSquareInfo info;
+                info.m_notation = "*";
+                m_squareInfoList.push_back(info);
+                continue;
+            }
+
             Piece* piece         = new Piece(m_match, squareInfo);
             piece->m_orientation = boardDefs->m_pieceOrientation;
             piece->m_color       = boardDefs->m_pieceColor;
+            m_squareInfoList.push_back(squareInfo);
             m_pieceList.push_back(piece);
         }
     }
@@ -68,6 +77,10 @@ Piece* Board::GetPieceByCoords(IntVec2 const& coords)
 {
     for (Piece* piece : m_pieceList)
     {
+        if (piece==nullptr)
+        {
+            continue;
+        }
         if (piece->m_coords == coords)
         {
             return piece;
@@ -75,6 +88,18 @@ Piece* Board::GetPieceByCoords(IntVec2 const& coords)
     }
 
     return nullptr;
+}
+
+sSquareInfo Board::GetSquareInfoByCoords(IntVec2 const& coords)
+{
+    for (sSquareInfo squareInfo : m_squareInfoList)
+    {
+        if (squareInfo.m_coords == coords)
+        {
+            return squareInfo;
+        }
+    }
+    return sSquareInfo{};
 }
 
 IntVec2 Board::StringToChessCoord(String const& chessPos)
@@ -90,6 +115,44 @@ IntVec2 Board::StringToChessCoord(String const& chessPos)
     int row = rank - '0';      // '3' -> 3
 
     return IntVec2(col, row);
+}
+
+String Board::ChessCoordToString(IntVec2 const& coords)
+{
+    int col = coords.x;  // 假設 IntVec2.x 是欄（1~8）
+    int row = coords.y;  // IntVec2.y 是列（1~8）
+
+    // 非法檢查，若超出棋盤範圍，回傳空字串或其他錯誤字串
+    if (col < 1 || col > 8 || row < 1 || row > 8) return String("");
+
+    char file = 'a' + (col - 1);   // 1 -> 'a', 2 -> 'b', ..., 8 -> 'h'
+    char rank = '0' + row;          // 1 -> '1', 2 -> '2', ..., 8 -> '8'
+
+    String result;
+    result += file;
+    result += rank;
+
+    return result;
+}
+
+String Board::GetBoardContents(int rowNum)
+{
+    const int colNum = 8;
+    String    result;
+
+    // rowNum: 1 ~ 8（最上到最下）
+    int startIndex = (rowNum - 1) * colNum;
+    for (int i = 0; i < colNum; ++i)
+    {
+        result += m_squareInfoList[startIndex + i].m_notation;
+    }
+
+    return result;
+}
+
+bool Board::IsCoordValid(IntVec2 const& coords) const
+{
+    return coords.x >= 1 && coords.x <= 8 && coords.y >= 1 && coords.y <= 8;
 }
 
 void Board::InitializeLocalVertsForAABB3s()
@@ -156,3 +219,44 @@ void Board::InitializeLocalVertsForGrid()
         AddVertsForAABB3D(m_vertexes, m_indexes, boundsY, colorY);
     }
 }
+
+void Board::CapturePiece(IntVec2 const& fromCoords ,
+    IntVec2 const& toCoords)
+{
+    sSquareInfo fromInfo = GetSquareInfoByCoords(fromCoords);
+
+    for (auto it = m_squareInfoList.begin(); it != m_squareInfoList.end(); ++it)
+    {
+        if (it->m_coords == toCoords)
+        {
+            *it = fromInfo; // 用暫存的，不怕被修改掉
+        }
+        else if (it->m_coords == fromCoords)
+        {
+            it->m_name = "DEFAULT";
+            it->m_notation = "*";
+            it->m_playerControllerId = -1;
+        }
+    }
+
+    for (auto it = m_pieceList.begin(); it != m_pieceList.end();)
+    {
+        Piece* piece = *it;
+        if (piece->m_coords == toCoords)
+        {
+            delete piece;                  // 釋放記憶體
+            piece=  nullptr;
+            it = m_pieceList.erase(it);   // 用 erase 回傳的 iterator（新的位置）
+        }
+        else
+        {
+            ++it; // 只有沒刪除時才 ++
+        }
+    }
+
+
+
+
+}
+
+

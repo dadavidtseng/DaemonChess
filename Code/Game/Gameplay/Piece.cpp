@@ -12,6 +12,7 @@
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game/Definition/BoardDefinition.hpp"
+#include "Game/Definition/PieceDefinition.hpp"
 #include "Game/Framework/GameCommon.hpp"
 #include "Game/Gameplay/Match.hpp"
 #include "ThirdParty/stb/stb_image.h"
@@ -23,10 +24,12 @@ Piece::Piece(Match* owner, sSquareInfo const& squareInfo, Texture * texture)
       m_texture(texture)
 {
     m_definition = PieceDefinition::GetDefByName(squareInfo.m_name);
+
     m_shader     = m_definition->m_shader;
     m_texture    = m_definition->m_texture;
-    m_coords     = squareInfo.m_coord;
-    UpdatePositionByCoords(squareInfo.m_coord);
+    m_coords     = squareInfo.m_coords;
+
+    UpdatePositionByCoords(squareInfo.m_coords);
     // m_orientation = EulerAngles(45,0,0);
     for (auto const& [name, startPosition, endPosition,orientation,halfDimension, radius] : m_definition->m_pieceParts)
     {

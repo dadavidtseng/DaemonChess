@@ -30,12 +30,12 @@ public:
     void Render() const override;
 
     void UpdatePositionByCoords(IntVec2 const& newCoords);
+    PieceDefinition* m_definition = nullptr;
 
 private:
     VertexList_PCUTBN m_vertexes;
     IndexList         m_indexes;
 
     Texture*         m_texture    = nullptr;
-    PieceDefinition* m_definition = nullptr;
     Shader*          m_shader     = nullptr;
 };

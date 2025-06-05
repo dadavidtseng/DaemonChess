@@ -1,41 +1,74 @@
 <Definitions>
     <!-- PieceInfo -->
-    <BoardDefinition id="0" orientation="0,0,0" color="40, 50, 60">
-        <SquareInfo name="rook" notation="R" coord="1,1"/>
-        <SquareInfo name="knight" notation="N" coord="2,1"/>
-        <SquareInfo name="bishop" notation="B" coord="3,1"/>
-        <SquareInfo name="queen" notation="Q" coord="4,1"/>
-        <SquareInfo name="king" notation="K" coord="5,1"/>
-        <SquareInfo name="bishop" notation="B" coord="6,1"/>
-        <SquareInfo name="knight" notation="N" coord="7,1"/>
-        <SquareInfo name="rook" notation="R" coord="8,1"/>
-        <SquareInfo name="pawn" notation="P" coord="1,2"/>
-        <SquareInfo name="pawn" notation="P" coord="2,2"/>
-        <SquareInfo name="pawn" notation="P" coord="3,2"/>
-        <SquareInfo name="pawn" notation="P" coord="4,2"/>
-        <SquareInfo name="pawn" notation="P" coord="5,2"/>
-        <SquareInfo name="pawn" notation="P" coord="6,2"/>
-        <SquareInfo name="pawn" notation="P" coord="7,2"/>
-        <SquareInfo name="pawn" notation="P" coord="8,2"/>
+    <BoardDefinition orientation="0,0,0" color="40, 50, 60">
+        <SquareInfo id="0" name="rook" notation="R" coord="1,1"/>
+        <SquareInfo id="0" name="knight" notation="N" coord="2,1"/>
+        <SquareInfo id="0" name="bishop" notation="B" coord="3,1"/>
+        <SquareInfo id="0" name="queen" notation="Q" coord="4,1"/>
+        <SquareInfo id="0" name="king" notation="K" coord="5,1"/>
+        <SquareInfo id="0" name="bishop" notation="B" coord="6,1"/>
+        <SquareInfo id="0" name="knight" notation="N" coord="7,1"/>
+        <SquareInfo id="0" name="rook" notation="R" coord="8,1"/>
+        <SquareInfo id="0" name="pawn" notation="P" coord="1,2"/>
+        <SquareInfo id="0" name="pawn" notation="P" coord="2,2"/>
+        <SquareInfo id="0" name="pawn" notation="P" coord="3,2"/>
+        <SquareInfo id="0" name="pawn" notation="P" coord="4,2"/>
+        <SquareInfo id="0" name="pawn" notation="P" coord="5,2"/>
+        <SquareInfo id="0" name="pawn" notation="P" coord="6,2"/>
+        <SquareInfo id="0" name="pawn" notation="P" coord="7,2"/>
+        <SquareInfo id="0" name="pawn" notation="P" coord="8,2"/>
     </BoardDefinition>
-
-    <BoardDefinition id="1" orientation="180,0,0" color="240, 230, 210">
-        <SquareInfo name="pawn" notation="p" coord="1,7"/>
-        <SquareInfo name="pawn" notation="p" coord="2,7"/>
-        <SquareInfo name="pawn" notation="p" coord="3,7"/>
-        <SquareInfo name="pawn" notation="p" coord="4,7"/>
-        <SquareInfo name="pawn" notation="p" coord="5,7"/>
-        <SquareInfo name="pawn" notation="p" coord="6,7"/>
-        <SquareInfo name="pawn" notation="p" coord="7,7"/>
-        <SquareInfo name="pawn" notation="p" coord="8,7"/>
-        <SquareInfo name="rook" notation="r" coord="1,8"/>
-        <SquareInfo name="knight" notation="n" coord="2,8"/>
-        <SquareInfo name="bishop" notation="b" coord="3,8"/>
-        <SquareInfo name="queen" notation="q" coord="4,8"/>
-        <SquareInfo name="king" notation="k" coord="5,8"/>
-        <SquareInfo name="bishop" notation="b" coord="6,8"/>
-        <SquareInfo name="knight" notation="n" coord="7,8"/>
-        <SquareInfo name="rook" notation="r" coord="8,8"/>
+    <BoardDefinition>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+        <SquareInfo/>
+    </BoardDefinition>
+    <BoardDefinition orientation="180,0,0" color="240, 230, 210">
+        <SquareInfo id="1" name="pawn" notation="p" coord="1,7"/>
+        <SquareInfo id="1" name="pawn" notation="p" coord="2,7"/>
+        <SquareInfo id="1" name="pawn" notation="p" coord="3,7"/>
+        <SquareInfo id="1" name="pawn" notation="p" coord="4,7"/>
+        <SquareInfo id="1" name="pawn" notation="p" coord="5,7"/>
+        <SquareInfo id="1" name="pawn" notation="p" coord="6,7"/>
+        <SquareInfo id="1" name="pawn" notation="p" coord="7,7"/>
+        <SquareInfo id="1" name="pawn" notation="p" coord="8,7"/>
+        <SquareInfo id="1" name="rook" notation="r" coord="1,8"/>
+        <SquareInfo id="1" name="knight" notation="n" coord="2,8"/>
+        <SquareInfo id="1" name="bishop" notation="b" coord="3,8"/>
+        <SquareInfo id="1" name="queen" notation="q" coord="4,8"/>
+        <SquareInfo id="1" name="king" notation="k" coord="5,8"/>
+        <SquareInfo id="1" name="bishop" notation="b" coord="6,8"/>
+        <SquareInfo id="1" name="knight" notation="n" coord="7,8"/>
+        <SquareInfo id="1" name="rook" notation="r" coord="8,8"/>
 
     </BoardDefinition>
 </Definitions>

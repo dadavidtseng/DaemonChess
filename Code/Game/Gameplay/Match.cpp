@@ -19,12 +19,19 @@
 #include "Game/Gameplay/Game.hpp"
 #include "Game/Gameplay/Piece.hpp"
 
+//----------------------------------------------------------------------------------------------------
+#if defined ERROR
+#undef ERROR
+#endif
+
 Match::Match()
 {
     g_theEventSystem->SubscribeEventCallbackFunction("ChessMove", OnChessMove);
     g_theEventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnEnterMatchState);
     g_theEventSystem->SubscribeEventCallbackFunction("OnEnterMatchTurn", OnEnterMatchTurn);
     g_theEventSystem->SubscribeEventCallbackFunction("OnExitMatchTurn", OnExitMatchTurn);
+    g_theEventSystem->SubscribeEventCallbackFunction("OnMatchInitialized", OnMatchInitialized);
+
     m_screenCamera = new Camera();
 
     Vec2 const bottomLeft     = Vec2::ZERO;
@@ -51,7 +58,7 @@ Match::Match()
     SpawnProp();
 
     // m_grid->m_position = Vec3::ZERO;
-    m_clock            = new Clock(Clock::GetSystemClock());
+    m_clock = new Clock(Clock::GetSystemClock());
 }
 
 Match::~Match()
@@ -74,8 +81,8 @@ void Match::SpawnProp()
     Texture const* texture2 = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Test_StbiFlippedAndOpenGL.png");
 
     // m_grid  = new Piece(this);
-    m_board = new Board(this);
-    m_pieceList = m_board->m_pieceList;
+    m_board     = new Board(this);
+    // m_pieceList = m_board->m_pieceList;
     // m_grid->InitializeLocalVertsForGrid();
 }
 
@@ -192,29 +199,96 @@ void Match::Render() const
 
     m_board->Render();
 
-    for (Piece* piece:m_pieceList)
+    for (Piece* piece : m_board->m_pieceList)
     {
-        if (piece==nullptr) continue;
+        if (piece == nullptr) continue;
         piece->Render();
     }
+}
+
+bool Match::IsMoveValid(IntVec2 const& from,
+    IntVec2 const& to)
+{
+    // 1. from/to 在範圍內（可加，也可在 Board 層保證）
+    if (!m_board->IsCoordValid(from) || !m_board->IsCoordValid(to))
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR, "Invalid board coordinates!");
+        return false;
+    }
+
+    // 2. from 格是空的
+    Piece* fromPiece = m_board->GetPieceByCoords(from);
+    if (fromPiece == nullptr)
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("from=%s is empty!", m_board->ChessCoordToString(from).c_str()));
+        return false;
+    }
+
+    // 3. from 不是自己的棋子
+    if (m_board->GetSquareInfoByCoords(from).m_playerControllerId != m_currenTurnPlayerIndex)
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("from=%s is not your piece!", m_board->ChessCoordToString(from).c_str()));
+        return false;
+    }
+
+    // 4. from 和 to 一樣
+    if (from == to)
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR, "Cannot move to the same square.");
+        return false;
+    }
+
+    // 5. to 格的資訊
+    Piece* toPiece = m_board->GetPieceByCoords(to);
+    int toOwner = m_board->GetSquareInfoByCoords(to).m_playerControllerId;
+
+    if (toPiece == nullptr)
+    {
+DebuggerPrintf("PIECE is nullptr");
+    }
+    if (toPiece != nullptr)
+    {
+        if (toOwner == m_currenTurnPlayerIndex)
+        {
+            g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("to=%s is occupied by your own piece!", m_board->ChessCoordToString(to).c_str()));
+            return false;
+        }
+
+        // (Optional) 6. 檢查是否吃掉對方國王
+        if (toPiece->m_definition->m_type == ePieceType::KING)
+        {
+            m_board->CapturePiece(fromPiece->m_coords,toPiece->m_coords);
+            g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, "You captured the opponent's King! You win!");
+            return false;
+            // 你可以在這裡切換遊戲狀態：e.g., m_gameState = GameState::VICTORY;
+        }
+
+        m_board->CapturePiece(fromPiece->m_coords,toPiece->m_coords);
+    }
+
+    // 通過全部基本驗證
+    return true;
 }
 
 void Match::OnChessMove(IntVec2 const& from,
                         IntVec2 const& to)
 {
     DebuggerPrintf(Stringf("OnChessMove from=%d to=%d\n", from, to).c_str());
-    Piece* piece =m_board->GetPieceByCoords(from);
+
+    if (!IsMoveValid(from, to)) return;
+
+    Piece* piece = m_board->GetPieceByCoords(from);
     piece->UpdatePositionByCoords(to);
-    g_theEventSystem->FireEvent("OnEnterMatchTurn");
+    g_theEventSystem->FireEvent("OnExitMatchTurn");
 }
 
 bool Match::OnChessMove(EventArgs& args)
 {
     String from = args.GetValue("from", "DEFAULT");
-    String to   = args.GetValue("to",  "DEFAULT");
+    String to   = args.GetValue("to", "DEFAULT");
 
-IntVec2 fromCoords = g_theGame->m_match->m_board->StringToChessCoord(from);
-    IntVec2 toCoords = g_theGame->m_match->m_board->StringToChessCoord( to);
+    IntVec2 fromCoords = g_theGame->m_match->m_board->StringToChessCoord(from);
+    IntVec2 toCoords   = g_theGame->m_match->m_board->StringToChessCoord(to);
 
     g_theGame->m_match->OnChessMove(fromCoords, toCoords);
     return true;
@@ -233,17 +307,38 @@ bool Match::OnEnterMatchTurn(EventArgs& args)
 
     int const currentTurnPlayerIndex = g_theGame->m_match->m_currenTurnPlayerIndex;
 
-    if (currentTurnPlayerIndex == 0) g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Game state is: First Player's Turn"));
+    if (currentTurnPlayerIndex == 0||currentTurnPlayerIndex==-1) g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Game state is: First Player's Turn"));
     else if (currentTurnPlayerIndex == 1) g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Game state is: Second Player's Turn"));
 
-    g_theEventSystem->FireEvent("OnExitMatchTurn");
+    g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf("  ABCDEFGH"));
+    g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf(" +--------+"));
+
+    for (int row = 8; row >= 1; --row)
+    {
+        g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf("%d|%s|%d", row, g_theGame->m_match->m_board->GetBoardContents(row).c_str(), row));
+    }
+
+    g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf(" +--------+"));
+    g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf("  ABCDEFGH"));
+
     return true;
 }
 
 bool Match::OnExitMatchTurn(EventArgs& args)
 {
+    // if (g_theGame->m_match->m_currenTurnPlayerIndex==-1)
+    // {
+    //     g_theGame->m_match->m_currenTurnPlayerIndex=0;
+    //     return true;
+    // }
     g_theGame->m_match->SwitchPlayerIndex();
-    // g_theEventSystem->FireEvent("OnEnterMatchTurn");
+    g_theEventSystem->FireEvent("OnEnterMatchTurn");
+    return true;
+}
+
+bool Match::OnMatchInitialized(EventArgs& args)
+{
+    g_theEventSystem->FireEvent("OnEnterMatchTurn");
     return true;
 }
 

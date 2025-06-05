@@ -99,6 +99,7 @@ bool Game::OnGameStateChanged(EventArgs& args)
     if (args.GetValue("OnGameStateChanged", "DEFAULT") == "MATCH")
     {
         g_theGame->m_match = new Match();
+        g_theEventSystem->FireEvent("OnMatchInitialized");
     }
 
     return true;
