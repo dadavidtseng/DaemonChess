@@ -1,1 +1,3 @@
-# Protogame3D
+# ChessSimulator
+
+![UML](https://cdn-0.plantuml.com/plantuml/png/PP312i8m38RlUOgTXRw2R2fu4do5q4KiTEt8ua7KTtTBjKHt2VnV_fIFjfCWoss803xYD3NTEC83uFNDHnne1ZMV8zw9zpa9vnY9xUw4ugy_vK2ULk10bv22X9piQfUHUmiwBvaBqBF6kUVsGxLimQpTR9mhkilGf48rhjt_GMcfjCwQhRC-gfkYhDbSGakfNtxq3G00)
