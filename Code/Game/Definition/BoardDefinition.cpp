@@ -38,7 +38,7 @@ bool BoardDefinition::LoadFromXmlElement(XmlElement const* element)
             squareInfo.m_name               = ParseXmlAttribute(*boardElement, "name", "DEFAULT");
             squareInfo.m_notation           = ParseXmlAttribute(*boardElement, "notation", "DEFAULT");
             squareInfo.m_playerControllerId = ParseXmlAttribute(*boardElement, "id", -1);
-            squareInfo.m_coords              = ParseXmlAttribute(*boardElement, "coord", IntVec2::ZERO);
+            squareInfo.m_coords             = ParseXmlAttribute(*boardElement, "coord", IntVec2::ZERO);
             m_squareInfos.push_back(squareInfo);
             boardElement = boardElement->NextSiblingElement();
         }
@@ -47,6 +47,7 @@ bool BoardDefinition::LoadFromXmlElement(XmlElement const* element)
     return true;
 }
 
+//----------------------------------------------------------------------------------------------------
 void BoardDefinition::InitializeDefs(char const* path)
 {
     XmlDocument     document;

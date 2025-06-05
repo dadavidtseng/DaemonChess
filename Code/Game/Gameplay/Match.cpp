@@ -24,6 +24,9 @@
 #undef ERROR
 #endif
 
+#define DEBUG_MODE
+
+//----------------------------------------------------------------------------------------------------
 Match::Match()
 {
     g_theEventSystem->SubscribeEventCallbackFunction("ChessMove", OnChessMove);
@@ -40,8 +43,9 @@ Match::Match()
     m_screenCamera->SetOrthoGraphicView(bottomLeft, screenTopRight);
     m_screenCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
     m_gameClock = new Clock(Clock::GetSystemClock());
+    CreateBoard();
 
-
+#if defined DEBUG_MODE
     DebugAddWorldBasis(Mat44(), -1.f);
 
     Mat44 transform;
@@ -54,43 +58,19 @@ Match::Match()
 
     transform.SetIJKT3D(-Vec3::X_BASIS, Vec3::Z_BASIS, Vec3::Y_BASIS, Vec3(0.f, -0.25f, 0.25f));
     DebugAddWorldText("Z-Up", transform, 0.25f, Vec2(1.f, 0.f), -1.f, Rgba8::BLUE);
-
-    SpawnProp();
-
-    // m_grid->m_position = Vec3::ZERO;
-    m_clock = new Clock(Clock::GetSystemClock());
+#endif
 }
-
-Match::~Match()
-{
-    // delete m_grid;
-    // m_grid = nullptr;
-
-    delete m_gameClock;
-    m_gameClock = nullptr;
-
-    delete m_screenCamera;
-    m_screenCamera = nullptr;
-}
-
 
 //----------------------------------------------------------------------------------------------------
-void Match::SpawnProp()
+Match::~Match()
 {
-    Texture const* texture  = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/TestUV.png");
-    Texture const* texture2 = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Test_StbiFlippedAndOpenGL.png");
-
-    // m_grid  = new Piece(this);
-    m_board     = new Board(this);
-    // m_pieceList = m_board->m_pieceList;
-    // m_grid->InitializeLocalVertsForGrid();
+    SafeDeletePointer(m_screenCamera);
 }
 
 void Match::Update(float const deltaSeconds)
 {
-    // m_grid->Update(deltaSeconds);
-
     DebugAddScreenText(Stringf("Time: %.2f\nFPS: %.2f\nScale: %.1f", m_gameClock->GetTotalSeconds(), 1.f / m_gameClock->GetDeltaSeconds(), m_gameClock->GetTimeScale()), m_screenCamera->GetOrthographicTopRight() - Vec2(250.f, 60.f), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
+
     UpdateFromInput(deltaSeconds);
 
     m_board->Update(deltaSeconds);
@@ -191,11 +171,10 @@ void Match::UpdateFromInput(float deltaSeconds)
     }
 }
 
-
+//----------------------------------------------------------------------------------------------------
 void Match::Render() const
 {
     g_theRenderer->SetLightConstants(m_sunDirection, m_sunIntensity, m_ambientIntensity);
-    // m_grid->Render();
 
     m_board->Render();
 
@@ -206,79 +185,110 @@ void Match::Render() const
     }
 }
 
-bool Match::IsMoveValid(IntVec2 const& from,
-    IntVec2 const& to)
+//----------------------------------------------------------------------------------------------------
+void Match::CreateBoard()
 {
-    // 1. from/to 在範圍內（可加，也可在 Board 層保證）
-    if (!m_board->IsCoordValid(from) || !m_board->IsCoordValid(to))
+    Texture const* texture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/metal.png");
+
+    m_board = new Board(this, texture);
+}
+
+//----------------------------------------------------------------------------------------------------
+bool Match::IsChessMoveValid(IntVec2 const& fromCoords,
+                        IntVec2 const& toCoords) const
+{
+    // 1. If fromCoords nor toCoords is not valid, return false.
+    if (!m_board->IsCoordValid(fromCoords) || !m_board->IsCoordValid(toCoords))
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR, "Invalid board coordinates!");
+        g_theDevConsole->AddLine(DevConsole::ERROR, "[SYSTEM] Invalid board coordinates!");
         return false;
     }
 
-    // 2. from 格是空的
-    Piece* fromPiece = m_board->GetPieceByCoords(from);
+    // 2. If fromCoords if empty, return false.
+    Piece const* fromPiece = m_board->GetPieceByCoords(fromCoords);
+
     if (fromPiece == nullptr)
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("from=%s is empty!", m_board->ChessCoordToString(from).c_str()));
+        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("[SYSTEM] from=%s is empty!", m_board->ChessCoordToString(fromCoords).c_str()));
         return false;
     }
 
-    // 3. from 不是自己的棋子
-    if (m_board->GetSquareInfoByCoords(from).m_playerControllerId != m_currenTurnPlayerIndex)
+    // 3. If fromCoords is not current turn player's piece, return false.
+    if (m_board->GetSquareInfoByCoords(fromCoords).m_playerControllerId != m_currenTurnPlayerIndex)
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("from=%s is not your piece!", m_board->ChessCoordToString(from).c_str()));
+        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("[SYSTEM] from=%s is not your piece!", m_board->ChessCoordToString(fromCoords).c_str()));
         return false;
     }
 
-    // 4. from 和 to 一樣
-    if (from == to)
+    // 4. If fromCoords equals to toCoords, return false.
+    if (fromCoords == toCoords)
     {
         g_theDevConsole->AddLine(DevConsole::ERROR, "Cannot move to the same square.");
         return false;
     }
 
     // 5. to 格的資訊
-    Piece* toPiece = m_board->GetPieceByCoords(to);
-    int toOwner = m_board->GetSquareInfoByCoords(to).m_playerControllerId;
+    Piece const* toPiece = m_board->GetPieceByCoords(toCoords);
+    int const    toOwner = m_board->GetSquareInfoByCoords(toCoords).m_playerControllerId;
 
-    if (toPiece == nullptr)
-    {
-DebuggerPrintf("PIECE is nullptr");
-    }
     if (toPiece != nullptr)
     {
         if (toOwner == m_currenTurnPlayerIndex)
         {
-            g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("to=%s is occupied by your own piece!", m_board->ChessCoordToString(to).c_str()));
+            g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("[SYSTEM] to=%s is occupied by your own piece!", m_board->ChessCoordToString(toCoords).c_str()));
             return false;
         }
 
-        // (Optional) 6. 檢查是否吃掉對方國王
+        // If toCoords's piece is a king, capture it and end the match.
         if (toPiece->m_definition->m_type == ePieceType::KING)
         {
-            m_board->CapturePiece(fromPiece->m_coords,toPiece->m_coords);
-            g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, "You captured the opponent's King! You win!");
+            m_board->CapturePiece(fromPiece->m_coords, toPiece->m_coords);
+            g_theDevConsole->AddLine(DevConsole::WARNING, "##################################################");
+            g_theDevConsole->AddLine(DevConsole::WARNING, Stringf("[SYSTEM] Player #%d has won the match!", m_currenTurnPlayerIndex));
+            g_theDevConsole->AddLine(DevConsole::WARNING, "##################################################");
+            g_theGame->ChangeGameState(eGameState::FINISHED);
             return false;
-            // 你可以在這裡切換遊戲狀態：e.g., m_gameState = GameState::VICTORY;
         }
 
-        m_board->CapturePiece(fromPiece->m_coords,toPiece->m_coords);
+        m_board->CapturePiece(fromPiece->m_coords, toPiece->m_coords);
     }
 
-    // 通過全部基本驗證
+    // This move is valid, return true.
     return true;
 }
 
-void Match::OnChessMove(IntVec2 const& from,
-                        IntVec2 const& to)
+void Match::HandleCapture(IntVec2 const& fromCoords,
+                          IntVec2 const& toCoords) const
 {
-    DebuggerPrintf(Stringf("OnChessMove from=%d to=%d\n", from, to).c_str());
+    Piece const* fromPiece = m_board->GetPieceByCoords(fromCoords);
+    Piece const* toPiece   = m_board->GetPieceByCoords(toCoords);
 
-    if (!IsMoveValid(from, to)) return;
+    if (toPiece == nullptr) return;
 
+    // If toCoords's piece is a king, capture it and end the match.
+    if (toPiece->m_definition->m_type == ePieceType::KING)
+    {
+        m_board->CapturePiece(fromPiece->m_coords, toPiece->m_coords);
+        g_theDevConsole->AddLine(DevConsole::WARNING, "##################################################");
+        g_theDevConsole->AddLine(DevConsole::WARNING, Stringf("[SYSTEM] Player #%d has won the match!", m_currenTurnPlayerIndex));
+        g_theDevConsole->AddLine(DevConsole::WARNING, "##################################################");
+        g_theGame->ChangeGameState(eGameState::FINISHED);
+    }
+    else
+    {
+        m_board->CapturePiece(fromPiece->m_coords, toPiece->m_coords);
+    }
+}
+
+void Match::OnChessMove(IntVec2 const& from,
+                        IntVec2 const& to) const
+{
+    if (!IsChessMoveValid(from, to)) return;
+
+    HandleCapture(from, to);
     Piece* piece = m_board->GetPieceByCoords(from);
     piece->UpdatePositionByCoords(to);
+    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("Move Player #%d's %s from %s to %s", m_currenTurnPlayerIndex, m_board->GetPieceByCoords(from)->m_definition->m_name.c_str(), m_board->ChessCoordToString(from).c_str(), m_board->ChessCoordToString(to).c_str()));
     g_theEventSystem->FireEvent("OnExitMatchTurn");
 }
 
@@ -307,7 +317,7 @@ bool Match::OnEnterMatchTurn(EventArgs& args)
 
     int const currentTurnPlayerIndex = g_theGame->m_match->m_currenTurnPlayerIndex;
 
-    if (currentTurnPlayerIndex == 0||currentTurnPlayerIndex==-1) g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Game state is: First Player's Turn"));
+    if (currentTurnPlayerIndex == 0 || currentTurnPlayerIndex == -1) g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Game state is: First Player's Turn"));
     else if (currentTurnPlayerIndex == 1) g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Game state is: Second Player's Turn"));
 
     g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf("  ABCDEFGH"));

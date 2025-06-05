@@ -4,7 +4,7 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include "Controller.hpp"
+#include "Game/Framework/Controller.hpp"
 #include "Game/Gameplay/Actor.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -24,7 +24,6 @@ public:
 
     Camera* GetCamera() const;
     Mat44   GetModelToWorldTransform() const;
-
 
 private:
     Vec3        m_velocity        = Vec3::ZERO;

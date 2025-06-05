@@ -62,7 +62,8 @@ void Game::Render() const
 
     g_theRenderer->BeginCamera(*localPlayer->GetCamera());
 
-    if (m_gameState == eGameState::MATCH)
+    if (m_gameState == eGameState::MATCH ||
+        m_gameState == eGameState::FINISHED)
     {
         RenderEntities();
     }
@@ -88,7 +89,8 @@ void Game::Render() const
     g_theRenderer->EndCamera(*m_screenCamera);
 
     //-End-of-Screen-Camera---------------------------------------------------------------------------
-    if (m_gameState == eGameState::MATCH)
+    if (m_gameState == eGameState::MATCH ||
+        m_gameState == eGameState::FINISHED)
     {
         DebugRenderScreen(*m_screenCamera);
     }
@@ -96,10 +98,19 @@ void Game::Render() const
 
 bool Game::OnGameStateChanged(EventArgs& args)
 {
-    if (args.GetValue("OnGameStateChanged", "DEFAULT") == "MATCH")
+    String const newGameState = args.GetValue("OnGameStateChanged", "DEFAULT");
+
+    if (newGameState == "MATCH")
     {
         g_theGame->m_match = new Match();
         g_theEventSystem->FireEvent("OnMatchInitialized");
+    }
+    else if (newGameState == "FINISHED")
+    {
+        int const         id     = g_theGame->m_currentControllerId;
+        PlayerController* player = g_theGame->GetLocalPlayer(id);
+        player->m_position       = Vec3(9.5f, 4.f, 4.f);
+        player->m_orientation    = EulerAngles(180, 45, 0);
     }
 
     return true;
@@ -118,6 +129,7 @@ void Game::ChangeGameState(eGameState const newGameState)
 
     if (newGameState == eGameState::ATTRACT) args.SetValue("OnGameStateChanged", "ATTRACT");
     else if (newGameState == eGameState::MATCH) args.SetValue("OnGameStateChanged", "MATCH");
+    else if (newGameState == eGameState::FINISHED) args.SetValue("OnGameStateChanged", "FINISHED");
 
     m_gameState = newGameState;
 
@@ -142,7 +154,8 @@ void Game::UpdateFromInput()
         }
     }
 
-    if (m_gameState == eGameState::MATCH)
+    if (m_gameState == eGameState::MATCH ||
+        m_gameState == eGameState::FINISHED)
     {
         if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
         {

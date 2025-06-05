@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------------------------------
-// Player.cpp
+// PlayerController.cpp
 //----------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------
@@ -21,10 +21,6 @@ PlayerController::PlayerController(Game* owner)
     m_worldCamera = new Camera();
     m_worldCamera->SetPerspectiveGraphicView(2.f, 60.f, 0.1f, 100.f);
     m_worldCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
-    // m_worldCamera->SetPosition(Vec3(4, -2, 4));
-
-    // m_position    = Vec3(4, -2, 4);
-    // m_orientation = EulerAngles(90, 40, 0);
 
     Mat44 c2r;
     c2r.SetIJK3D(Vec3::Z_BASIS, -Vec3::X_BASIS, Vec3::Y_BASIS);
@@ -41,9 +37,7 @@ PlayerController::~PlayerController()
 //----------------------------------------------------------------------------------------------------
 void PlayerController::Update(float deltaSeconds)
 {
-    XboxController const& controller = g_theInput->GetController(0);
-
-    if (g_theInput->WasKeyJustPressed(KEYCODE_H) || controller.WasButtonJustPressed(XBOX_BUTTON_START))
+    if (g_theInput->WasKeyJustPressed(KEYCODE_H))
     {
         if (g_theGame->GetCurrentGameState() != eGameState::ATTRACT)
         {
@@ -60,42 +54,22 @@ void PlayerController::Update(float deltaSeconds)
     m_velocity                = Vec3::ZERO;
     float constexpr moveSpeed = 2.f;
 
-    Vec2 const leftStickInput = controller.GetLeftStick().GetPosition();
-    m_velocity += Vec3(leftStickInput.y, -leftStickInput.x, 0.f) * moveSpeed;
-
     if (g_theInput->IsKeyDown(KEYCODE_W)) m_velocity += forward * moveSpeed;
     if (g_theInput->IsKeyDown(KEYCODE_S)) m_velocity -= forward * moveSpeed;
     if (g_theInput->IsKeyDown(KEYCODE_A)) m_velocity += left * moveSpeed;
     if (g_theInput->IsKeyDown(KEYCODE_D)) m_velocity -= left * moveSpeed;
-    if (g_theInput->IsKeyDown(KEYCODE_Z) || controller.IsButtonDown(XBOX_BUTTON_LSHOULDER)) m_velocity -= Vec3(0.f, 0.f, 1.f) * moveSpeed;
-    if (g_theInput->IsKeyDown(KEYCODE_C) || controller.IsButtonDown(XBOX_BUTTON_RSHOULDER)) m_velocity += Vec3(0.f, 0.f, 1.f) * moveSpeed;
+    if (g_theInput->IsKeyDown(KEYCODE_Z)) m_velocity -= Vec3(0.f, 0.f, 1.f) * moveSpeed;
+    if (g_theInput->IsKeyDown(KEYCODE_C)) m_velocity += Vec3(0.f, 0.f, 1.f) * moveSpeed;
 
-    if (g_theInput->IsKeyDown(KEYCODE_SHIFT) || controller.IsButtonDown(XBOX_BUTTON_A)) deltaSeconds *= 10.f;
+    if (g_theInput->IsKeyDown(KEYCODE_SHIFT)) deltaSeconds *= 10.f;
 
     m_position += m_velocity * deltaSeconds;
-
-    Vec2 const rightStickInput = controller.GetRightStick().GetPosition();
-    m_orientation.m_yawDegrees -= rightStickInput.x * 0.125f;
-    m_orientation.m_pitchDegrees -= rightStickInput.y * 0.125f;
 
     m_orientation.m_yawDegrees -= g_theInput->GetCursorClientDelta().x * 0.125f;
     m_orientation.m_pitchDegrees += g_theInput->GetCursorClientDelta().y * 0.125f;
     m_orientation.m_pitchDegrees = GetClamped(m_orientation.m_pitchDegrees, -85.f, 85.f);
 
     m_angularVelocity.m_rollDegrees = 0.f;
-
-    float const leftTriggerInput  = controller.GetLeftTrigger();
-    float const rightTriggerInput = controller.GetRightTrigger();
-
-    if (leftTriggerInput != 0.f)
-    {
-        m_angularVelocity.m_rollDegrees -= 90.f;
-    }
-
-    if (rightTriggerInput != 0.f)
-    {
-        m_angularVelocity.m_rollDegrees += 90.f;
-    }
 
     if (g_theInput->IsKeyDown(KEYCODE_Q)) m_angularVelocity.m_rollDegrees = 90.f;
     if (g_theInput->IsKeyDown(KEYCODE_E)) m_angularVelocity.m_rollDegrees = -90.f;
