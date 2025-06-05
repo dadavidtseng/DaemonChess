@@ -19,6 +19,7 @@ struct sSquareInfo
 {
     String  m_name     = "DEFAULT";
     String  m_notation = "DEFAULT";
+    Rgba8   m_color    = Rgba8::WHITE;
     IntVec2 m_coord    = IntVec2::ZERO;
 };
 
@@ -35,4 +36,7 @@ struct BoardDefinition
     static std::vector<BoardDefinition*> s_boardDefinitions;
 
     std::vector<sSquareInfo> m_squareInfos;
+    int                      m_playerControllerId = -1;
+    EulerAngles              m_pieceOrientation   = EulerAngles::ZERO;
+    Rgba8                    m_pieceColor         = Rgba8::WHITE;
 };

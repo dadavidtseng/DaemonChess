@@ -16,10 +16,19 @@ class Controller
 public:
     // Construction / Destruction
     explicit Controller(Game* owner);
-    virtual  ~Controller() = default;
+
+    virtual ~Controller() = default;
 
     virtual void Update(float deltaSeconds) = 0;
 
+    // Setter
+    void SetControllerIndex(int newIndex);
+    void SetControllerPosition(Vec3 const& newPosition);
+    void SetControllerOrientation(EulerAngles const& newOrientation);
+    // Getter
+    int   GetControllerIndex() const;
+
+    int   m_index = -1;
     Game* m_owner = nullptr;
 
     Camera* m_viewCamera = nullptr; // Handle screen message and hud

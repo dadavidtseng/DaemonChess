@@ -36,8 +36,10 @@ bool PieceDefinition::LoadFromXmlElement(XmlElement const* element)
     else if (type == "QUEEN") m_type = ePieceType::QUEEN;
     else if (type == "KING") m_type = ePieceType::KING;
 
-    String const shader = ParseXmlAttribute(*element, "shader", "DEFAULT");
-    m_shader            = g_theRenderer->CreateOrGetShaderFromFile(shader.c_str(), eVertexType::VERTEX_PCUTBN);
+    String const shader  = ParseXmlAttribute(*element, "shader", "DEFAULT");
+    m_shader             = g_theRenderer->CreateOrGetShaderFromFile(shader.c_str(), eVertexType::VERTEX_PCUTBN);
+    String const texture = ParseXmlAttribute(*element, "texture", "DEFAULT");
+    m_texture            = g_theRenderer->CreateOrGetTextureFromFile(texture.c_str());
 
     XmlElement const* partElement = element->FirstChildElement("PiecePart");
 
@@ -49,8 +51,9 @@ bool PieceDefinition::LoadFromXmlElement(XmlElement const* element)
             piecePart.m_name          = ParseXmlAttribute(*partElement, "name", "DEFAULT");
             piecePart.m_startPosition = ParseXmlAttribute(*partElement, "startPosition", Vec3::ZERO);
             piecePart.m_endPosition   = ParseXmlAttribute(*partElement, "endPosition", Vec3::ZERO);
+            piecePart.m_orientation   = ParseXmlAttribute(*partElement, "orientation", EulerAngles::ZERO);
+            piecePart.m_halfDimension = ParseXmlAttribute(*partElement, "halfDimension", Vec3::ZERO);
             piecePart.m_radius        = ParseXmlAttribute(*partElement, "radius", 0.f);
-            piecePart.m_color         = ParseXmlAttribute(*partElement, "color", Rgba8::WHITE);
             m_pieceParts.push_back(piecePart);
             partElement = partElement->NextSiblingElement();
         }

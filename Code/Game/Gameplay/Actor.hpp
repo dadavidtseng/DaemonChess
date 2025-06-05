@@ -22,6 +22,7 @@ public:
     virtual void  Update(float deltaSeconds) = 0;
     virtual void  Render() const = 0;
     virtual Mat44 GetModelToWorldTransform() const;
+    virtual void  SetOrientation(EulerAngles const& newOrientation);
 
     Match*      m_match           = nullptr;
     IntVec2     m_coords          = IntVec2::ZERO;

@@ -8,6 +8,8 @@
 //----------------------------------------------------------------------------------------------------
 class ConsoleSubsystem
 {
-    void Initialize();
-    void Deinitialize();
+    void StartUp();
+    void Update();
+    void Render();
+    void ShutDown();
 };

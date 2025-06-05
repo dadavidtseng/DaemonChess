@@ -8,5 +8,8 @@
 //----------------------------------------------------------------------------------------------------
 class WidgetSubsystem
 {
-
+    void StartUp();
+    void Update();
+    void Render();
+    void ShutDown();
 };

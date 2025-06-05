@@ -1,6 +1,6 @@
 <Definitions>
     <!-- PieceInfo -->
-    <BoardDefinition>
+    <BoardDefinition id="0" orientation="0,0,0" color="40, 50, 60">
         <SquareInfo name="rook" notation="R" coord="1,1"/>
         <SquareInfo name="knight" notation="N" coord="2,1"/>
         <SquareInfo name="bishop" notation="B" coord="3,1"/>
@@ -17,7 +17,9 @@
         <SquareInfo name="pawn" notation="P" coord="6,2"/>
         <SquareInfo name="pawn" notation="P" coord="7,2"/>
         <SquareInfo name="pawn" notation="P" coord="8,2"/>
+    </BoardDefinition>
 
+    <BoardDefinition id="1" orientation="180,0,0" color="240, 230, 210">
         <SquareInfo name="pawn" notation="p" coord="1,7"/>
         <SquareInfo name="pawn" notation="p" coord="2,7"/>
         <SquareInfo name="pawn" notation="p" coord="3,7"/>

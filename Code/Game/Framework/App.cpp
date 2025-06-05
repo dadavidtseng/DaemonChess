@@ -9,6 +9,7 @@
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
@@ -33,6 +34,8 @@ STATIC bool App::m_isQuitting = false;
 //----------------------------------------------------------------------------------------------------
 void App::Startup()
 {
+    LoadGameConfig("Data/GameConfig.xml");
+
     // Create All Engine Subsystems
     EventSystemConfig eventSystemConfig;
     g_theEventSystem = new EventSystem(eventSystemConfig);
@@ -241,4 +244,26 @@ void App::DeleteAndCreateNewGame()
     g_theGame = nullptr;
 
     g_theGame = new Game();
+}
+
+void App::LoadGameConfig(char const* gameConfigXmlFilePath) const
+{
+    XmlDocument     gameConfigXml;
+    XmlResult const result = gameConfigXml.LoadFile(gameConfigXmlFilePath);
+
+    if (result == XmlResult::XML_SUCCESS)
+    {
+        if (XmlElement const* rootElement = gameConfigXml.RootElement())
+        {
+            g_gameConfigBlackboard.PopulateFromXmlElementAttributes(*rootElement);
+        }
+        else
+        {
+            DebuggerPrintf("WARNING: game config from file \"%s\" was invalid (missing root element)\n", gameConfigXmlFilePath);
+        }
+    }
+    else
+    {
+        DebuggerPrintf("WARNING: failed to load game config from file \"%s\"\n", gameConfigXmlFilePath);
+    }
 }

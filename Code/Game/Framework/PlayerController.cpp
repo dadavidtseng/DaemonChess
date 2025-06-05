@@ -5,29 +5,26 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Framework/PlayerController.hpp"
 
-#include "GameCommon.hpp"
-#include "Game/Gameplay/Game.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Renderer/Camera.hpp"
-#include "Engine/Renderer/Window.hpp"
+#include "Game/Framework/GameCommon.hpp"
+#include "Game/Gameplay/Game.hpp"
 
 //----------------------------------------------------------------------------------------------------
 PlayerController::PlayerController(Game* owner)
     : Controller(owner)
 {
     m_worldCamera = new Camera();
-
     m_worldCamera->SetPerspectiveGraphicView(2.f, 60.f, 0.1f, 100.f);
-
     m_worldCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
+    // m_worldCamera->SetPosition(Vec3(4, -2, 4));
 
-    m_worldCamera->SetPosition(Vec3(4, -2, 4));
-    m_position    = Vec3(4, -2, 4);
-    m_orientation = EulerAngles(90.f, 40.f, 0.f);
+    // m_position    = Vec3(4, -2, 4);
+    // m_orientation = EulerAngles(90, 40, 0);
 
     Mat44 c2r;
     c2r.SetIJK3D(Vec3::Z_BASIS, -Vec3::X_BASIS, Vec3::Y_BASIS);

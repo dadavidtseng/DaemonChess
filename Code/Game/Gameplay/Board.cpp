@@ -29,9 +29,9 @@ Board::Board(Match* owner, Texture const* texture)
     {
         for (sSquareInfo const& squareInfo : boardDefs->m_squareInfos)
         {
-            Piece* piece = new Piece(m_match, squareInfo);
-            piece->UpdatePositionByCoords(squareInfo.m_coord);
-            piece->m_coords = squareInfo.m_coord;
+            Piece* piece         = new Piece(m_match, squareInfo);
+            piece->m_orientation = boardDefs->m_pieceOrientation;
+            piece->m_color       = boardDefs->m_pieceColor;
             m_pieceList.push_back(piece);
         }
     }
@@ -120,7 +120,7 @@ void Board::InitializeLocalVertsForAABB3s()
             OBB3 obb3 = OBB3(center, halfDimensions, iBasis, jBasis, kBasis);
 
             bool  isBlack = (x + y) % 2 == 0;
-            Rgba8 color   = isBlack ? Rgba8::BLACK : Rgba8::WHITE;
+            Rgba8 color   = isBlack ? Rgba8(40, 50, 60) : Rgba8(240, 230, 210);
 
             AddVertsForAABB3D(m_vertexes, m_indexes, box, color);
             // AddVertsForOBB3D(m_vertexes, m_indexes, obb3, color, AABB2::ZERO_TO_ONE);

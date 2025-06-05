@@ -24,7 +24,7 @@ struct Vertex_PCU;
 class Piece final : public Actor
 {
 public:
-    explicit Piece(Match* owner, sSquareInfo const& squareInfo, Texture const* texture = nullptr);
+    explicit Piece(Match* owner, sSquareInfo const& squareInfo, Texture * texture = nullptr);
 
     void Update(float deltaSeconds) override;
     void Render() const override;
@@ -35,7 +35,7 @@ private:
     VertexList_PCUTBN m_vertexes;
     IndexList         m_indexes;
 
-    Texture const*   m_texture    = nullptr;
+    Texture*         m_texture    = nullptr;
     PieceDefinition* m_definition = nullptr;
     Shader*          m_shader     = nullptr;
 };

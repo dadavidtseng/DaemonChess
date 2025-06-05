@@ -25,6 +25,10 @@ BoardDefinition::~BoardDefinition()
 
 bool BoardDefinition::LoadFromXmlElement(XmlElement const* element)
 {
+    m_playerControllerId = ParseXmlAttribute(*element, "id", -1);
+    m_pieceOrientation   = ParseXmlAttribute(*element, "orientation", EulerAngles::ZERO);
+    m_pieceColor         = ParseXmlAttribute(*element, "color", Rgba8::WHITE);
+
     XmlElement const* boardElement = element->FirstChildElement("SquareInfo");
 
     if (boardElement != nullptr)

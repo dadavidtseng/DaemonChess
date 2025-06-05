@@ -11,7 +11,7 @@
 class Camera;
 
 //----------------------------------------------------------------------------------------------------
-class PlayerController : public Controller
+class PlayerController final : public Controller
 {
 public:
     explicit PlayerController(Game* owner);
@@ -25,8 +25,8 @@ public:
     Camera* GetCamera() const;
     Mat44   GetModelToWorldTransform() const;
 
+
 private:
     Vec3        m_velocity        = Vec3::ZERO;
     EulerAngles m_angularVelocity = EulerAngles::ZERO;
-    int         m_index           = 0;
 };

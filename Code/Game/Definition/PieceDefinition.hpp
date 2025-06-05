@@ -9,8 +9,10 @@
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/XmlUtils.hpp"
+#include "Engine/Math/EulerAngles.hpp"
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Renderer/IndexBuffer.hpp"
+#include "Engine/Renderer/Texture.hpp"
 #include "Engine/Renderer/VertexBuffer.hpp"
 
 class Shader;
@@ -29,12 +31,12 @@ enum class ePieceType : int8_t
 
 struct sPiecePart
 {
-    String m_name          = "DEFAULT";
-    Vec3   m_startPosition = Vec3::ZERO;
-    Vec3   m_endPosition   = Vec3::ZERO;
-
-    float  m_radius        = 0.f;
-    Rgba8  m_color         = Rgba8::WHITE;
+    String      m_name          = "DEFAULT";
+    Vec3        m_startPosition = Vec3::ZERO;
+    Vec3        m_endPosition   = Vec3::ZERO;
+    EulerAngles m_orientation   = EulerAngles::ZERO;
+    Vec3        m_halfDimension = Vec3::ZERO;
+    float       m_radius        = 0.f;
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -50,9 +52,10 @@ struct PieceDefinition
     static PieceDefinition*              GetDefByName(String const& name);
     static std::vector<PieceDefinition*> s_pieceDefinitions;
 
-    String                  m_name   = "DEFAULT";
-    ePieceType              m_type   = ePieceType::NONE;
-    Shader*                 m_shader = nullptr;
+    String                  m_name    = "DEFAULT";
+    ePieceType              m_type    = ePieceType::NONE;
+    Shader*                 m_shader  = nullptr;
+    Texture*                m_texture = nullptr;
     std::vector<sPiecePart> m_pieceParts;
     char                    m_glyph           = '?';
     IndexBuffer*            m_indexBuffer[2]  = {};
