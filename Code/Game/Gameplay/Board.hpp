@@ -11,11 +11,11 @@
 #include "Game/Definition/BoardDefinition.hpp"
 #include "Game/Gameplay/Actor.hpp"
 
-struct BoardDefinition;
 //----------------------------------------------------------------------------------------------------
 class Match;
 class Piece;
 class Texture;
+struct BoardDefinition;
 
 //----------------------------------------------------------------------------------------------------
 typedef std::vector<Piece*> PieceList;
@@ -30,18 +30,18 @@ public:
     void Render() const override;
 
     /// Query
-    IntVec2 GetCoordsByWorldPosition(Vec3 const& worldPosition);
-    Vec3    GetWorldPositionByCoords(IntVec2 const& coords);
-    Piece*  GetPieceByCoords(IntVec2 const& coords);
+    IntVec2     GetCoordsByWorldPosition(Vec3 const& worldPosition);
+    Vec3        GetWorldPositionByCoords(IntVec2 const& coords);
+    Piece*      GetPieceByCoords(IntVec2 const& coords);
     sSquareInfo GetSquareInfoByCoords(IntVec2 const& coords);
-    IntVec2 StringToChessCoord(String const& chessPos);
-    String  ChessCoordToString(IntVec2 const& coords);
-    String  GetBoardContents(int rowNum);
-    bool IsCoordValid(IntVec2 const& coords)const;
+    IntVec2     StringToChessCoord(String const& chessPos);
+    String      ChessCoordToString(IntVec2 const& coords);
+    String      GetBoardContents(int rowNum);
+    bool        IsCoordValid(IntVec2 const& coords) const;
 
     void                     InitializeLocalVertsForAABB3s();
-    void                     InitializeLocalVertsForGrid();
-    void CapturePiece(IntVec2 const& fromCoords ,IntVec2 const& toCoords);
+    void                     InitializeLocalVertsForBoardFrame();
+    void                     CapturePiece(IntVec2 const& fromCoords, IntVec2 const& toCoords);
     PieceList                m_pieceList;
     std::vector<sSquareInfo> m_squareInfoList;
 

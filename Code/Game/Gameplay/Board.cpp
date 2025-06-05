@@ -24,6 +24,7 @@ Board::Board(Match* owner, Texture const* texture)
 {
     m_shader = g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Diffuse", eVertexType::VERTEX_PCUTBN);
     InitializeLocalVertsForAABB3s();
+    InitializeLocalVertsForBoardFrame();
 
     for (BoardDefinition const* boardDefs : BoardDefinition::s_boardDefinitions)
     {
@@ -64,7 +65,6 @@ void Board::Render() const
     g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);  //DISABLE
     g_theRenderer->BindTexture(m_texture);
     g_theRenderer->BindShader(m_shader);
-    // g_theRenderer->DrawVertexArray(static_cast<int>(m_vertexes.size()), m_vertexes.data());
     g_theRenderer->DrawVertexArray(m_vertexes, m_indexes);
 }
 
@@ -77,7 +77,7 @@ Piece* Board::GetPieceByCoords(IntVec2 const& coords)
 {
     for (Piece* piece : m_pieceList)
     {
-        if (piece==nullptr)
+        if (piece == nullptr)
         {
             continue;
         }
@@ -165,63 +165,57 @@ void Board::InitializeLocalVertsForAABB3s()
             Vec3  maxs = mins + Vec3(1.f, 1.f, 0.2f);
             AABB3 box  = AABB3(mins, maxs);
 
-            Vec3 center         = (mins + maxs) * 0.5f;
-            Vec3 halfDimensions = (maxs - mins) * 0.1f;
-
-            // 🎯 加入 Z 軸旋轉角度（例：每格增加 10 度）
-            float angleDegrees = static_cast<float>((x + y) * 10);
-            float angleRadians = angleDegrees * (PI / 180.f); // 確保你有定義 PI
-
-            float cosTheta = CosDegrees(angleDegrees);
-            float sinTheta = SinDegrees(angleDegrees);
-
-            // 🔁 基底向量 (只繞 Z 軸旋轉)
-            Vec3 iBasis = Vec3(cosTheta, sinTheta, 0.f);  // X 軸旋轉後的新方向
-            Vec3 jBasis = Vec3(-sinTheta, cosTheta, 0.f); // Y 軸旋轉後的新方向
-            Vec3 kBasis = Vec3(0.f, 0.f, 1.f);            // Z 軸不變
-
-            OBB3 obb3 = OBB3(center, halfDimensions, iBasis, jBasis, kBasis);
-
-            bool  isBlack = (x + y) % 2 == 0;
-            Rgba8 color   = isBlack ? Rgba8(40, 50, 60) : Rgba8(240, 230, 210);
+            bool const isBlack = (x + y) % 2 == 0;
+            Rgba8      color   = isBlack ? Rgba8(40, 50, 60) : Rgba8(240, 230, 210);
 
             AddVertsForAABB3D(m_vertexes, m_indexes, box, color);
-            // AddVertsForOBB3D(m_vertexes, m_indexes, obb3, color, AABB2::ZERO_TO_ONE);
-            // AddVertsForCylinder3D(m_vertexes, m_indexes, mins, mins + Vec3::Z_BASIS, 0.5f, Rgba8::WHITE, AABB2::ZERO_TO_ONE, 1024);
-            // AddVertsForSphere3D(m_vertexes, m_indexes, mins, 0.5f);
         }
     }
 }
 
-//----------------------------------------------------------------------------------------------------
-void Board::InitializeLocalVertsForGrid()
+void Board::InitializeLocalVertsForBoardFrame()
 {
-    float gridLineLength = 100.f;
+    constexpr float boardSize = 8.0f;
+    constexpr float halfSize = boardSize * 0.5f; // = 4.0f
+    constexpr float frameThickness = 0.2f;
+    constexpr float frameHeight = 0.5f;
 
-    for (int i = -(int)gridLineLength / 2; i < (int)gridLineLength / 2; i++)
-    {
-        float lineWidth = 0.05f;
-        if (i == 0) lineWidth = 0.3f;
+    // 棋盤中心點在 (4,4)
+    const float centerX = 4.0f;
+    const float centerY = 4.0f;
 
-        AABB3 boundsX = AABB3(Vec3(-gridLineLength / 2.f, -lineWidth / 2.f + (float)i, -lineWidth / 2.f), Vec3(gridLineLength / 2.f, lineWidth / 2.f + (float)i, lineWidth / 2.f));
-        AABB3 boundsY = AABB3(Vec3(-lineWidth / 2.f + (float)i, -gridLineLength / 2.f, -lineWidth / 2.f), Vec3(lineWidth / 2.f + (float)i, gridLineLength / 2.f, lineWidth / 2.f));
+    // Bottom Frame
+    AABB3 bottomFrame = AABB3(
+        Vec3(centerX - halfSize - frameThickness, centerY - halfSize - frameThickness, 0.f),
+        Vec3(centerX + halfSize + frameThickness, centerY - halfSize, frameHeight)
+    );
 
-        Rgba8 colorX = Rgba8::DARK_GREY;
-        Rgba8 colorY = Rgba8::DARK_GREY;
+    // Top Frame
+    AABB3 topFrame = AABB3(
+        Vec3(centerX - halfSize - frameThickness, centerY + halfSize, 0.f),
+        Vec3(centerX + halfSize + frameThickness, centerY + halfSize + frameThickness, frameHeight)
+    );
 
-        if (i % 5 == 0)
-        {
-            colorX = Rgba8::RED;
-            colorY = Rgba8::GREEN;
-        }
+    // Left Frame
+    AABB3 leftFrame = AABB3(
+        Vec3(centerX - halfSize - frameThickness, centerY - halfSize, 0.f),
+        Vec3(centerX - halfSize, centerY + halfSize, frameHeight)
+    );
 
-        AddVertsForAABB3D(m_vertexes, m_indexes, boundsX, colorX);
-        AddVertsForAABB3D(m_vertexes, m_indexes, boundsY, colorY);
-    }
+    // Right Frame
+    AABB3 rightFrame = AABB3(
+        Vec3(centerX + halfSize, centerY - halfSize, 0.f),
+        Vec3(centerX + halfSize + frameThickness, centerY + halfSize, frameHeight)
+    );
+
+    AddVertsForAABB3D(m_vertexes,m_indexes,bottomFrame, Rgba8(40, 50, 60));
+    AddVertsForAABB3D(m_vertexes,m_indexes,topFrame, Rgba8(40, 50, 60));
+    AddVertsForAABB3D(m_vertexes,m_indexes,leftFrame, Rgba8(40, 50, 60));
+    AddVertsForAABB3D(m_vertexes,m_indexes,rightFrame, Rgba8(40, 50, 60));
 }
 
-void Board::CapturePiece(IntVec2 const& fromCoords ,
-    IntVec2 const& toCoords)
+void Board::CapturePiece(IntVec2 const& fromCoords,
+                         IntVec2 const& toCoords)
 {
     sSquareInfo fromInfo = GetSquareInfoByCoords(fromCoords);
 
@@ -233,8 +227,8 @@ void Board::CapturePiece(IntVec2 const& fromCoords ,
         }
         else if (it->m_coords == fromCoords)
         {
-            it->m_name = "DEFAULT";
-            it->m_notation = "*";
+            it->m_name               = "DEFAULT";
+            it->m_notation           = "*";
             it->m_playerControllerId = -1;
         }
     }
@@ -245,18 +239,12 @@ void Board::CapturePiece(IntVec2 const& fromCoords ,
         if (piece->m_coords == toCoords)
         {
             delete piece;                  // 釋放記憶體
-            piece=  nullptr;
-            it = m_pieceList.erase(it);   // 用 erase 回傳的 iterator（新的位置）
+            piece = nullptr;
+            it    = m_pieceList.erase(it);   // 用 erase 回傳的 iterator（新的位置）
         }
         else
         {
             ++it; // 只有沒刪除時才 ++
         }
     }
-
-
-
-
 }
-
-
