@@ -8,9 +8,9 @@
     <screenCenterY>400</screenCenterY>
 
     <!-- PlayerController -->
-    <playerControllerPosition0>9.5,4,4</playerControllerPosition0>
+    <playerControllerPosition0>4, -2, 4</playerControllerPosition0>
     <playerControllerPosition1>4, 10, 4</playerControllerPosition1>
-    <playerControllerOrientation0>180, 45, 0</playerControllerOrientation0>
+    <playerControllerOrientation0>90, 40, 0</playerControllerOrientation0>
     <playerControllerOrientation1>-90, 40, 0</playerControllerOrientation1>
 
 </GameConfig>
