@@ -5,11 +5,11 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Board.hpp"
 
+#include "Match.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/MathUtils.hpp"
-#include "Engine/Math/OBB3.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game/Definition/BoardDefinition.hpp"
@@ -30,19 +30,14 @@ Board::Board(Match* owner, Texture const* texture)
     {
         for (sSquareInfo const& squareInfo : boardDefs->m_squareInfos)
         {
-            if (squareInfo.m_name == "DEFAULT")
-            {
-                sSquareInfo info;
-                info.m_notation = "*";
-                m_squareInfoList.push_back(info);
-                continue;
-            }
+            m_squareInfoList.push_back(squareInfo);
+
+            if (squareInfo.m_name == "DEFAULT") continue;
 
             Piece* piece         = new Piece(m_match, squareInfo);
             piece->m_orientation = boardDefs->m_pieceOrientation;
             piece->m_color       = boardDefs->m_pieceColor;
-            m_squareInfoList.push_back(squareInfo);
-            m_pieceList.push_back(piece);
+            m_match->m_pieceList.push_back(piece);
         }
     }
 }
@@ -59,23 +54,25 @@ void Board::Update(float const deltaSeconds)
 void Board::Render() const
 {
     g_theRenderer->SetModelConstants(GetModelToWorldTransform(), m_color);
-    g_theRenderer->SetBlendMode(eBlendMode::OPAQUE); //AL
-    g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);  //SOLID_CULL_NONE
+    g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
+    g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
     g_theRenderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
-    g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);  //DISABLE
+    g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
     g_theRenderer->BindTexture(m_texture);
     g_theRenderer->BindShader(m_shader);
     g_theRenderer->DrawVertexArray(m_vertexes, m_indexes);
 }
 
+//----------------------------------------------------------------------------------------------------
 Vec3 Board::GetWorldPositionByCoords(IntVec2 const& coords)
 {
     return Vec3((float)(coords.x) - 0.5f, (float)(coords.y) - 0.5f, 0.2f);
 }
 
-Piece* Board::GetPieceByCoords(IntVec2 const& coords)
+//----------------------------------------------------------------------------------------------------
+Piece* Board::GetPieceByCoords(IntVec2 const& coords) const
 {
-    for (Piece* piece : m_pieceList)
+    for (Piece* piece : m_match->m_pieceList)
     {
         if (piece == nullptr)
         {
@@ -175,10 +172,10 @@ void Board::InitializeLocalVertsForAABB3s()
 
 void Board::InitializeLocalVertsForBoardFrame()
 {
-    constexpr float boardSize = 8.0f;
-    constexpr float halfSize = boardSize * 0.5f; // = 4.0f
+    constexpr float boardSize      = 8.0f;
+    constexpr float halfSize       = boardSize * 0.5f; // = 4.0f
     constexpr float frameThickness = 0.2f;
-    constexpr float frameHeight = 0.5f;
+    constexpr float frameHeight    = 0.5f;
 
     // 棋盤中心點在 (4,4)
     const float centerX = 4.0f;
@@ -208,16 +205,15 @@ void Board::InitializeLocalVertsForBoardFrame()
         Vec3(centerX + halfSize + frameThickness, centerY + halfSize, frameHeight)
     );
 
-    AddVertsForAABB3D(m_vertexes,m_indexes,bottomFrame, Rgba8(40, 50, 60));
-    AddVertsForAABB3D(m_vertexes,m_indexes,topFrame, Rgba8(40, 50, 60));
-    AddVertsForAABB3D(m_vertexes,m_indexes,leftFrame, Rgba8(40, 50, 60));
-    AddVertsForAABB3D(m_vertexes,m_indexes,rightFrame, Rgba8(40, 50, 60));
+    AddVertsForAABB3D(m_vertexes, m_indexes, bottomFrame, Rgba8(40, 50, 60));
+    AddVertsForAABB3D(m_vertexes, m_indexes, topFrame, Rgba8(40, 50, 60));
+    AddVertsForAABB3D(m_vertexes, m_indexes, leftFrame, Rgba8(40, 50, 60));
+    AddVertsForAABB3D(m_vertexes, m_indexes, rightFrame, Rgba8(40, 50, 60));
 }
 
-void Board::CapturePiece(IntVec2 const& fromCoords,
-                         IntVec2 const& toCoords)
+void Board::UpdateBoardSquareInfoList(IntVec2 const& fromCoords, IntVec2 const& toCoords)
 {
-    sSquareInfo fromInfo = GetSquareInfoByCoords(fromCoords);
+    sSquareInfo const fromInfo = GetSquareInfoByCoords(fromCoords);
 
     for (auto it = m_squareInfoList.begin(); it != m_squareInfoList.end(); ++it)
     {
@@ -232,19 +228,11 @@ void Board::CapturePiece(IntVec2 const& fromCoords,
             it->m_playerControllerId = -1;
         }
     }
+}
 
-    for (auto it = m_pieceList.begin(); it != m_pieceList.end();)
-    {
-        Piece* piece = *it;
-        if (piece->m_coords == toCoords)
-        {
-            delete piece;                  // 釋放記憶體
-            piece = nullptr;
-            it    = m_pieceList.erase(it);   // 用 erase 回傳的 iterator（新的位置）
-        }
-        else
-        {
-            ++it; // 只有沒刪除時才 ++
-        }
-    }
+void Board::CapturePiece(IntVec2 const& fromCoords,
+                         IntVec2 const& toCoords)
+{
+    // UpdateBoardSquareInfoList(fromCoords, toCoords);
+    m_match->UpdatePieceList(fromCoords, toCoords);
 }

@@ -11,7 +11,8 @@
 class Camera;
 class PlayerController;
 class Piece;
-
+//----------------------------------------------------------------------------------------------------
+typedef std::vector<Piece*> PieceList;
 //----------------------------------------------------------------------------------------------------
 /// @brief
 /// Owned by Game, owns playerController, piece, and board
@@ -30,7 +31,8 @@ public:
 
     bool        IsChessMoveValid(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
     void        HandleCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
-    void        OnChessMove(IntVec2 const& from, IntVec2 const& to) const;
+    void        OnChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords) ;
+    void UpdatePieceList(IntVec2 const& fromCoords, IntVec2 const& toCoords);
     static bool OnChessMove(EventArgs& args);
     static bool OnEnterMatchState(EventArgs& args);
     static bool OnEnterMatchTurn(EventArgs& args);
@@ -48,4 +50,6 @@ public:
     Vec3  m_sunDirection     = Vec3(2.f, 1.f, -1.f).GetNormalized();
     float m_sunIntensity     = 0.85f;
     float m_ambientIntensity = 0.35f;
+
+    PieceList                m_pieceList;
 };

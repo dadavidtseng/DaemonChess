@@ -44,12 +44,11 @@ public:
 private:
     void              UpdateFromInput();
     void              UpdateEntities(float gameDeltaSeconds, float systemDeltaSeconds) const;
-    void UpdateCurrentControllerId(int newID);
+    void              UpdateCurrentControllerId(int newID);
     void              RenderAttractMode() const;
     void              RenderEntities() const;
     PlayerController* CreateLocalPlayer(int id);
     PlayerController* GetLocalPlayer(int id) const;
-
 
     Camera*                        m_screenCamera = nullptr;
     AABB2                          m_screenSpace  = AABB2::ZERO_TO_ONE;

@@ -19,38 +19,38 @@
         <SquareInfo id="0" name="pawn" notation="P" coord="8,2"/>
     </BoardDefinition>
     <BoardDefinition>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
-        <SquareInfo/>
+        <SquareInfo notation="*" coord="1,3"/>
+        <SquareInfo notation="*" coord="2,3"/>
+        <SquareInfo notation="*" coord="3,3"/>
+        <SquareInfo notation="*" coord="4,3"/>
+        <SquareInfo notation="*" coord="5,3"/>
+        <SquareInfo notation="*" coord="6,3"/>
+        <SquareInfo notation="*" coord="7,3"/>
+        <SquareInfo notation="*" coord="8,3"/>
+        <SquareInfo notation="*" coord="1,4"/>
+        <SquareInfo notation="*" coord="2,4"/>
+        <SquareInfo notation="*" coord="3,4"/>
+        <SquareInfo notation="*" coord="4,4"/>
+        <SquareInfo notation="*" coord="5,4"/>
+        <SquareInfo notation="*" coord="6,4"/>
+        <SquareInfo notation="*" coord="7,4"/>
+        <SquareInfo notation="*" coord="8,4"/>
+        <SquareInfo notation="*" coord="1,5"/>
+        <SquareInfo notation="*" coord="2,5"/>
+        <SquareInfo notation="*" coord="3,5"/>
+        <SquareInfo notation="*" coord="4,5"/>
+        <SquareInfo notation="*" coord="5,5"/>
+        <SquareInfo notation="*" coord="6,5"/>
+        <SquareInfo notation="*" coord="7,5"/>
+        <SquareInfo notation="*" coord="8,5"/>
+        <SquareInfo notation="*" coord="1,6"/>
+        <SquareInfo notation="*" coord="2,6"/>
+        <SquareInfo notation="*" coord="3,6"/>
+        <SquareInfo notation="*" coord="4,6"/>
+        <SquareInfo notation="*" coord="5,6"/>
+        <SquareInfo notation="*" coord="6,6"/>
+        <SquareInfo notation="*" coord="7,6"/>
+        <SquareInfo notation="*" coord="8,6"/>
     </BoardDefinition>
     <BoardDefinition orientation="180,0,0" color="240, 230, 210">
         <SquareInfo id="1" name="pawn" notation="p" coord="1,7"/>

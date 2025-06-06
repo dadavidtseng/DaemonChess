@@ -9,7 +9,6 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Input/InputSystem.hpp"
-#include "Engine/Input/XboxController.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
@@ -76,38 +75,26 @@ void Match::Update(float const deltaSeconds)
     m_board->Update(deltaSeconds);
 }
 
-// TODO: controller keybinding
 void Match::UpdateFromInput(float deltaSeconds)
 {
-    XboxController const& controller = g_theInput->GetController(0);
-
     if (g_theGame->GetCurrentGameState() == eGameState::MATCH)
     {
-        if (controller.WasButtonJustPressed(XBOX_BUTTON_BACK))
-        {
-            g_theGame->ChangeGameState(eGameState::ATTRACT);
-        }
-
-        if (g_theInput->WasKeyJustPressed(KEYCODE_P) ||
-            controller.WasButtonJustPressed(XBOX_BUTTON_B))
+        if (g_theInput->WasKeyJustPressed(KEYCODE_P))
         {
             m_gameClock->TogglePause();
         }
 
-        if (g_theInput->WasKeyJustPressed(KEYCODE_O) ||
-            controller.WasButtonJustPressed(XBOX_BUTTON_Y))
+        if (g_theInput->WasKeyJustPressed(KEYCODE_O))
         {
             m_gameClock->StepSingleFrame();
         }
 
-        if (g_theInput->IsKeyDown(KEYCODE_T) ||
-            controller.WasButtonJustPressed(XBOX_BUTTON_X))
+        if (g_theInput->IsKeyDown(KEYCODE_T))
         {
             m_gameClock->SetTimeScale(0.1f);
         }
 
-        if (g_theInput->WasKeyJustReleased(KEYCODE_T) ||
-            controller.WasButtonJustReleased(XBOX_BUTTON_X))
+        if (g_theInput->WasKeyJustReleased(KEYCODE_T))
         {
             m_gameClock->SetTimeScale(1.f);
         }
@@ -178,7 +165,7 @@ void Match::Render() const
 
     m_board->Render();
 
-    for (Piece* piece : m_board->m_pieceList)
+    for (Piece* piece : m_pieceList)
     {
         if (piece == nullptr) continue;
         piece->Render();
@@ -195,7 +182,7 @@ void Match::CreateBoard()
 
 //----------------------------------------------------------------------------------------------------
 bool Match::IsChessMoveValid(IntVec2 const& fromCoords,
-                        IntVec2 const& toCoords) const
+                             IntVec2 const& toCoords) const
 {
     // 1. If fromCoords nor toCoords is not valid, return false.
     if (!m_board->IsCoordValid(fromCoords) || !m_board->IsCoordValid(toCoords))
@@ -238,19 +225,6 @@ bool Match::IsChessMoveValid(IntVec2 const& fromCoords,
             g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("[SYSTEM] to=%s is occupied by your own piece!", m_board->ChessCoordToString(toCoords).c_str()));
             return false;
         }
-
-        // If toCoords's piece is a king, capture it and end the match.
-        if (toPiece->m_definition->m_type == ePieceType::KING)
-        {
-            m_board->CapturePiece(fromPiece->m_coords, toPiece->m_coords);
-            g_theDevConsole->AddLine(DevConsole::WARNING, "##################################################");
-            g_theDevConsole->AddLine(DevConsole::WARNING, Stringf("[SYSTEM] Player #%d has won the match!", m_currenTurnPlayerIndex));
-            g_theDevConsole->AddLine(DevConsole::WARNING, "##################################################");
-            g_theGame->ChangeGameState(eGameState::FINISHED);
-            return false;
-        }
-
-        m_board->CapturePiece(fromPiece->m_coords, toPiece->m_coords);
     }
 
     // This move is valid, return true.
@@ -280,16 +254,37 @@ void Match::HandleCapture(IntVec2 const& fromCoords,
     }
 }
 
-void Match::OnChessMove(IntVec2 const& from,
-                        IntVec2 const& to) const
+void Match::OnChessMove(IntVec2 const& fromCoords,
+                        IntVec2 const& toCoords)
 {
-    if (!IsChessMoveValid(from, to)) return;
+    if (!IsChessMoveValid(fromCoords, toCoords)) return;
 
-    HandleCapture(from, to);
-    Piece* piece = m_board->GetPieceByCoords(from);
-    piece->UpdatePositionByCoords(to);
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("Move Player #%d's %s from %s to %s", m_currenTurnPlayerIndex, m_board->GetPieceByCoords(from)->m_definition->m_name.c_str(), m_board->ChessCoordToString(from).c_str(), m_board->ChessCoordToString(to).c_str()));
+    HandleCapture(fromCoords, toCoords);
+    Piece* piece = m_board->GetPieceByCoords(fromCoords);
+    piece->UpdatePositionByCoords(toCoords);
+    m_board->UpdateBoardSquareInfoList(fromCoords, toCoords);
+    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("Move Player #%d's %s from %s to %s", m_currenTurnPlayerIndex, m_board->GetPieceByCoords(fromCoords)->m_definition->m_name.c_str(), m_board->ChessCoordToString(fromCoords).c_str(), m_board->ChessCoordToString(toCoords).c_str()));
     g_theEventSystem->FireEvent("OnExitMatchTurn");
+}
+
+void Match::UpdatePieceList(IntVec2 const& fromCoords,
+                            IntVec2 const& toCoords)
+{
+    for (auto it = m_pieceList.begin(); it != m_pieceList.end();)
+    {
+        Piece const* piece = *it;
+
+        if (piece->m_coords == toCoords)
+        {
+            delete piece;                  // 釋放記憶體
+            piece = nullptr;
+            it    = m_pieceList.erase(it);   // 用 erase 回傳的 iterator（新的位置）
+        }
+        else
+        {
+            ++it; // 只有沒刪除時才 ++
+        }
+    }
 }
 
 bool Match::OnChessMove(EventArgs& args)

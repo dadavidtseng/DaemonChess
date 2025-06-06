@@ -17,8 +17,6 @@ class Piece;
 class Texture;
 struct BoardDefinition;
 
-//----------------------------------------------------------------------------------------------------
-typedef std::vector<Piece*> PieceList;
 
 //----------------------------------------------------------------------------------------------------
 class Board final : public Actor
@@ -30,19 +28,19 @@ public:
     void Render() const override;
 
     /// Query
-    IntVec2     GetCoordsByWorldPosition(Vec3 const& worldPosition);
     Vec3        GetWorldPositionByCoords(IntVec2 const& coords);
-    Piece*      GetPieceByCoords(IntVec2 const& coords);
+    Piece*      GetPieceByCoords(IntVec2 const& coords) const;
     sSquareInfo GetSquareInfoByCoords(IntVec2 const& coords);
     IntVec2     StringToChessCoord(String const& chessPos);
     String      ChessCoordToString(IntVec2 const& coords);
     String      GetBoardContents(int rowNum);
     bool        IsCoordValid(IntVec2 const& coords) const;
 
-    void                     InitializeLocalVertsForAABB3s();
-    void                     InitializeLocalVertsForBoardFrame();
-    void                     CapturePiece(IntVec2 const& fromCoords, IntVec2 const& toCoords);
-    PieceList                m_pieceList;
+    void InitializeLocalVertsForAABB3s();
+    void InitializeLocalVertsForBoardFrame();
+    void UpdateBoardSquareInfoList(IntVec2 const& fromCoords, IntVec2 const& toCoords);
+    void CapturePiece(IntVec2 const& fromCoords, IntVec2 const& toCoords);
+    // PieceList                m_pieceList;
     std::vector<sSquareInfo> m_squareInfoList;
 
 private:
