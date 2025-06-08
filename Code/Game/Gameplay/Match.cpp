@@ -9,9 +9,7 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Input/InputSystem.hpp"
-#include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/MathUtils.hpp"
-#include "Engine/Math/OBB3.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game/Definition/BoardDefinition.hpp"
@@ -36,12 +34,10 @@ Match::Match()
     g_theEventSystem->SubscribeEventCallbackFunction("OnExitMatchTurn", OnExitMatchTurn);
     g_theEventSystem->SubscribeEventCallbackFunction("OnMatchInitialized", OnMatchInitialized);
 
-    m_screenCamera = new Camera();
-
-    Vec2 const bottomLeft     = Vec2::ZERO;
-    Vec2 const screenTopRight = Vec2(SCREEN_SIZE_X, SCREEN_SIZE_Y);
-
-    m_screenCamera->SetOrthoGraphicView(bottomLeft, screenTopRight);
+    m_screenCamera          = new Camera();
+    float const screenSizeX = g_gameConfigBlackboard.GetValue("screenSizeX", -1.f);
+    float const screenSizeY = g_gameConfigBlackboard.GetValue("screenSizeY", -1.f);
+    m_screenCamera->SetOrthoGraphicView(Vec2::ZERO, Vec2(screenSizeX, screenSizeY));
     m_screenCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
     m_gameClock = new Clock(Clock::GetSystemClock());
     CreateBoard();

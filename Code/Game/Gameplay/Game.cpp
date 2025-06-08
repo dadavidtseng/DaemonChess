@@ -23,11 +23,11 @@
 Game::Game()
 {
     g_theEventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
-    m_gameClock               = new Clock(Clock::GetSystemClock());
-    m_screenCamera            = new Camera();
-    Vec2 const bottomLeft     = Vec2::ZERO;
-    Vec2 const screenTopRight = Vec2(SCREEN_SIZE_X, SCREEN_SIZE_Y);
-    m_screenCamera->SetOrthoGraphicView(bottomLeft, screenTopRight);
+    m_gameClock             = new Clock(Clock::GetSystemClock());
+    m_screenCamera          = new Camera();
+    float const screenSizeX = g_gameConfigBlackboard.GetValue("screenSizeX", -1.f);
+    float const screenSizeY = g_gameConfigBlackboard.GetValue("screenSizeY", -1.f);
+    m_screenCamera->SetOrthoGraphicView(Vec2::ZERO, Vec2(screenSizeX, screenSizeY));
     m_screenCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
     CreateLocalPlayer(0);
     CreateLocalPlayer(1);
