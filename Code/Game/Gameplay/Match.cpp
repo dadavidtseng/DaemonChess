@@ -127,7 +127,7 @@ void Match::Render() const
 //----------------------------------------------------------------------------------------------------
 void Match::CreateBoard()
 {
-    Texture const* texture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/metal.png");
+    Texture const* texture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/WhiteMarble_COLOR.jpg");
 
     m_board = new Board(this, texture);
 }
@@ -259,9 +259,10 @@ bool Match::OnEnterMatchState(EventArgs& args)
     return true;
 }
 
+//----------------------------------------------------------------------------------------------------
 bool Match::OnEnterMatchTurn(EventArgs& args)
 {
-	UNUSED(args);
+    UNUSED(args)
 
     g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("=================================================="));
     g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("Player #%d -- it's your turn!", g_theGame->GetCurrentPlayerControllerId()));
@@ -285,22 +286,20 @@ bool Match::OnEnterMatchTurn(EventArgs& args)
     return true;
 }
 
+//----------------------------------------------------------------------------------------------------
 bool Match::OnExitMatchTurn(EventArgs& args)
 {
-    UNUSED(args);
-    // if (g_theGame->m_match->m_currenTurnPlayerIndex==-1)
-    // {
-    //     g_theGame->m_match->m_currenTurnPlayerIndex=0;
-    //     return true;
-    // }
-    g_theGame->SwitchPlayerControllerId();
+    UNUSED(args)
+
+    g_theGame->TogglePlayerControllerId();
     g_theEventSystem->FireEvent("OnEnterMatchTurn");
     return true;
 }
 
+//----------------------------------------------------------------------------------------------------
 bool Match::OnMatchInitialized(EventArgs& args)
 {
-    UNUSED(args);
+    UNUSED(args)
     g_theEventSystem->FireEvent("OnEnterMatchTurn");
     return true;
 }

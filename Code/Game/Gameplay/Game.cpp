@@ -133,7 +133,7 @@ int Game::GetCurrentPlayerControllerId() const
     return m_currentPlayerControllerId;
 }
 
-void Game::SwitchPlayerControllerId()
+void Game::TogglePlayerControllerId()
 {
     if (m_currentPlayerControllerId == 0) m_currentPlayerControllerId = 1;
     else if (m_currentPlayerControllerId == 1) m_currentPlayerControllerId = 0;
@@ -156,7 +156,13 @@ void Game::ChangeGameState(eGameState const newGameState)
 
 bool Game::IsFixedCameraMode() const
 {
-    return m_isFixedCameraMode;
+    return m_cameraState == eCameraState::FIXED;
+}
+
+void Game::ToggleCameraStateBetweenFreeAndFixed()
+{
+    if (m_cameraState == eCameraState::FIXED) m_cameraState = eCameraState::FREE;
+    else if (m_cameraState == eCameraState::FREE) m_cameraState = eCameraState::FIXED;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -205,74 +211,9 @@ void Game::UpdateFromInput()
             m_gameClock->SetTimeScale(1.f);
         }
 
-        if (g_theInput->WasKeyJustPressed(NUMCODE_1))
-        {
-            Vec3 forward;
-            Vec3 right;
-            Vec3 up;
-            localPlayer->m_orientation.GetAsVectors_IFwd_JLeft_KUp(forward, right, up);
-
-            UpdateCurrentControllerId(0);
-            DebugAddWorldLine(localPlayer->m_position, localPlayer->m_position + forward * 20.f, 0.01f, 10.f, Rgba8(255, 255, 0), Rgba8(255, 255, 0), eDebugRenderMode::X_RAY);
-        }
-
-        if (g_theInput->IsKeyDown(NUMCODE_2))
-        {
-            UpdateCurrentControllerId(1);
-            DebugAddWorldPoint(Vec3(localPlayer->m_position.x, localPlayer->m_position.y, 0.f), 0.25f, 60.f, Rgba8(150, 75, 0), Rgba8(150, 75, 0));
-        }
-
-        if (g_theInput->WasKeyJustPressed(NUMCODE_3))
-        {
-            Vec3 forward;
-            Vec3 right;
-            Vec3 up;
-            localPlayer->m_orientation.GetAsVectors_IFwd_JLeft_KUp(forward, right, up);
-
-            DebugAddWorldWireSphere(localPlayer->m_position + forward * 2.f, 1.f, 5.f, Rgba8::GREEN, Rgba8::RED);
-        }
-
-        if (g_theInput->WasKeyJustPressed(NUMCODE_4))
-        {
-            DebugAddWorldBasis(localPlayer->GetModelToWorldTransform(), 20.f);
-        }
-
-        if (g_theInput->WasKeyJustReleased(NUMCODE_5))
-        {
-            float const  positionX    = localPlayer->m_position.x;
-            float const  positionY    = localPlayer->m_position.y;
-            float const  positionZ    = localPlayer->m_position.z;
-            float const  orientationX = localPlayer->m_orientation.m_yawDegrees;
-            float const  orientationY = localPlayer->m_orientation.m_pitchDegrees;
-            float const  orientationZ = localPlayer->m_orientation.m_rollDegrees;
-            String const text         = Stringf("Position: (%.2f, %.2f, %.2f)\nOrientation: (%.2f, %.2f, %.2f)", positionX, positionY, positionZ, orientationX, orientationY, orientationZ);
-
-            Vec3 forward;
-            Vec3 right;
-            Vec3 up;
-            localPlayer->m_orientation.GetAsVectors_IFwd_JLeft_KUp(forward, right, up);
-
-            DebugAddBillboardText(text, localPlayer->m_position + forward, 0.1f, Vec2::HALF, 10.f, Rgba8::WHITE, Rgba8::RED);
-        }
-
-        if (g_theInput->WasKeyJustPressed(NUMCODE_6))
-        {
-            DebugAddWorldCylinder(localPlayer->m_position, localPlayer->m_position + Vec3::Z_BASIS * 2, 1.f, 10.f, true, Rgba8::WHITE, Rgba8::RED);
-        }
-
-
-        if (g_theInput->WasKeyJustReleased(NUMCODE_7))
-        {
-            float const orientationX = localPlayer->GetCamera()->GetOrientation().m_yawDegrees;
-            float const orientationY = localPlayer->GetCamera()->GetOrientation().m_pitchDegrees;
-            float const orientationZ = localPlayer->GetCamera()->GetOrientation().m_rollDegrees;
-
-            DebugAddMessage(Stringf("Camera Orientation: (%.2f, %.2f, %.2f)", orientationX, orientationY, orientationZ), 5.f);
-        }
-
         if (g_theInput->WasKeyJustPressed(KEYCODE_F4))
         {
-            m_isFixedCameraMode = !m_isFixedCameraMode;
+            ToggleCameraStateBetweenFreeAndFixed();
 
             for (int i = 0; i < static_cast<int>(m_localPlayerControllerList.size()); i++)
             {
@@ -283,12 +224,13 @@ void Game::UpdateFromInput()
         }
 
         DebugAddMessage(Stringf("Use the DevConsole(~) to enter commands"), 0.f, Rgba8::YELLOW);
-        String cameraMode = m_isFixedCameraMode ? "Fixed" : "Free";
-        String gameState;
+        String cameraMode = "DEFAULT";
+        if (m_cameraState == eCameraState::FIXED) cameraMode = "Fixed";
+        else if (m_cameraState == eCameraState::FREE) cameraMode = "Free";
+        String gameState = "DEFAULT";
         if (m_currentPlayerControllerId == 0) gameState = "First player's turn.";
         else if (m_currentPlayerControllerId == 1) gameState = "Second player's turn.";
         DebugAddMessage(Stringf("CameraMode=%s|GameState=%s", cameraMode.c_str(), gameState.c_str()), 0.f, Rgba8::YELLOW);
-        // DebugAddMessage(Stringf("Player Position: (%.2f, %.2f, %.2f)", localPlayer->m_position.x, localPlayer->m_position.y, localPlayer->m_position.z), 0.f);
     }
 }
 

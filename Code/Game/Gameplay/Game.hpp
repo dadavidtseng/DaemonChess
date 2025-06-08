@@ -16,6 +16,14 @@ class Match;
 class PlayerController;
 
 //----------------------------------------------------------------------------------------------------
+enum class eCameraState : int8_t
+{
+    FIXED,
+    FREE,
+    ROTATE
+};
+
+//----------------------------------------------------------------------------------------------------
 enum class eGameState : int8_t
 {
     ATTRACT,
@@ -39,10 +47,11 @@ public:
 
     eGameState GetCurrentGameState() const;
     int        GetCurrentPlayerControllerId() const;
-    void       SwitchPlayerControllerId();
+    void       TogglePlayerControllerId();
     void       ChangeGameState(eGameState newGameState);
     bool       IsFixedCameraMode() const;
-    Match*     m_match = nullptr;
+
+    Match* m_match = nullptr;
 
 private:
     void              UpdateFromInput();
@@ -53,11 +62,13 @@ private:
     PlayerController* CreateLocalPlayer(int id);
     PlayerController* GetLocalPlayer(int id) const;
 
+    void ToggleCameraStateBetweenFreeAndFixed();
+
     Camera*                        m_screenCamera = nullptr;
     AABB2                          m_screenSpace  = AABB2::ZERO_TO_ONE;
     eGameState                     m_gameState    = eGameState::ATTRACT;
+    eCameraState                   m_cameraState  = eCameraState::FIXED;
     Clock*                         m_gameClock    = nullptr;
     std::vector<PlayerController*> m_localPlayerControllerList;
     int                            m_currentPlayerControllerId = -1;
-    bool                           m_isFixedCameraMode         = true;
 };

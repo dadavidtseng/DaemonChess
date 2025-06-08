@@ -23,11 +23,10 @@ Piece::Piece(Match* owner, sSquareInfo const& squareInfo, Texture* texture)
     m_definition = PieceDefinition::GetDefByName(squareInfo.m_name);
 
     m_shader = m_definition->m_shader;
-    // m_texture = m_definition->m_texture;
+    m_texture = m_definition->m_texture;
     m_coords = squareInfo.m_coords;
 
     UpdatePositionByCoords(squareInfo.m_coords);
-    // m_orientation = EulerAngles(45,0,0);
 }
 
 

@@ -58,7 +58,7 @@ void Board::Render() const
 //----------------------------------------------------------------------------------------------------
 Vec3 Board::GetWorldPositionByCoords(IntVec2 const& coords)
 {
-    return Vec3((float)(coords.x) - 0.5f, (float)(coords.y) - 0.5f, 0.2f);
+    return Vec3(static_cast<float>(coords.x) - 0.5f, static_cast<float>(coords.y) - 0.5f, 0.2f);
 }
 
 //----------------------------------------------------------------------------------------------------

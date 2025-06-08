@@ -7,6 +7,7 @@
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/EulerAngles.hpp"
 
+//-Forward-Declaration--------------------------------------------------------------------------------
 class Game;
 class Camera;
 
@@ -16,7 +17,6 @@ class Controller
 public:
     // Construction / Destruction
     explicit Controller(Game* owner);
-
     virtual ~Controller() = default;
 
     virtual void Update(float deltaSeconds) = 0;
