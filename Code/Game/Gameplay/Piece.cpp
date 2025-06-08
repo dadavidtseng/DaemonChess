@@ -5,10 +5,8 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Piece.hpp"
 
-#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Math/AABB3.hpp"
-#include "Engine/Math/OBB3.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game/Definition/BoardDefinition.hpp"
@@ -17,32 +15,21 @@
 #include "Game/Gameplay/Match.hpp"
 #include "ThirdParty/stb/stb_image.h"
 
-// TODO: AddVertsForOBB3D();
 //----------------------------------------------------------------------------------------------------
-Piece::Piece(Match* owner, sSquareInfo const& squareInfo, Texture * texture)
+Piece::Piece(Match* owner, sSquareInfo const& squareInfo, Texture* texture)
     : Actor(owner),
       m_texture(texture)
 {
     m_definition = PieceDefinition::GetDefByName(squareInfo.m_name);
 
-    m_shader     = m_definition->m_shader;
-    m_texture    = m_definition->m_texture;
-    m_coords     = squareInfo.m_coords;
+    m_shader = m_definition->m_shader;
+    // m_texture = m_definition->m_texture;
+    m_coords = squareInfo.m_coords;
 
     UpdatePositionByCoords(squareInfo.m_coords);
     // m_orientation = EulerAngles(45,0,0);
-    for (auto const& [name, startPosition, endPosition,orientation,halfDimension, radius] : m_definition->m_pieceParts)
-    {
-        if (name == "sphere") AddVertsForSphere3D(m_vertexes, m_indexes, startPosition, radius, m_color);
-        else if (name == "aabb3") AddVertsForAABB3D(m_vertexes, m_indexes, AABB3(startPosition, endPosition), m_color);
-        else if (name == "cylinder") AddVertsForCylinder3D(m_vertexes, m_indexes, startPosition, endPosition, radius, m_color);
-        else if (name == "obb3")
-        {
-            Mat44 matrix = orientation.GetAsMatrix_IFwd_JLeft_KUp();
-            AddVertsForOBB3D(m_vertexes, m_indexes, OBB3(startPosition, halfDimension, matrix.GetIBasis3D(), matrix.GetJBasis3D(), matrix.GetKBasis3D()), m_color);
-        }
-    }
 }
+
 
 //----------------------------------------------------------------------------------------------------
 void Piece::Update(float const deltaSeconds)
@@ -62,7 +49,8 @@ void Piece::Render() const
     g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
     g_theRenderer->BindTexture(m_texture);
     g_theRenderer->BindShader(m_shader);
-    g_theRenderer->DrawVertexArray(m_vertexes, m_indexes);
+    unsigned int const indexCount = m_definition->GetIndexCountByID(m_id);
+    g_theRenderer->DrawIndexedVertexBuffer(m_definition->m_vertexBuffer[m_id], m_definition->m_indexBuffer[m_id], indexCount);
 }
 
 void Piece::UpdatePositionByCoords(IntVec2 const& newCoords)

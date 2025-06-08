@@ -23,6 +23,7 @@ class Board final : public Actor
 {
 public:
     explicit Board(Match* owner, Texture const* texture = nullptr);
+~Board()override;
 
     void Update(float deltaSeconds) override;
     void Render() const override;

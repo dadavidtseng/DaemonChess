@@ -8,6 +8,7 @@
 
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/StringUtils.hpp"
+#include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Core/XmlUtils.hpp"
 #include "Engine/Math/EulerAngles.hpp"
 #include "Engine/Math/Vec3.hpp"
@@ -29,6 +30,7 @@ enum class ePieceType : int8_t
     KING
 };
 
+//----------------------------------------------------------------------------------------------------
 struct sPiecePart
 {
     String      m_name          = "DEFAULT";
@@ -45,12 +47,14 @@ struct PieceDefinition
     PieceDefinition() = default;
     ~PieceDefinition();
 
-    bool LoadFromXmlElement(XmlElement const* element);
-    void CreateMeshForEachPlayer(int playerIndex);
+    bool         LoadFromXmlElement(XmlElement const* element);
+    void         CreateMeshByID(int id);
+    unsigned int GetIndexCountByID(int id) const;
 
     static void                          InitializeDefs(char const* path);
     static PieceDefinition*              GetDefByName(String const& name);
     static std::vector<PieceDefinition*> s_pieceDefinitions;
+    static void                          ClearAllDefs();
 
     String                  m_name    = "DEFAULT";
     ePieceType              m_type    = ePieceType::NONE;
@@ -58,6 +62,6 @@ struct PieceDefinition
     Texture*                m_texture = nullptr;
     std::vector<sPiecePart> m_pieceParts;
     char                    m_glyph           = '?';
-    IndexBuffer*            m_indexBuffer[2]  = {};
     VertexBuffer*           m_vertexBuffer[2] = {};
+    IndexBuffer*            m_indexBuffer[2]  = {};
 };

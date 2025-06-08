@@ -32,8 +32,6 @@ Game::Game()
     CreateLocalPlayer(0);
     CreateLocalPlayer(1);
     UpdateCurrentControllerId(0);
-    PieceDefinition::InitializeDefs("Data/Definitions/PieceDefinition.xml");
-    BoardDefinition::InitializeDefs("Data/Definitions/BoardDefinition.xml");
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -56,7 +54,7 @@ void Game::Update()
 //----------------------------------------------------------------------------------------------------
 void Game::Render() const
 {
-    PlayerController const* localPlayer = GetLocalPlayer(m_currentControllerId);
+    PlayerController const* localPlayer = GetLocalPlayer(m_currentPlayerControllerId);
 
     //-Start-of-Game-Camera---------------------------------------------------------------------------
 
@@ -100,14 +98,23 @@ bool Game::OnGameStateChanged(EventArgs& args)
 {
     String const newGameState = args.GetValue("OnGameStateChanged", "DEFAULT");
 
+    if (newGameState == "ATTRACT")
+    {
+        PieceDefinition::ClearAllDefs();
+        BoardDefinition::ClearAllDefs();
+        SafeDeletePointer(g_theGame->m_match);
+    }
+
     if (newGameState == "MATCH")
     {
+        PieceDefinition::InitializeDefs("Data/Definitions/PieceDefinition.xml");
+        BoardDefinition::InitializeDefs("Data/Definitions/BoardDefinition.xml");
         g_theGame->m_match = new Match();
         g_theEventSystem->FireEvent("OnMatchInitialized");
     }
     else if (newGameState == "FINISHED")
     {
-        int const         id     = g_theGame->m_currentControllerId;
+        int const         id     = g_theGame->m_currentPlayerControllerId;
         PlayerController* player = g_theGame->GetLocalPlayer(id);
         player->m_position       = Vec3(9.5f, 4.f, 4.f);
         player->m_orientation    = EulerAngles(180, 45, 0);
@@ -119,6 +126,17 @@ bool Game::OnGameStateChanged(EventArgs& args)
 eGameState Game::GetCurrentGameState() const
 {
     return m_gameState;
+}
+
+int Game::GetCurrentPlayerControllerId() const
+{
+    return m_currentPlayerControllerId;
+}
+
+void Game::SwitchPlayerControllerId()
+{
+    if (m_currentPlayerControllerId == 0) m_currentPlayerControllerId = 1;
+    else if (m_currentPlayerControllerId == 1) m_currentPlayerControllerId = 0;
 }
 
 void Game::ChangeGameState(eGameState const newGameState)
@@ -136,10 +154,15 @@ void Game::ChangeGameState(eGameState const newGameState)
     g_theEventSystem->FireEvent("OnGameStateChanged", args);
 }
 
+bool Game::IsFixedCameraMode() const
+{
+    return m_isFixedCameraMode;
+}
+
 //----------------------------------------------------------------------------------------------------
 void Game::UpdateFromInput()
 {
-    PlayerController const* localPlayer = GetLocalPlayer(m_currentControllerId);
+    PlayerController const* localPlayer = GetLocalPlayer(m_currentPlayerControllerId);
 
     if (m_gameState == eGameState::ATTRACT)
     {
@@ -159,7 +182,7 @@ void Game::UpdateFromInput()
     {
         if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
         {
-            m_gameState = eGameState::ATTRACT;
+            ChangeGameState(eGameState::ATTRACT);
         }
 
         if (g_theInput->WasKeyJustPressed(KEYCODE_P))
@@ -247,7 +270,25 @@ void Game::UpdateFromInput()
             DebugAddMessage(Stringf("Camera Orientation: (%.2f, %.2f, %.2f)", orientationX, orientationY, orientationZ), 5.f);
         }
 
-        DebugAddMessage(Stringf("Player Position: (%.2f, %.2f, %.2f)", localPlayer->m_position.x, localPlayer->m_position.y, localPlayer->m_position.z), 0.f);
+        if (g_theInput->WasKeyJustPressed(KEYCODE_F4))
+        {
+            m_isFixedCameraMode = !m_isFixedCameraMode;
+
+            for (int i = 0; i < static_cast<int>(m_localPlayerControllerList.size()); i++)
+            {
+                m_localPlayerControllerList[i]->SetControllerPosition(g_gameConfigBlackboard.GetValue(Stringf("playerControllerPosition%d", i), Vec3::ZERO));
+                m_localPlayerControllerList[i]->SetControllerOrientation(g_gameConfigBlackboard.GetValue(Stringf("playerControllerOrientation%d", i), EulerAngles::ZERO));
+                m_localPlayerControllerList[i]->m_worldCamera->SetPositionAndOrientation(m_localPlayerControllerList[i]->m_position, m_localPlayerControllerList[i]->m_orientation);
+            }
+        }
+
+        DebugAddMessage(Stringf("Use the DevConsole(~) to enter commands"), 0.f, Rgba8::YELLOW);
+        String cameraMode = m_isFixedCameraMode ? "Fixed" : "Free";
+        String gameState;
+        if (m_currentPlayerControllerId == 0) gameState = "First player's turn.";
+        else if (m_currentPlayerControllerId == 1) gameState = "Second player's turn.";
+        DebugAddMessage(Stringf("CameraMode=%s|GameState=%s", cameraMode.c_str(), gameState.c_str()), 0.f, Rgba8::YELLOW);
+        // DebugAddMessage(Stringf("Player Position: (%.2f, %.2f, %.2f)", localPlayer->m_position.x, localPlayer->m_position.y, localPlayer->m_position.z), 0.f);
     }
 }
 
@@ -257,12 +298,12 @@ void Game::UpdateEntities(float const gameDeltaSeconds, float const systemDeltaS
 {
     if (m_match == nullptr) return;
     m_match->Update(gameDeltaSeconds);
-    GetLocalPlayer(m_currentControllerId)->Update(systemDeltaSeconds);
+    GetLocalPlayer(m_currentPlayerControllerId)->Update(systemDeltaSeconds);
 }
 
 void Game::UpdateCurrentControllerId(int const newID)
 {
-    m_currentControllerId = newID;
+    m_currentPlayerControllerId = newID;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -275,7 +316,7 @@ void Game::RenderAttractMode() const
 void Game::RenderEntities() const
 {
     if (m_match == nullptr) return;
-    PlayerController const* localPlayer = GetLocalPlayer(m_currentControllerId);
+    PlayerController const* localPlayer = GetLocalPlayer(m_currentPlayerControllerId);
 
     m_match->Render();
     g_theRenderer->SetModelConstants(localPlayer->GetModelToWorldTransform());
@@ -297,7 +338,7 @@ PlayerController* Game::CreateLocalPlayer(int const id)
     newPlayer->SetControllerIndex(id);
     newPlayer->SetControllerPosition(g_gameConfigBlackboard.GetValue(Stringf("playerControllerPosition%d", id), Vec3::ZERO));
     newPlayer->SetControllerOrientation(g_gameConfigBlackboard.GetValue(Stringf("playerControllerOrientation%d", id), EulerAngles::ZERO));
-
+    newPlayer->m_worldCamera->SetPositionAndOrientation(newPlayer->m_position, newPlayer->m_orientation);
     m_localPlayerControllerList.push_back(newPlayer);
 
     return newPlayer;

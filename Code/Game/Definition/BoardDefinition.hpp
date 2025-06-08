@@ -31,6 +31,7 @@ struct BoardDefinition
 
     static void                          InitializeDefs(char const* path);
     static std::vector<BoardDefinition*> s_boardDefinitions;
+    static void ClearAllDefs();
 
     std::vector<sSquareInfo> m_squareInfos;
     EulerAngles              m_pieceOrientation   = EulerAngles::ZERO;

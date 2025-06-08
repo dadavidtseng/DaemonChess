@@ -17,7 +17,8 @@ class Actor
 {
 public:
     explicit Actor(Match* owner);
-    virtual  ~Actor();
+    virtual  ~Actor() =0;
+
 
     virtual void  Update(float deltaSeconds) = 0;
     virtual void  Render() const = 0;

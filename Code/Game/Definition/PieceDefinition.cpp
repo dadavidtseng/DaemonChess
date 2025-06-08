@@ -7,22 +7,19 @@
 
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Math/AABB3.hpp"
+#include "Engine/Math/OBB3.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game/Framework/GameCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
 STATIC std::vector<PieceDefinition*> PieceDefinition::s_pieceDefinitions;
 
-
 //----------------------------------------------------------------------------------------------------
 PieceDefinition::~PieceDefinition()
 {
-    for (PieceDefinition const* pieceDef : s_pieceDefinitions)
-    {
-        delete pieceDef;
-    }
-
-    s_pieceDefinitions.clear();
+    for (VertexBuffer* buffer : m_vertexBuffer) SafeDeletePointer(buffer);
+    for (IndexBuffer* buffer : m_indexBuffer) SafeDeletePointer(buffer);
 }
 
 bool PieceDefinition::LoadFromXmlElement(XmlElement const* element)
@@ -60,6 +57,36 @@ bool PieceDefinition::LoadFromXmlElement(XmlElement const* element)
     }
 
     return true;
+}
+
+void PieceDefinition::CreateMeshByID(int const id)
+{
+    VertexList_PCUTBN verts;
+    IndexList         indexes;
+
+    for (auto const& [name, startPosition, endPosition,orientation,halfDimension, radius] : m_pieceParts)
+    {
+        if (name == "sphere") AddVertsForSphere3D(verts, indexes, startPosition, radius);
+        else if (name == "aabb3") AddVertsForAABB3D(verts, indexes, AABB3(startPosition, endPosition));
+        else if (name == "cylinder") AddVertsForCylinder3D(verts, indexes, startPosition, endPosition, radius);
+        else if (name == "obb3")
+        {
+            Mat44 matrix = orientation.GetAsMatrix_IFwd_JLeft_KUp();
+            AddVertsForOBB3D(verts, indexes, OBB3(startPosition, halfDimension, matrix.GetIBasis3D(), matrix.GetJBasis3D(), matrix.GetKBasis3D()));
+        }
+    }
+
+    m_vertexBuffer[id] = g_theRenderer->CreateVertexBuffer(sizeof(Vertex_PCUTBN), sizeof(Vertex_PCUTBN));
+    m_indexBuffer[id]  = g_theRenderer->CreateIndexBuffer(sizeof(unsigned int), sizeof(unsigned int));
+
+    g_theRenderer->CopyCPUToGPU(verts.data(), static_cast<int>(verts.size()) * sizeof(Vertex_PCUTBN), m_vertexBuffer[id]);
+    g_theRenderer->CopyCPUToGPU(indexes.data(), static_cast<int>(indexes.size()) * sizeof(unsigned int), m_indexBuffer[id]);
+}
+
+//----------------------------------------------------------------------------------------------------
+unsigned int PieceDefinition::GetIndexCountByID(int const id) const
+{
+    return m_indexBuffer[id]->GetSize() / m_indexBuffer[id]->GetStride();
 }
 
 void PieceDefinition::InitializeDefs(char const* path)
@@ -111,4 +138,14 @@ PieceDefinition* PieceDefinition::GetDefByName(String const& name)
     }
 
     return nullptr;
+}
+
+void PieceDefinition::ClearAllDefs()
+{
+    for (PieceDefinition const* pieceDef : s_pieceDefinitions)
+    {
+        delete pieceDef;
+    }
+
+    s_pieceDefinitions.clear();
 }

@@ -67,6 +67,9 @@
     <ClCompile Include="Subsystem\Widget\WidgetSubsystem.cpp">
       <Filter>Subsystem\Widget</Filter>
     </ClCompile>
+    <ClCompile Include="Definition\BoardDefinition.cpp">
+      <Filter>Definition</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Gameplay\Actor.hpp">
@@ -110,6 +113,9 @@
     </ClInclude>
     <ClInclude Include="Subsystem\Widget\WidgetSubsystem.hpp">
       <Filter>Subsystem\Widget</Filter>
+    </ClInclude>
+    <ClInclude Include="Definition\BoardDefinition.hpp">
+      <Filter>Definition</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

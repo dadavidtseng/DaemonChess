@@ -26,21 +26,13 @@ Board::Board(Match* owner, Texture const* texture)
     InitializeLocalVertsForAABB3s();
     InitializeLocalVertsForBoardFrame();
 
-    for (BoardDefinition const* boardDefs : BoardDefinition::s_boardDefinitions)
-    {
-        for (sSquareInfo const& squareInfo : boardDefs->m_squareInfos)
-        {
-            m_squareInfoList.push_back(squareInfo);
 
-            if (squareInfo.m_name == "DEFAULT") continue;
-
-            Piece* piece         = new Piece(m_match, squareInfo);
-            piece->m_orientation = boardDefs->m_pieceOrientation;
-            piece->m_color       = boardDefs->m_pieceColor;
-            m_match->m_pieceList.push_back(piece);
-        }
-    }
 }
+
+Board::~Board()
+{
+}
+
 
 //----------------------------------------------------------------------------------------------------
 void Board::Update(float const deltaSeconds)
@@ -103,13 +95,14 @@ IntVec2 Board::StringToChessCoord(String const& chessPos)
 {
     if (chessPos.length() != 2) return IntVec2(-1, -1);  // 非法輸入
 
-    char file = tolower(chessPos[0]); // 'a'~'h'
-    char rank = chessPos[1];          // '1'~'8'
+    int fileInt = tolower(static_cast<unsigned char>(chessPos[0])); // 'a'~'h'
+    char rank = chessPos[1]; // '1'~'8'
 
-    if (file < 'a' || file > 'h' || rank < '1' || rank > '8') return IntVec2(-1, -1); // 非法座標
+    if (fileInt < 'a' || fileInt > 'h' || rank < '1' || rank > '8')
+        return IntVec2(-1, -1); // 非法座標
 
-    int col = file - 'a' + 1;  // 'a' -> 1, 'b' -> 2, ..., 'h' -> 8
-    int row = rank - '0';      // '3' -> 3
+    int col = fileInt - 'a' + 1;  // 'a' -> 1, ..., 'h' -> 8
+    int row = rank - '0';         // '3' -> 3
 
     return IntVec2(col, row);
 }
@@ -119,11 +112,11 @@ String Board::ChessCoordToString(IntVec2 const& coords)
     int col = coords.x;  // 假設 IntVec2.x 是欄（1~8）
     int row = coords.y;  // IntVec2.y 是列（1~8）
 
-    // 非法檢查，若超出棋盤範圍，回傳空字串或其他錯誤字串
+    // 非法檢查，若超出棋盤範圍，回傳空字串
     if (col < 1 || col > 8 || row < 1 || row > 8) return String("");
 
-    char file = 'a' + (col - 1);   // 1 -> 'a', 2 -> 'b', ..., 8 -> 'h'
-    char rank = '0' + row;          // 1 -> '1', 2 -> '2', ..., 8 -> '8'
+    char file = static_cast<char>('a' + (col - 1));  // 1 -> 'a', ..., 8 -> 'h'
+    char rank = static_cast<char>('0' + row);        // 1 -> '1', ..., 8 -> '8'
 
     String result;
     result += file;

@@ -25,26 +25,19 @@ PlayerController::PlayerController(Game* owner)
     Mat44 c2r;
     c2r.SetIJK3D(Vec3::Z_BASIS, -Vec3::X_BASIS, Vec3::Y_BASIS);
     m_worldCamera->SetCameraToRenderTransform(c2r);
+
 }
 
 //----------------------------------------------------------------------------------------------------
 PlayerController::~PlayerController()
 {
-    delete m_worldCamera;
-    m_worldCamera = nullptr;
+    SafeDeletePointer(m_worldCamera);
 }
 
 //----------------------------------------------------------------------------------------------------
 void PlayerController::Update(float deltaSeconds)
 {
-    if (g_theInput->WasKeyJustPressed(KEYCODE_H))
-    {
-        if (g_theGame->GetCurrentGameState() != eGameState::ATTRACT)
-        {
-            m_position    = Vec3::ZERO;
-            m_orientation = EulerAngles::ZERO;
-        }
-    }
+    if (g_theGame->IsFixedCameraMode()) return;
 
     Vec3 forward;
     Vec3 left;

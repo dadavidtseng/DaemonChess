@@ -38,7 +38,10 @@ public:
     static bool OnGameStateChanged(EventArgs& args);
 
     eGameState GetCurrentGameState() const;
+    int        GetCurrentPlayerControllerId() const;
+    void       SwitchPlayerControllerId();
     void       ChangeGameState(eGameState newGameState);
+    bool       IsFixedCameraMode() const;
     Match*     m_match = nullptr;
 
 private:
@@ -55,5 +58,6 @@ private:
     eGameState                     m_gameState    = eGameState::ATTRACT;
     Clock*                         m_gameClock    = nullptr;
     std::vector<PlayerController*> m_localPlayerControllerList;
-    int                            m_currentControllerId = -1;
+    int                            m_currentPlayerControllerId = -1;
+    bool                           m_isFixedCameraMode         = true;
 };

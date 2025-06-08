@@ -9,7 +9,9 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/OBB3.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game/Definition/BoardDefinition.hpp"
@@ -23,7 +25,7 @@
 #undef ERROR
 #endif
 
-#define DEBUG_MODE
+// #define DEBUG_MODE
 
 //----------------------------------------------------------------------------------------------------
 Match::Match()
@@ -43,6 +45,27 @@ Match::Match()
     m_screenCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
     m_gameClock = new Clock(Clock::GetSystemClock());
     CreateBoard();
+    for (PieceDefinition* pieceDef : PieceDefinition::s_pieceDefinitions)
+    {
+        pieceDef->CreateMeshByID(0);
+        pieceDef->CreateMeshByID(1);
+    }
+
+    for (BoardDefinition const* boardDefs : BoardDefinition::s_boardDefinitions)
+    {
+        for (sSquareInfo const& squareInfo : boardDefs->m_squareInfos)
+        {
+            m_board->m_squareInfoList.push_back(squareInfo);
+
+            if (squareInfo.m_name == "DEFAULT") continue;
+
+            Piece* piece         = new Piece(this, squareInfo);
+            piece->m_orientation = boardDefs->m_pieceOrientation;
+            piece->m_color       = boardDefs->m_pieceColor;
+            piece->m_id          = squareInfo.m_playerControllerId;
+            m_pieceList.push_back(piece);
+        }
+    }
 
 #if defined DEBUG_MODE
     DebugAddWorldBasis(Mat44(), -1.f);
@@ -64,6 +87,13 @@ Match::Match()
 Match::~Match()
 {
     SafeDeletePointer(m_screenCamera);
+    SafeDeletePointer(m_board);
+
+    for (int i = 0; i < static_cast<int>(m_pieceList.size()); ++i)
+    {
+        SafeDeletePointer(m_pieceList[i]);
+    }
+    m_pieceList.clear();
 }
 
 void Match::Update(float const deltaSeconds)
@@ -75,87 +105,9 @@ void Match::Update(float const deltaSeconds)
     m_board->Update(deltaSeconds);
 }
 
-void Match::UpdateFromInput(float deltaSeconds)
+void Match::UpdateFromInput(float const deltaSeconds)
 {
-    if (g_theGame->GetCurrentGameState() == eGameState::MATCH)
-    {
-        if (g_theInput->WasKeyJustPressed(KEYCODE_P))
-        {
-            m_gameClock->TogglePause();
-        }
-
-        if (g_theInput->WasKeyJustPressed(KEYCODE_O))
-        {
-            m_gameClock->StepSingleFrame();
-        }
-
-        if (g_theInput->IsKeyDown(KEYCODE_T))
-        {
-            m_gameClock->SetTimeScale(0.1f);
-        }
-
-        if (g_theInput->WasKeyJustReleased(KEYCODE_T))
-        {
-            m_gameClock->SetTimeScale(1.f);
-        }
-
-        if (g_theInput->WasKeyJustPressed(KEYCODE_I))
-        {
-            DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
-        }
-
-        if (g_theInput->WasKeyJustPressed(KEYCODE_F2))
-        {
-            m_sunDirection.x -= 1.f;
-            DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
-        }
-
-        if (g_theInput->WasKeyJustPressed(KEYCODE_F3))
-        {
-            m_sunDirection.x += 1.f;
-            DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
-        }
-
-        if (g_theInput->WasKeyJustPressed(KEYCODE_F4))
-        {
-            m_sunDirection.y -= 1.f;
-            DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
-        }
-
-        if (g_theInput->WasKeyJustPressed(KEYCODE_F5))
-        {
-            m_sunDirection.y += 1.f;
-            DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
-        }
-
-        if (g_theInput->WasKeyJustPressed(KEYCODE_F6))
-        {
-            m_sunIntensity -= 0.05f;
-            m_sunIntensity = GetClampedZeroToOne(m_sunIntensity);
-            DebugAddMessage(Stringf("Sun Intensity: (%.2f)", m_sunIntensity), 5.f);
-        }
-
-        if (g_theInput->WasKeyJustPressed(KEYCODE_F7))
-        {
-            m_sunIntensity += 0.05f;
-            m_sunIntensity = GetClampedZeroToOne(m_sunIntensity);
-            DebugAddMessage(Stringf("Sun Intensity: (%.2f)", m_sunIntensity), 5.f);
-        }
-
-        if (g_theInput->WasKeyJustPressed(KEYCODE_F8))
-        {
-            m_ambientIntensity -= 0.05f;
-            m_ambientIntensity = GetClampedZeroToOne(m_ambientIntensity);
-            DebugAddMessage(Stringf("Ambient Intensity: (%.2f)", m_ambientIntensity), 5.f);
-        }
-
-        if (g_theInput->WasKeyJustPressed(KEYCODE_F9))
-        {
-            m_ambientIntensity += 0.05f;
-            m_ambientIntensity = GetClampedZeroToOne(m_ambientIntensity);
-            DebugAddMessage(Stringf("Ambient Intensity: (%.2f)", m_ambientIntensity), 5.f);
-        }
-    }
+    UNUSED(deltaSeconds)
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -165,7 +117,7 @@ void Match::Render() const
 
     m_board->Render();
 
-    for (Piece* piece : m_pieceList)
+    for (Piece const* piece : m_pieceList)
     {
         if (piece == nullptr) continue;
         piece->Render();
@@ -201,7 +153,7 @@ bool Match::IsChessMoveValid(IntVec2 const& fromCoords,
     }
 
     // 3. If fromCoords is not current turn player's piece, return false.
-    if (m_board->GetSquareInfoByCoords(fromCoords).m_playerControllerId != m_currenTurnPlayerIndex)
+    if (m_board->GetSquareInfoByCoords(fromCoords).m_playerControllerId != g_theGame->GetCurrentPlayerControllerId())
     {
         g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("[SYSTEM] from=%s is not your piece!", m_board->ChessCoordToString(fromCoords).c_str()));
         return false;
@@ -220,7 +172,7 @@ bool Match::IsChessMoveValid(IntVec2 const& fromCoords,
 
     if (toPiece != nullptr)
     {
-        if (toOwner == m_currenTurnPlayerIndex)
+        if (toOwner == g_theGame->GetCurrentPlayerControllerId())
         {
             g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("[SYSTEM] to=%s is occupied by your own piece!", m_board->ChessCoordToString(toCoords).c_str()));
             return false;
@@ -244,7 +196,7 @@ void Match::HandleCapture(IntVec2 const& fromCoords,
     {
         m_board->CapturePiece(fromPiece->m_coords, toPiece->m_coords);
         g_theDevConsole->AddLine(DevConsole::WARNING, "##################################################");
-        g_theDevConsole->AddLine(DevConsole::WARNING, Stringf("[SYSTEM] Player #%d has won the match!", m_currenTurnPlayerIndex));
+        g_theDevConsole->AddLine(DevConsole::WARNING, Stringf("[SYSTEM] Player #%d has won the match!", g_theGame->GetCurrentPlayerControllerId()));
         g_theDevConsole->AddLine(DevConsole::WARNING, "##################################################");
         g_theGame->ChangeGameState(eGameState::FINISHED);
     }
@@ -263,13 +215,15 @@ void Match::OnChessMove(IntVec2 const& fromCoords,
     Piece* piece = m_board->GetPieceByCoords(fromCoords);
     piece->UpdatePositionByCoords(toCoords);
     m_board->UpdateBoardSquareInfoList(fromCoords, toCoords);
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("Move Player #%d's %s from %s to %s", m_currenTurnPlayerIndex, m_board->GetPieceByCoords(fromCoords)->m_definition->m_name.c_str(), m_board->ChessCoordToString(fromCoords).c_str(), m_board->ChessCoordToString(toCoords).c_str()));
+    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("Move Player #%d's %s from %s to %s", g_theGame->GetCurrentPlayerControllerId(), m_board->GetPieceByCoords(fromCoords)->m_definition->m_name.c_str(), m_board->ChessCoordToString(fromCoords).c_str(),
+                                                             m_board->ChessCoordToString(toCoords).c_str()));
     g_theEventSystem->FireEvent("OnExitMatchTurn");
 }
 
 void Match::UpdatePieceList(IntVec2 const& fromCoords,
                             IntVec2 const& toCoords)
 {
+    UNUSED(fromCoords);
     for (auto it = m_pieceList.begin(); it != m_pieceList.end();)
     {
         Piece const* piece = *it;
@@ -307,10 +261,12 @@ bool Match::OnEnterMatchState(EventArgs& args)
 
 bool Match::OnEnterMatchTurn(EventArgs& args)
 {
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("=================================================="));
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("Player #%d -- it's your turn!", g_theGame->m_match->m_currenTurnPlayerIndex));
+	UNUSED(args);
 
-    int const currentTurnPlayerIndex = g_theGame->m_match->m_currenTurnPlayerIndex;
+    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("=================================================="));
+    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("Player #%d -- it's your turn!", g_theGame->GetCurrentPlayerControllerId()));
+
+    int const currentTurnPlayerIndex = g_theGame->GetCurrentPlayerControllerId();
 
     if (currentTurnPlayerIndex == 0 || currentTurnPlayerIndex == -1) g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Game state is: First Player's Turn"));
     else if (currentTurnPlayerIndex == 1) g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Game state is: Second Player's Turn"));
@@ -331,24 +287,20 @@ bool Match::OnEnterMatchTurn(EventArgs& args)
 
 bool Match::OnExitMatchTurn(EventArgs& args)
 {
+    UNUSED(args);
     // if (g_theGame->m_match->m_currenTurnPlayerIndex==-1)
     // {
     //     g_theGame->m_match->m_currenTurnPlayerIndex=0;
     //     return true;
     // }
-    g_theGame->m_match->SwitchPlayerIndex();
+    g_theGame->SwitchPlayerControllerId();
     g_theEventSystem->FireEvent("OnEnterMatchTurn");
     return true;
 }
 
 bool Match::OnMatchInitialized(EventArgs& args)
 {
+    UNUSED(args);
     g_theEventSystem->FireEvent("OnEnterMatchTurn");
     return true;
-}
-
-void Match::SwitchPlayerIndex()
-{
-    if (m_currenTurnPlayerIndex == 0) m_currenTurnPlayerIndex = 1;
-    else if (m_currenTurnPlayerIndex == 1) m_currenTurnPlayerIndex = 0;
 }

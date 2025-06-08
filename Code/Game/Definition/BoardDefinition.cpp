@@ -15,12 +15,6 @@ STATIC std::vector<BoardDefinition*> BoardDefinition::s_boardDefinitions;
 //----------------------------------------------------------------------------------------------------
 BoardDefinition::~BoardDefinition()
 {
-    for (BoardDefinition const* boardDef : s_boardDefinitions)
-    {
-        delete boardDef;
-    }
-
-    s_boardDefinitions.clear();
 }
 
 bool BoardDefinition::LoadFromXmlElement(XmlElement const* element)
@@ -84,4 +78,14 @@ void BoardDefinition::InitializeDefs(char const* path)
 
         boardDefinitionElement = boardDefinitionElement->NextSiblingElement();
     }
+}
+
+void BoardDefinition::ClearAllDefs()
+{
+    for (BoardDefinition const* boardDef : s_boardDefinitions)
+    {
+        delete boardDef;
+    }
+
+    s_boardDefinitions.clear();
 }
