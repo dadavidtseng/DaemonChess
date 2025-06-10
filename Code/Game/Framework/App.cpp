@@ -37,15 +37,15 @@ void App::Startup()
     LoadGameConfig("Data/GameConfig.xml");
 
     // Create All Engine Subsystems
-    EventSystemConfig eventSystemConfig;
+    sEventSystemConfig eventSystemConfig;
     g_theEventSystem = new EventSystem(eventSystemConfig);
     g_theEventSystem->SubscribeEventCallbackFunction("OnCloseButtonClicked", OnCloseButtonClicked);
     g_theEventSystem->SubscribeEventCallbackFunction("quit", OnCloseButtonClicked);
 
-    InputSystemConfig inputConfig;
+    sInputSystemConfig inputConfig;
     g_theInput = new InputSystem(inputConfig);
 
-    WindowConfig windowConfig;
+    sWindowConfig windowConfig;
     windowConfig.m_aspectRatio = 2.f;
     windowConfig.m_inputSystem = g_theInput;
     windowConfig.m_windowTitle = "ChessSimulator";
@@ -87,7 +87,7 @@ void App::Startup()
     g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(ESC)   Exit Game");
     g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(SPACE) Start Game");
 
-    AudioSystemConfig audioConfig;
+    sAudioSystemConfig audioConfig;
     g_theAudio = new AudioSystem(audioConfig);
 
     g_theEventSystem->Startup();

@@ -23,7 +23,7 @@ class Board final : public Actor
 {
 public:
     explicit Board(Match* owner, Texture const* texture = nullptr);
-    ~Board() override;
+~Board()override;
 
     void Update(float deltaSeconds) override;
     void Render() const override;
@@ -41,7 +41,7 @@ public:
     void InitializeLocalVertsForBoardFrame();
     void UpdateBoardSquareInfoList(IntVec2 const& fromCoords, IntVec2 const& toCoords);
     void CapturePiece(IntVec2 const& fromCoords, IntVec2 const& toCoords);
-
+    // PieceList                m_pieceList;
     std::vector<sSquareInfo> m_squareInfoList;
 
 private:

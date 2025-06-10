@@ -18,8 +18,9 @@ public:
     ~PlayerController() override;
 
     void Update(float deltaSeconds) override;
-    void Render() const override;
-    void UpdateFromInput();
+    void Render() const;
+    void UpdateFromKeyBoard();
+    void UpdateFromController();
 
     Camera* GetCamera() const;
     Mat44   GetModelToWorldTransform() const;

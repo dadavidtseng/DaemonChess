@@ -36,4 +36,9 @@ protected:
     Shader*          m_shader     = nullptr;
     PieceDefinition* m_definition = nullptr;
     int              m_id         = -1;
+
+    // IntVec2 m_currentCoords
+    // IntVec2 m_prevCoords;
+    // float m_secondSinceMOved = 0.f;
+    // int m_turnLastMoved = -1;
 };

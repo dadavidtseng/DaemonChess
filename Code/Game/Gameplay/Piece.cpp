@@ -23,16 +23,18 @@ Piece::Piece(Match* owner, sSquareInfo const& squareInfo, Texture* texture)
     m_definition = PieceDefinition::GetDefByName(squareInfo.m_name);
 
     m_shader = m_definition->m_shader;
-    m_texture = m_definition->m_texture;
+    // m_texture = m_definition->m_texture;
     m_coords = squareInfo.m_coords;
 
     UpdatePositionByCoords(squareInfo.m_coords);
+    // m_orientation = EulerAngles(45,0,0);
 }
 
 
 //----------------------------------------------------------------------------------------------------
 void Piece::Update(float const deltaSeconds)
 {
+    // Interpolation finishes no matter the value of FPS.
     m_orientation.m_yawDegrees += m_angularVelocity.m_yawDegrees * deltaSeconds;
     m_orientation.m_pitchDegrees += m_angularVelocity.m_pitchDegrees * deltaSeconds;
     m_orientation.m_rollDegrees += m_angularVelocity.m_rollDegrees * deltaSeconds;

@@ -25,6 +25,7 @@ PlayerController::PlayerController(Game* owner)
     Mat44 c2r;
     c2r.SetIJK3D(Vec3::Z_BASIS, -Vec3::X_BASIS, Vec3::Y_BASIS);
     m_worldCamera->SetCameraToRenderTransform(c2r);
+
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -78,7 +79,12 @@ void PlayerController::Render() const
 }
 
 //----------------------------------------------------------------------------------------------------
-void PlayerController::UpdateFromInput()
+void PlayerController::UpdateFromKeyBoard()
+{
+}
+
+//----------------------------------------------------------------------------------------------------
+void PlayerController::UpdateFromController()
 {
 }
 
@@ -88,12 +94,12 @@ Camera* PlayerController::GetCamera() const
     return m_worldCamera;
 }
 
-//----------------------------------------------------------------------------------------------------
 Mat44 PlayerController::GetModelToWorldTransform() const
 {
     Mat44 m2w;
 
     m2w.SetTranslation3D(m_position);
+
     m2w.Append(m_orientation.GetAsMatrix_IFwd_JLeft_KUp());
 
     return m2w;
