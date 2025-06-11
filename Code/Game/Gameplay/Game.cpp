@@ -11,7 +11,7 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
-#include "Engine/Renderer/Window.hpp"
+#include "Engine/Platform/Window.hpp"
 #include "Game/Definition/BoardDefinition.hpp"
 #include "Game/Definition/PieceDefinition.hpp"
 #include "Game/Framework/App.hpp"

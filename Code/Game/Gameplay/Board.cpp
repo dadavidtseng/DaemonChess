@@ -22,7 +22,7 @@ Board::Board(Match* owner, Texture const* texture)
     : Actor(owner),
       m_texture(texture)
 {
-    m_shader = g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Diffuse", eVertexType::VERTEX_PCUTBN);
+    m_shader = g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Diffuse", Renderer::eVertexType::VERTEX_PCUTBN);
     InitializeLocalVertsForAABB3s();
     InitializeLocalVertsForBoardFrame();
 
@@ -46,10 +46,10 @@ void Board::Update(float const deltaSeconds)
 void Board::Render() const
 {
     g_theRenderer->SetModelConstants(GetModelToWorldTransform(), m_color);
-    g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
-    g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
-    g_theRenderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
-    g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
+    g_theRenderer->SetBlendMode(Renderer::eBlendMode::OPAQUE);
+    g_theRenderer->SetRasterizerMode(Renderer::eRasterizerMode::SOLID_CULL_BACK);
+    g_theRenderer->SetSamplerMode(Renderer::eSamplerMode::POINT_CLAMP);
+    g_theRenderer->SetDepthMode(Renderer::eDepthMode::READ_WRITE_LESS_EQUAL);
     g_theRenderer->BindTexture(m_texture);
     g_theRenderer->BindShader(m_shader);
     g_theRenderer->DrawVertexArray(m_vertexes, m_indexes);

@@ -15,7 +15,7 @@
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
-#include "Engine/Renderer/Window.hpp"
+#include "Engine/Platform/Window.hpp"
 #include "Game/Gameplay/Game.hpp"
 #include "Game/Framework/GameCommon.hpp"
 
@@ -49,9 +49,10 @@ void App::Startup()
     windowConfig.m_aspectRatio = 2.f;
     windowConfig.m_inputSystem = g_theInput;
     windowConfig.m_windowTitle = "ChessSimulator";
+    windowConfig.m_iconFilePath=L"C:/p4/Personal/SD/ChessSimulator/Run/Data/Images/Chess.ico";
     g_theWindow                = new Window(windowConfig);
 
-    sRenderConfig renderConfig;
+    Renderer::sRenderConfig renderConfig;
     renderConfig.m_window = g_theWindow;
     g_theRenderer         = new Renderer(renderConfig);
 
