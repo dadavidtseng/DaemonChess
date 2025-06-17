@@ -303,7 +303,7 @@ void Game::UpdateFromInput()
 void Game::UpdateEntities(float const gameDeltaSeconds, float const systemDeltaSeconds) const
 {
     if (m_match == nullptr) return;
-    m_match->Update(gameDeltaSeconds);
+    m_match->Update();
     GetLocalPlayer(m_currentPlayerControllerId)->Update(systemDeltaSeconds);
 }
 

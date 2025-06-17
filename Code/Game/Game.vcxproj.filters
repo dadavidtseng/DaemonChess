@@ -70,6 +70,9 @@
     <ClCompile Include="Definition\BoardDefinition.cpp">
       <Filter>Definition</Filter>
     </ClCompile>
+    <ClCompile Include="Framework\MatchCommon.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Gameplay\Actor.hpp">
@@ -116,6 +119,9 @@
     </ClInclude>
     <ClInclude Include="Definition\BoardDefinition.hpp">
       <Filter>Definition</Filter>
+    </ClInclude>
+    <ClInclude Include="Framework\MatchCommon.hpp">
+      <Filter>Framework</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

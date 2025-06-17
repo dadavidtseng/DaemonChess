@@ -23,7 +23,7 @@ class Board final : public Actor
 {
 public:
     explicit Board(Match* owner, Texture const* texture = nullptr);
-~Board()override;
+    ~Board() override;
 
     void Update(float deltaSeconds) override;
     void Render() const override;
@@ -34,13 +34,17 @@ public:
     sSquareInfo GetSquareInfoByCoords(IntVec2 const& coords);
     IntVec2     StringToChessCoord(String const& chessPos);
     String      ChessCoordToString(IntVec2 const& coords);
-    String      GetBoardContents(int rowNum);
+    String      GetBoardContents(int rowNum) const;
     bool        IsCoordValid(IntVec2 const& coords) const;
 
-    void InitializeLocalVertsForAABB3s();
-    void InitializeLocalVertsForBoardFrame();
-    void UpdateBoardSquareInfoList(IntVec2 const& fromCoords, IntVec2 const& toCoords);
-    void CapturePiece(IntVec2 const& fromCoords, IntVec2 const& toCoords);
+    void    InitializeLocalVertsForAABB3s();
+    void    InitializeLocalVertsForBoardFrame();
+    void    UpdateBoardSquareInfoList(IntVec2 const& fromCoords, IntVec2 const& toCoords);
+    void    CapturePiece(IntVec2 const& fromCoords, IntVec2 const& toCoords);
+    IntVec2 FindKingPosition(int enemy_player);
+    void    MovePiece(IntVec2 const& int_vec2, IntVec2 const& to_coords);
+    void    PromotePawn(IntVec2 const& int_vec2, IntVec2 const& to_coords, const std::string& string);
+    void    RemovePiece(IntVec2 const& int_vec2);
     // PieceList                m_pieceList;
     std::vector<sSquareInfo> m_squareInfoList;
 

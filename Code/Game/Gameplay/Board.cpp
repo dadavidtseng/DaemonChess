@@ -5,7 +5,6 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Board.hpp"
 
-#include "Match.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Math/AABB3.hpp"
@@ -14,19 +13,17 @@
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game/Definition/BoardDefinition.hpp"
 #include "Game/Framework/GameCommon.hpp"
+#include "Game/Gameplay/Match.hpp"
 #include "Game/Gameplay/Piece.hpp"
-#include "ThirdParty/stb/stb_image.h"
 
 //----------------------------------------------------------------------------------------------------
 Board::Board(Match* owner, Texture const* texture)
     : Actor(owner),
       m_texture(texture)
 {
-    m_shader = g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Diffuse", Renderer::eVertexType::VERTEX_PCUTBN);
+    m_shader = g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Diffuse", eVertexType::VERTEX_PCUTBN);
     InitializeLocalVertsForAABB3s();
     InitializeLocalVertsForBoardFrame();
-
-
 }
 
 Board::~Board()
@@ -46,10 +43,10 @@ void Board::Update(float const deltaSeconds)
 void Board::Render() const
 {
     g_theRenderer->SetModelConstants(GetModelToWorldTransform(), m_color);
-    g_theRenderer->SetBlendMode(Renderer::eBlendMode::OPAQUE);
-    g_theRenderer->SetRasterizerMode(Renderer::eRasterizerMode::SOLID_CULL_BACK);
-    g_theRenderer->SetSamplerMode(Renderer::eSamplerMode::POINT_CLAMP);
-    g_theRenderer->SetDepthMode(Renderer::eDepthMode::READ_WRITE_LESS_EQUAL);
+    g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
+    g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
+    g_theRenderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
+    g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
     g_theRenderer->BindTexture(m_texture);
     g_theRenderer->BindShader(m_shader);
     g_theRenderer->DrawVertexArray(m_vertexes, m_indexes);
@@ -95,11 +92,10 @@ IntVec2 Board::StringToChessCoord(String const& chessPos)
 {
     if (chessPos.length() != 2) return IntVec2(-1, -1);  // 非法輸入
 
-    int fileInt = tolower(static_cast<unsigned char>(chessPos[0])); // 'a'~'h'
-    char rank = chessPos[1]; // '1'~'8'
+    int  fileInt = tolower(static_cast<unsigned char>(chessPos[0])); // 'a'~'h'
+    char rank    = chessPos[1]; // '1'~'8'
 
-    if (fileInt < 'a' || fileInt > 'h' || rank < '1' || rank > '8')
-        return IntVec2(-1, -1); // 非法座標
+    if (fileInt < 'a' || fileInt > 'h' || rank < '1' || rank > '8') return IntVec2(-1, -1); // 非法座標
 
     int col = fileInt - 'a' + 1;  // 'a' -> 1, ..., 'h' -> 8
     int row = rank - '0';         // '3' -> 3
@@ -125,10 +121,10 @@ String Board::ChessCoordToString(IntVec2 const& coords)
     return result;
 }
 
-String Board::GetBoardContents(int rowNum)
+String Board::GetBoardContents(int const rowNum) const
 {
-    const int colNum = 8;
-    String    result;
+    int constexpr colNum = 8;
+    String        result;
 
     // rowNum: 1 ~ 8（最上到最下）
     int startIndex = (rowNum - 1) * colNum;
@@ -165,14 +161,14 @@ void Board::InitializeLocalVertsForAABB3s()
 
 void Board::InitializeLocalVertsForBoardFrame()
 {
-    constexpr float boardSize      = 8.0f;
-    constexpr float halfSize       = boardSize * 0.5f; // = 4.0f
-    constexpr float frameThickness = 0.2f;
-    constexpr float frameHeight    = 0.5f;
+    float constexpr boardSize      = 8.f;
+    float constexpr halfSize       = boardSize * 0.5f; // = 4.0f
+    float constexpr frameThickness = 0.2f;
+    float constexpr frameHeight    = 0.5f;
 
     // 棋盤中心點在 (4,4)
-    const float centerX = 4.0f;
-    const float centerY = 4.0f;
+    float constexpr centerX = 4.f;
+    float constexpr centerY = 4.f;
 
     // Bottom Frame
     AABB3 bottomFrame = AABB3(
@@ -229,3 +225,21 @@ void Board::CapturePiece(IntVec2 const& fromCoords,
     // UpdateBoardSquareInfoList(fromCoords, toCoords);
     m_match->UpdatePieceList(fromCoords, toCoords);
 }
+
+IntVec2 Board::FindKingPosition(int enemy_player)
+{
+    return IntVec2::ZERO;
+}
+
+void Board::MovePiece(IntVec2 const& int_vec2, IntVec2 const& to_coords)
+{
+}
+
+void Board::PromotePawn(IntVec2 const& int_vec2, IntVec2 const& to_coords, const std::string& string)
+{
+}
+
+void Board::RemovePiece(IntVec2 const& int_vec2)
+{
+}
+

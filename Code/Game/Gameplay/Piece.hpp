@@ -37,6 +37,7 @@ protected:
     PieceDefinition* m_definition = nullptr;
     int              m_id         = -1;
 
+    bool m_hasMoved       = false;
     // IntVec2 m_currentCoords
     // IntVec2 m_prevCoords;
     // float m_secondSinceMOved = 0.f;

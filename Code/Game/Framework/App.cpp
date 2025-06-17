@@ -32,35 +32,57 @@ Window*                g_theWindow     = nullptr;       // Created and owned by 
 STATIC bool App::m_isQuitting = false;
 
 //----------------------------------------------------------------------------------------------------
+/// @brief
+/// Create all engine subsystems in a specific order.
 void App::Startup()
 {
     LoadGameConfig("Data/GameConfig.xml");
 
-    // Create All Engine Subsystems
-    sEventSystemConfig eventSystemConfig;
+    //-Start-of-EventSystem---------------------------------------------------------------------------
+
+    sEventSystemConfig constexpr eventSystemConfig;
     g_theEventSystem = new EventSystem(eventSystemConfig);
     g_theEventSystem->SubscribeEventCallbackFunction("OnCloseButtonClicked", OnCloseButtonClicked);
     g_theEventSystem->SubscribeEventCallbackFunction("quit", OnCloseButtonClicked);
 
-    sInputSystemConfig inputConfig;
+    //-End-of-EventSystem-----------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
+    //-Start-of-InputSystem---------------------------------------------------------------------------
+
+    sInputSystemConfig constexpr inputConfig;
     g_theInput = new InputSystem(inputConfig);
 
-    sWindowConfig windowConfig;
-    windowConfig.m_aspectRatio = 2.f;
-    windowConfig.m_inputSystem = g_theInput;
-    windowConfig.m_windowTitle = "ChessSimulator";
-    windowConfig.m_iconFilePath=L"C:/p4/Personal/SD/ChessSimulator/Run/Data/Images/Chess.ico";
-    g_theWindow                = new Window(windowConfig);
+    //-End-of-InputSystem-----------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
+    //-Start-of-Window--------------------------------------------------------------------------------
 
-    Renderer::sRenderConfig renderConfig;
+    sWindowConfig windowConfig;
+    windowConfig.m_aspectRatio  = 2.f;
+    windowConfig.m_inputSystem  = g_theInput;
+    windowConfig.m_windowTitle  = "ChessSimulator";
+    windowConfig.m_iconFilePath = L"C:/p4/Personal/SD/ChessSimulator/Run/Data/Images/Chess.ico";
+    g_theWindow                 = new Window(windowConfig);
+
+    //-End-of-Window----------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
+    //-Start-of-Renderer------------------------------------------------------------------------------
+
+    sRenderConfig renderConfig;
     renderConfig.m_window = g_theWindow;
     g_theRenderer         = new Renderer(renderConfig);
+
+    //-End-of-Renderer--------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
+    //-Start-of-DebugRender---------------------------------------------------------------------------
 
     sDebugRenderConfig debugConfig;
     debugConfig.m_renderer = g_theRenderer;
     debugConfig.m_fontName = "SquirrelFixedFont";
 
-    // Initialize devConsoleCamera
+    //-End-of-DebugRender-----------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
+    //-Start-of-DevConsole----------------------------------------------------------------------------
+
     m_devConsoleCamera = new Camera();
 
     sDevConsoleConfig devConsoleConfig;
@@ -76,20 +98,18 @@ void App::Startup()
     g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(Q/E)   Roll");
     g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(Z/C)   Elevate");
     g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(Shift) Sprint");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(H)     Set Camera to Origin");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(1)     Spawn Line");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(2)     Spawn Point");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(3)     Spawn Wireframe Sphere");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(4)     Spawn Basis");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(5)     Spawn Billboard Text");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(6)     Spawn Wireframe Cylinder");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(7)     Add Message");
     g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(~)     Toggle Dev Console");
     g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(ESC)   Exit Game");
     g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(SPACE) Start Game");
 
-    sAudioSystemConfig audioConfig;
+    //-End-of-DevConsole------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
+    //-Start-of-AudioSystem---------------------------------------------------------------------------
+
+    sAudioSystemConfig constexpr audioConfig;
     g_theAudio = new AudioSystem(audioConfig);
+
+    //-End-of-AudioSystem-----------------------------------------------------------------------------
 
     g_theEventSystem->Startup();
     g_theWindow->Startup();
@@ -222,31 +242,17 @@ void App::EndFrame() const
 }
 
 //----------------------------------------------------------------------------------------------------
-void App::UpdateCursorMode()
+void App::UpdateCursorMode() const
 {
-    bool const doesWindowHasFocus   = GetActiveWindow() == g_theWindow->GetWindowHandle();
-    bool const isAttractState = g_theGame->GetCurrentGameState()==eGameState::ATTRACT;
-    bool const shouldUsePointerMode = !doesWindowHasFocus || g_theDevConsole->IsOpen() || isAttractState;
+    bool const        doesWindowHasFocus   = GetActiveWindow() == g_theWindow->GetWindowHandle();
+    bool const        isAttractState       = g_theGame->GetCurrentGameState() == eGameState::ATTRACT;
+    bool const        shouldUsePointerMode = !doesWindowHasFocus || g_theDevConsole->IsOpen() || isAttractState;
+    eCursorMode const mode                 = shouldUsePointerMode ? eCursorMode::POINTER : eCursorMode::FPS;
 
-    if (shouldUsePointerMode == true)
-    {
-        g_theInput->SetCursorMode(CursorMode::POINTER);
-    }
-    else
-    {
-        g_theInput->SetCursorMode(CursorMode::FPS);
-    }
+    g_theInput->SetCursorMode(mode);
 }
 
 //----------------------------------------------------------------------------------------------------
-void App::DeleteAndCreateNewGame()
-{
-    delete g_theGame;
-    g_theGame = nullptr;
-
-    g_theGame = new Game();
-}
-
 void App::LoadGameConfig(char const* gameConfigXmlFilePath) const
 {
     XmlDocument     gameConfigXml;

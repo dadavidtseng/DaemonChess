@@ -31,8 +31,7 @@ private:
     void Render() const;
     void EndFrame() const;
 
-    void UpdateCursorMode();
-    void DeleteAndCreateNewGame();
+    void UpdateCursorMode() const;
     void LoadGameConfig(char const* gameConfigXmlFilePath) const;
 
     Camera* m_devConsoleCamera = nullptr;

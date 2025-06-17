@@ -197,6 +197,7 @@
     <ClCompile Include="Framework\Controller.cpp" />
     <ClCompile Include="Framework\GameCommon.cpp" />
     <ClCompile Include="Framework\Main_Windows.cpp" />
+    <ClCompile Include="Framework\MatchCommon.cpp" />
     <ClCompile Include="Framework\PlayerController.cpp" />
     <ClCompile Include="Gameplay\Actor.cpp" />
     <ClCompile Include="Gameplay\Board.cpp" />
@@ -214,6 +215,7 @@
     <ClInclude Include="Framework\App.hpp" />
     <ClInclude Include="Framework\Controller.hpp" />
     <ClInclude Include="Framework\GameCommon.hpp" />
+    <ClInclude Include="Framework\MatchCommon.hpp" />
     <ClInclude Include="Framework\PlayerController.hpp" />
     <ClInclude Include="Gameplay\Actor.hpp" />
     <ClInclude Include="Gameplay\Board.hpp" />
