@@ -22,8 +22,8 @@ Board::Board(Match* owner, Texture const* texture)
       m_texture(texture)
 {
     m_shader = g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Diffuse", eVertexType::VERTEX_PCUTBN);
-    InitializeLocalVertsForAABB3s();
-    InitializeLocalVertsForBoardFrame();
+    CreateLocalVertsForAABB3s();
+    CreateLocalVertsForBoardFrame();
 }
 
 Board::~Board()
@@ -78,6 +78,7 @@ Piece* Board::GetPieceByCoords(IntVec2 const& coords) const
 
 sSquareInfo Board::GetSquareInfoByCoords(IntVec2 const& coords)
 {
+    sSquareInfo returnSquareInfo;
     for (sSquareInfo squareInfo : m_squareInfoList)
     {
         if (squareInfo.m_coords == coords)
@@ -85,7 +86,7 @@ sSquareInfo Board::GetSquareInfoByCoords(IntVec2 const& coords)
             return squareInfo;
         }
     }
-    return sSquareInfo{};
+    return returnSquareInfo;
 }
 
 IntVec2 Board::StringToChessCoord(String const& chessPos)
@@ -141,7 +142,7 @@ bool Board::IsCoordValid(IntVec2 const& coords) const
     return coords.x >= 1 && coords.x <= 8 && coords.y >= 1 && coords.y <= 8;
 }
 
-void Board::InitializeLocalVertsForAABB3s()
+void Board::CreateLocalVertsForAABB3s()
 {
     for (int y = 0; y < 8; ++y)
     {
@@ -159,7 +160,7 @@ void Board::InitializeLocalVertsForAABB3s()
     }
 }
 
-void Board::InitializeLocalVertsForBoardFrame()
+void Board::CreateLocalVertsForBoardFrame()
 {
     float constexpr boardSize      = 8.f;
     float constexpr halfSize       = boardSize * 0.5f; // = 4.0f
@@ -208,7 +209,9 @@ void Board::UpdateBoardSquareInfoList(IntVec2 const& fromCoords, IntVec2 const& 
     {
         if (it->m_coords == toCoords)
         {
-            *it = fromInfo; // 用暫存的，不怕被修改掉
+            it->m_name               = fromInfo.m_name;
+            it->m_notation           = fromInfo.m_notation;
+            it->m_playerControllerId = fromInfo.m_playerControllerId;
         }
         else if (it->m_coords == fromCoords)
         {
@@ -231,8 +234,9 @@ IntVec2 Board::FindKingPosition(int enemy_player)
     return IntVec2::ZERO;
 }
 
-void Board::MovePiece(IntVec2 const& int_vec2, IntVec2 const& to_coords)
+void Board::MovePiece(IntVec2 const& fromCoords, IntVec2 const& toCoords)
 {
+    m_match->UpdatePieceList(fromCoords, toCoords);
 }
 
 void Board::PromotePawn(IntVec2 const& int_vec2, IntVec2 const& to_coords, const std::string& string)
@@ -242,4 +246,3 @@ void Board::PromotePawn(IntVec2 const& int_vec2, IntVec2 const& to_coords, const
 void Board::RemovePiece(IntVec2 const& int_vec2)
 {
 }
-

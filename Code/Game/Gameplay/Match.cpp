@@ -181,15 +181,17 @@ void Match::OnChessMove(IntVec2 const& fromCoords,
                         IntVec2 const& toCoords)
 {
     if (!IsChessMoveValid(fromCoords, toCoords)) return;
-
-    ExecuteMove(fromCoords, toCoords, "");
-    HandleCapture(fromCoords, toCoords);
-    Piece* piece = m_board->GetPieceByCoords(fromCoords);
-    piece->UpdatePositionByCoords(toCoords);
-    UpdatePieceList(fromCoords, toCoords);
-    m_board->UpdateBoardSquareInfoList(fromCoords, toCoords);
     g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("Move Player #%d's %s from %s to %s", g_theGame->GetCurrentPlayerControllerId(), m_board->GetPieceByCoords(fromCoords)->m_definition->m_name.c_str(), m_board->ChessCoordToString(fromCoords).c_str(),
                                                              m_board->ChessCoordToString(toCoords).c_str()));
+    ExecuteMove(fromCoords, toCoords, "");
+    // HandleCapture(fromCoords, toCoords);
+    //
+    // Piece* piece = m_board->GetPieceByCoords(fromCoords);
+    // piece->UpdatePositionByCoords(toCoords);
+    // UpdatePieceList(fromCoords, toCoords);
+    // m_board->UpdateBoardSquareInfoList(fromCoords, toCoords);
+
+
     g_theEventSystem->FireEvent("OnExitMatchTurn");
     // TODO: Add teleport event to cheat
 }
@@ -200,18 +202,18 @@ void Match::UpdatePieceList(IntVec2 const& fromCoords,
     UNUSED(fromCoords)
     for (auto it = m_pieceList.begin(); it != m_pieceList.end();)
     {
-        Piece const* piece = *it;
+        Piece* piece = *it;
 
         if (piece->m_coords == toCoords)
         {
-            delete piece;                  // 釋放記憶體
+            delete piece;
 
-            piece = nullptr;
-            it    = m_pieceList.erase(it);   // 用 erase 回傳的 iterator（新的位置）
+            it = m_pieceList.erase(it);
+            break;
         }
         else
         {
-            ++it; // 只有沒刪除時才 ++
+            ++it;
         }
     }
 }
@@ -291,6 +293,7 @@ MoveResult Match::ValidateChessMove(IntVec2 const&     fromCoords,
 
     // 2. Check if source square has a piece
     Piece const* fromPiece = m_board->GetPieceByCoords(fromCoords);
+
     if (fromPiece == nullptr)
     {
         return MoveResult::INVALID_MOVE_NO_PIECE;
@@ -742,10 +745,15 @@ void Match::ExecuteMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, std:
         HandleCapture(fromCoords, toCoords);
         m_board->MovePiece(fromCoords, toCoords);
         break;
-
     case MoveResult::VALID_MOVE_NORMAL:
     default:
-        m_board->MovePiece(fromCoords, toCoords);
+        // m_board->MovePiece(fromCoords, toCoords);
+
+        Piece* piece = m_board->GetPieceByCoords(fromCoords);
+
+        piece->UpdatePositionByCoords(toCoords);
+        m_board->UpdateBoardSquareInfoList(fromCoords, toCoords);
+
         break;
     }
 

@@ -57,4 +57,5 @@ void Piece::Render() const
 void Piece::UpdatePositionByCoords(IntVec2 const& newCoords)
 {
     m_position = m_match->m_board->GetWorldPositionByCoords(newCoords);
+    m_coords   = newCoords;
 }

@@ -17,7 +17,6 @@ class Piece;
 class Texture;
 struct BoardDefinition;
 
-
 //----------------------------------------------------------------------------------------------------
 class Board final : public Actor
 {
@@ -37,12 +36,12 @@ public:
     String      GetBoardContents(int rowNum) const;
     bool        IsCoordValid(IntVec2 const& coords) const;
 
-    void    InitializeLocalVertsForAABB3s();
-    void    InitializeLocalVertsForBoardFrame();
+    void    CreateLocalVertsForAABB3s();
+    void    CreateLocalVertsForBoardFrame();
     void    UpdateBoardSquareInfoList(IntVec2 const& fromCoords, IntVec2 const& toCoords);
     void    CapturePiece(IntVec2 const& fromCoords, IntVec2 const& toCoords);
     IntVec2 FindKingPosition(int enemy_player);
-    void    MovePiece(IntVec2 const& int_vec2, IntVec2 const& to_coords);
+    void    MovePiece(IntVec2 const& fromCoords, IntVec2 const& toCoords);
     void    PromotePawn(IntVec2 const& int_vec2, IntVec2 const& to_coords, const std::string& string);
     void    RemovePiece(IntVec2 const& int_vec2);
     // PieceList                m_pieceList;
