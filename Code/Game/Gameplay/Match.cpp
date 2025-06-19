@@ -20,18 +20,6 @@
 #include "Game/Gameplay/Piece.hpp"
 
 //----------------------------------------------------------------------------------------------------
-#if defined ERROR
-#undef ERROR
-#endif
-
-#if defined min
-#undef min
-#endif
-
-#if defined max
-#undef max
-#endif
-//----------------------------------------------------------------------------------------------------
 Match::Match()
 {
     g_theEventSystem->SubscribeEventCallbackFunction("ChessMove", OnChessMove);
@@ -143,7 +131,7 @@ void Match::CreateBoard()
 bool Match::IsChessMoveValid(IntVec2 const& fromCoords,
                              IntVec2 const& toCoords) const
 {
-    MoveResult result = ValidateChessMove(fromCoords, toCoords);
+    MoveResult const result = ValidateChessMove(fromCoords, toCoords);
 
     if (!IsMoveValid(result))
     {
@@ -178,19 +166,14 @@ void Match::HandleCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords) co
 }
 
 void Match::OnChessMove(IntVec2 const& fromCoords,
-                        IntVec2 const& toCoords)
+                        IntVec2 const& toCoords,
+                        String const&  promotionType)
 {
     if (!IsChessMoveValid(fromCoords, toCoords)) return;
+
     g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("Move Player #%d's %s from %s to %s", g_theGame->GetCurrentPlayerControllerId(), m_board->GetPieceByCoords(fromCoords)->m_definition->m_name.c_str(), m_board->ChessCoordToString(fromCoords).c_str(),
                                                              m_board->ChessCoordToString(toCoords).c_str()));
-    ExecuteMove(fromCoords, toCoords, "");
-    // HandleCapture(fromCoords, toCoords);
-    //
-    // Piece* piece = m_board->GetPieceByCoords(fromCoords);
-    // piece->UpdatePositionByCoords(toCoords);
-    // UpdatePieceList(fromCoords, toCoords);
-    // m_board->UpdateBoardSquareInfoList(fromCoords, toCoords);
-
+    ExecuteMove(fromCoords, toCoords, promotionType);
 
     g_theEventSystem->FireEvent("OnExitMatchTurn");
     // TODO: Add teleport event to cheat
@@ -211,22 +194,21 @@ void Match::UpdatePieceList(IntVec2 const& fromCoords,
             it = m_pieceList.erase(it);
             break;
         }
-        else
-        {
-            ++it;
-        }
+
+        ++it;
     }
 }
 
 bool Match::OnChessMove(EventArgs& args)
 {
-    String from = args.GetValue("from", "DEFAULT");
-    String to   = args.GetValue("to", "DEFAULT");
+    String const from      = args.GetValue("from", "DEFAULT");
+    String const to        = args.GetValue("to", "DEFAULT");
+    String const promotion = args.GetValue("promotion", "DEFAULT");
 
-    IntVec2 fromCoords = g_theGame->m_match->m_board->StringToChessCoord(from);
-    IntVec2 toCoords   = g_theGame->m_match->m_board->StringToChessCoord(to);
+    IntVec2 const fromCoords = g_theGame->m_match->m_board->StringToChessCoord(from);
+    IntVec2 const toCoords   = g_theGame->m_match->m_board->StringToChessCoord(to);
 
-    g_theGame->m_match->OnChessMove(fromCoords, toCoords);
+    g_theGame->m_match->OnChessMove(fromCoords, toCoords, promotion);
     return true;
 }
 
@@ -315,10 +297,10 @@ MoveResult Match::ValidateChessMove(IntVec2 const&     fromCoords,
     Piece const* toPiece = m_board->GetPieceByCoords(toCoords);
     int const    toOwner = m_board->GetSquareInfoByCoords(toCoords).m_playerControllerId;
 
-    if (toPiece != nullptr && toOwner == g_theGame->GetCurrentPlayerControllerId())
-    {
-        return MoveResult::INVALID_MOVE_DESTINATION_BLOCKED;
-    }
+    // if (toPiece != nullptr && toOwner == g_theGame->GetCurrentPlayerControllerId())
+    // {
+    //     return MoveResult::INVALID_MOVE_DESTINATION_BLOCKED;
+    // }
 
     // 6. Check piece-specific movement rules
     MoveResult pieceValidation = ValidatePieceMovement(fromCoords, toCoords, promotionType);
@@ -334,13 +316,13 @@ MoveResult Match::ValidateChessMove(IntVec2 const&     fromCoords,
     }
 
     // 8. Kings apart rule - king cannot move adjacent to enemy king
-    if (fromPiece->m_definition->m_type == ePieceType::KING)
-    {
-        if (!IsKingDistanceValid(fromCoords, toCoords))
-        {
-            return MoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
-        }
-    }
+    // if (fromPiece->m_definition->m_type == ePieceType::KING)
+    // {
+    //     if (!IsKingDistanceValid(fromCoords, toCoords))
+    //     {
+    //         return MoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
+    //     }
+    // }
 
     // Determine the type of valid move
     return DetermineValidMoveType(fromCoords, toCoords, fromPiece, promotionType);
@@ -505,7 +487,12 @@ MoveResult Match::ValidateKingMove(int            absDeltaX, int absDeltaY,
                                    IntVec2 const& toCoords) const
 {
     // Check for castling
-    if (absDeltaY == 0 && absDeltaX == 2)
+    if (absDeltaY == 0 && absDeltaX == 3)
+    {
+        return ValidateCastling(fromCoords, toCoords);
+    }
+
+    if (absDeltaY == 0 && absDeltaX == 4)
     {
         return ValidateCastling(fromCoords, toCoords);
     }
@@ -620,7 +607,7 @@ MoveResult Match::ValidateCastling(IntVec2 const& fromCoords, IntVec2 const& toC
 
     // Determine castling side
     bool    isKingSide = toCoords.x > fromCoords.x;
-    IntVec2 rookPos    = IntVec2(isKingSide ? 7 : 0, fromCoords.y);
+    IntVec2 rookPos    = IntVec2(isKingSide ? 8 : 1, fromCoords.y);
 
     Piece const* rook = m_board->GetPieceByCoords(rookPos);
     if (rook == nullptr || rook->m_definition->m_type != ePieceType::ROOK)
@@ -747,11 +734,9 @@ void Match::ExecuteMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, std:
         break;
     case MoveResult::VALID_MOVE_NORMAL:
     default:
-        // m_board->MovePiece(fromCoords, toCoords);
-
         Piece* piece = m_board->GetPieceByCoords(fromCoords);
-
         piece->UpdatePositionByCoords(toCoords);
+        piece->m_hasMoved = true;
         m_board->UpdateBoardSquareInfoList(fromCoords, toCoords);
 
         break;
@@ -785,12 +770,16 @@ void Match::ExecutePawnPromotion(IntVec2 const& fromCoords, IntVec2 const& toCoo
 void Match::ExecuteCastling(IntVec2 const& fromCoords, IntVec2 const& toCoords) const
 {
     bool    isKingSide  = toCoords.x > fromCoords.x;
-    IntVec2 rookFromPos = IntVec2(isKingSide ? 7 : 0, fromCoords.y);
-    IntVec2 rookToPos   = IntVec2(isKingSide ? 5 : 3, fromCoords.y);
+    IntVec2 kingToPos = IntVec2(isKingSide ? 7 : 3, fromCoords.y);
+    IntVec2 rookFromPos = IntVec2(isKingSide ? 8 : 1, fromCoords.y);
+    IntVec2 rookToPos   = IntVec2(isKingSide ? 6 : 4, fromCoords.y);
 
-    // Move king
-    m_board->MovePiece(fromCoords, toCoords);
+    Piece* king = m_board->GetPieceByCoords(fromCoords);
+    king->UpdatePositionByCoords(kingToPos);  // 不是 toCoords！
+    m_board->UpdateBoardSquareInfoList(fromCoords, kingToPos);
 
     // Move rook
-    m_board->MovePiece(rookFromPos, rookToPos);
+    Piece* rook = m_board->GetPieceByCoords(rookFromPos);
+    rook->UpdatePositionByCoords(rookToPos);
+    m_board->UpdateBoardSquareInfoList(rookFromPos, rookToPos);
 }

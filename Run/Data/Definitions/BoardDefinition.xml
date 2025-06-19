@@ -6,8 +6,8 @@
         <SquareInfo id="0" name="bishop" notation="B" coord="3,1"/>
         <SquareInfo id="0" name="queen" notation="Q" coord="4,1"/>
         <SquareInfo id="0" name="king" notation="K" coord="5,1"/>
-        <SquareInfo id="0" name="bishop" notation="B" coord="6,1"/>
-        <SquareInfo id="0" name="knight" notation="N" coord="7,1"/>
+        <SquareInfo notation="*" coord="6,1"/>
+        <SquareInfo notation="*" coord="7,1"/>
         <SquareInfo id="0" name="rook" notation="R" coord="8,1"/>
         <SquareInfo id="0" name="pawn" notation="P" coord="1,2"/>
         <SquareInfo id="0" name="pawn" notation="P" coord="2,2"/>

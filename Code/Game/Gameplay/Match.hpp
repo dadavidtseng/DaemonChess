@@ -46,7 +46,7 @@ public:
     void ExecutePawnPromotion(IntVec2 const& fromCoords, IntVec2 const& toCoords, std::string const& promotionType) const;
     void ExecuteCastling(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
     void HandleCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
-    void OnChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords);
+    void OnChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promotionType);
     void UpdatePieceList(IntVec2 const& fromCoords, IntVec2 const& toCoords);
 
     MoveResult ValidateChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, std::string const& promotionType = "") const;

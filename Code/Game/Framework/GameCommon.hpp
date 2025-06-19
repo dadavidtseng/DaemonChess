@@ -5,6 +5,18 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 
+#if defined ERROR
+#undef ERROR
+#endif
+
+#if defined min
+#undef min
+#endif
+
+#if defined max
+#undef max
+#endif
+
 //----------------------------------------------------------------------------------------------------
 struct Rgba8;
 struct Vec2;

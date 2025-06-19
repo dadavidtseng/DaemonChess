@@ -1,15 +1,30 @@
 //------------------------------------------------------------------------------------------------
-// Blinn-Phong (lit) shader for Squirrel's C34 SD Engine (circa SD2 Spring 2025)
-//	written by Squirrel Eiserloh, May 2025
+// Blinn-Phong (lit) shader for Squirrel Eiserloh's C34 SD student Engine (Spring 2025)
 //
-// Requires Vertex_PCUTBN vertex data (includes tangent, bitangent, normal).
+// Requires Vertex_PCUTBN vertex data (including valid tangent, bitangent, normal).
 //------------------------------------------------------------------------------------------------
-// D3D11 basic rendering pipeline stages:
-//	IA = Input Assembler (grouping verts 3 at a time to form triangles, or N to form lines, fans, chains, etc.)
+// D3D11 basic rendering pipeline stages (and D3D11 function prefixes):
+//	IA = Input Assembly (grouping verts 3 at a time to form triangles, or N to form lines, fans, chains, etc.)
 //	VS = Vertex Shader (transforming vertexes; moving them around, and computing them in different spaces)
 //	RS = Rasterization Stage (converting math triangles into discrete pixels covered, interpolating values within)
 //	PS = Pixel Shader (a.k.a. Fragment Shader, computing the actual output color(s) at each pixel being drawn)
 //	OM = Output Merger (combining PS output with existing colors, using the current blend mode: additive, alpha, etc.)
+//
+// D3D11 C++ functions are prefixed with the stage they apply to, so for example:
+//	m_d3dContext->IASetInputLayout( layout );							// Input Assembly knows to expect verts as PCU or PCUTBN or...
+//	m_d3dContext->IASetVertexBuffers( 0, 1, &vbo.m_gpuBuffer, &vbo.m_vertexSize, &offset ); // Bind VBOs for Input Assembly
+//	m_d3dContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );	// Triangles vs. TriStrips, TriFans, LineList, etc.
+//	m_d3dContext->VSSetShader( shader->m_vertexShader, nullptr, 0 );	// Set current Vertex Shader program
+//	m_d3dContext->VSSetConstantBuffers( 3, 1, &cbo->m_gpuBuffer );		// CBO is accessible in Vertex Shader as register(b3)
+//	m_d3dContext->RSSetViewports( 1, &viewport );						// Set viewport(s) to use in Rasterization Stage
+//	m_d3dContext->RSSetState( m_rasterState );							// Set Rasterization Stage states, e.g. cull, fill, winding
+//	m_d3dContext->PSSetShader( shader->m_pixelShader, nullptr, 0 );		// Set current Pixel Shader program
+//	m_d3dContext->PSSetConstantBuffers( 3, 1, &cbo->m_gpuBuffer );		// CBO is accessible in Pixel Shader as register(b3)
+//	m_d3dContext->PSSetShaderResources( 3, 1, &texture->m_shaderResourceView );	// Texture available in Pixel Shader as register(t3)
+//	m_d3dContext->PSSetSamplers( 3, 1, &samplerState );					// Sampler is used in Pixel Shader as register(s3)
+//	m_d3dContext->OMSetBlendState( m_blendStateAlpha, nullptr, 0xFFFFFFFF ); // Set alpha blend state in Output Merger
+//	m_d3dContext->OMSetRenderTargets( 1, &m_backBufferRTV, dsv );		// Set render target texture(s) for Output Merger
+//	m_d3dContext->OMSetDepthStencilState( m_depthStencilState, 0 );		// Set depth & stencil mode for Output Merger
 //------------------------------------------------------------------------------------------------
 
 
@@ -19,14 +34,14 @@
 //------------------------------------------------------------------------------------------------
 struct VertexInput
 {
-	// "a_" stands for for vertex "Attribute" which comes directly from VBO data (Squirrel's personal convention)
-	// Type (after conversion)   name (as used in shader)  :  semanticName (arbitrary symbol to associate CPU-GPU and other linkages);
-	float3	a_position		: POSITION;		
-	float4	a_color			: TINT; // Expanded to float[0.f,1.f] from byte[0,255] because "UNORM" in DXGI_FORMAT_R8G8B8A8_UNORM
-	float2	a_uvTexCoords	: TEXCOORDS; 
-	float3	a_tangent		: TANGENT; 
-	float3	a_bitangent		: BITANGENT; 
-	float3	a_normal		: NORMAL; 
+	// "v_" stands for for "Vertex" attribute which comes directly from VBO data (Squirrel's convention)
+	// The all-caps "semantic names" are arbitrary symbol to associate CPU-GPU and other linkages.
+	float3	a_position		: VERTEX_POSITION;		
+	float4	a_color			: VERTEX_COLOR; // Expanded to float[0.f,1.f] from byte[0,255] because "UNORM" in DXGI_FORMAT_R8G8B8A8_UNORM
+	float2	a_uvTexCoords	: VERTEX_UVTEXCOORDS; 
+	float3	a_tangent		: VERTEX_TANGENT; 
+	float3	a_bitangent		: VERTEX_BITANGENT; 
+	float3	a_normal		: VERTEX_NORMAL; 
 	
 	// Built-in / automatic attributes (not part of incoming VBO data)
 	// "SV_" means "System Variable" and is a built-in special reserved semantic
@@ -57,32 +72,36 @@ struct VertexInput
 struct VertexOutPixelIn 
 {
 	float4 v_position		: SV_Position; // Required; VS output as clip-space vertex position; PS input as NDC pixel position.
-	float4 v_color			: VERTEX_COLOR;
-	float2 v_uvTexCoords	: TEXTURE_COORDS;
+	float4 v_color			: SURFACE_COLOR;
+	float2 v_uvTexCoords	: SURFACE_UVTEXCOORDS;
 	float3 v_worldPos		: WORLD_POSITION;
 	float3 v_worldTangent	: WORLD_TANGENT;
 	float3 v_worldBitangent	: WORLD_BITANGENT;
 	float3 v_worldNormal	: WORLD_NORMAL;
+	float3 v_modelTangent	: MODEL_TANGENT;
+	float3 v_modelBitangent	: MODEL_BITANGENT;
+	float3 v_modelNormal	: MODEL_NORMAL;
 };
 
 
 //------------------------------------------------------------------------------------------------
-// CONSTANT BUFFERS (CBOs, a.k.a. UBOs or Uniform Buffers in OpenGL)
-//	"u_" stands for "Uniform", Squirrel's traditional 
+// CONSTANT BUFFERS (a.k.a. CBOs or Constant Buffer Objects, UBOs / Uniform Buffers in OpenGL)
+//	"c_" stands for "Constant", Squirrel's personal naming convention.
 //
 // There are 14 available CBO "slots" or "registers" (b0 through b13).
+//	If the C++ code binds to slot 5, we are binding to constant buffer register(b5)
 // In C++ code we bind structures into CBO slots when we call:
-//	m_d3dContext->VSSetConstantBuffers( slot, 1, &cbo->m_gpuBuffer ); // if slot==5, we are binding to register(b5)
-//	m_d3dContext->PSSetConstantBuffers( slot, 1, &cbo->m_gpuBuffer );
+//	m_d3dContext->VSSetConstantBuffers( slot, 1, &cbo->m_gpuBuffer ); VS... makes this CBO available in Vertex Shader
+//	m_d3dContext->PSSetConstantBuffers( slot, 1, &cbo->m_gpuBuffer ); PS... makes this CBO available in Pixel Shader
 //
 // We might update some CBOs once per frame; others perhaps between each draw call; others only occasionally.
 // CBOs have very picky alignment rules, but can otherwise be anything we want (max of 64k == 65536 bytes each).
 //
-// Guildhall-specific conventions we use for different CBO register slot numbers:
-//	b0 = Engine/System-Level constants (e.g. debug modes) -- updated rarely
-//	b1 = Per-Frame constants (e.g. time) -- updated once per frame
-//	b2 = Camera constants (e.g. view/proj matrices) -- updated once per CameraBegin
-//	b3 = Model constants (e.g. model matrix & tint) -- updated once per draw call
+// Guildhall-specific conventions we use for different CBO register slot numbers (b0 through b13):
+//	register(b0) = Engine/System-Level constants (e.g. debug)	-- updated rarely
+//	register(b1) = Per-Frame constants (e.g. time)				-- updated once per frame, maybe in Renderer::BeginFrame
+//	register(b2) = Camera constants (e.g. view/proj matrices)	-- updated once in each Renderer::CameraBegin
+//	register(b3) = Model constants (e.g. model matrix & tint)	-- updated once before each Renderer::DrawVertexBuffer call
 //	b4-b7 = Other Engine-reserved slots
 //	b8-b13 = Other Game-specific slots
 //
@@ -92,19 +111,29 @@ struct VertexOutPixelIn
 //	rules, and make sure that your corresponding C++ struct has identical byte-layout to the shader struct.
 // I find it easiest to think of this as the CBO having multiple rows, each row float4 (Vec4 == 16B) in size.
 //------------------------------------------------------------------------------------------------
+cbuffer PerFrameConstants : register(b1)
+{
+	float		c_time;
+	int			c_debugInt;
+	float		c_debugFloat;
+	float		EMPTY_PADDING;
+};
+
+
+//------------------------------------------------------------------------------------------------
 cbuffer CameraConstants : register(b2)
 {
-	float4x4 u_renderToClip;	// a.k.a. "Projection" matrix (perpective or orthographic); render space to clip space
-	float4x4 u_cameraToRender;	// a.k.a. "Game" matrix; axis-swaps from Game conventions (+X forward) to Render (+X right)
-	float4x4 u_worldToCamera;	// a.k.a. "View" matrix; world space (+X east) to camera-relative space (+X camera-forward)
+	float4x4	c_renderToClip;		// a.k.a. "Projection" matrix (perpective or orthographic); render space to clip space
+	float4x4	c_cameraToRender;	// a.k.a. "Game" matrix; axis-swaps from Game conventions (+X forward) to Render (+X right)
+	float4x4	c_worldToCamera;	// a.k.a. "View" matrix; world space (+X east) to camera-relative space (+X camera-forward)
 };
 
 
 //------------------------------------------------------------------------------------------------
 cbuffer ModelConstants : register(b3)
 {
-    float4x4 u_modelToWorld;	// a.k.a. "Model" matrix; model local space (+X model forward) to world space (+X east)
-    float4 u_modelTint;			// Uniform Vec4 model tint (including alpha) to multiply against diffuse texel & vertex color
+	float4x4	c_modelToWorld;		// a.k.a. "Model" matrix; model local space (+X model forward) to world space (+X east)
+	float4		c_modelTint;		// Uniform Vec4 model tint (including alpha) to multiply against diffuse texel & vertex color
 };
 
 
@@ -125,9 +154,11 @@ cbuffer ModelConstants : register(b3)
 //	m_d3dContext->VSSetShaderResources( textureSlot, 1, &texture->m_shaderResourceView );
 //	m_d3dContext->VSSetSamplers( samplerSlot, 1, &samplerState );
 //------------------------------------------------------------------------------------------------
-Texture2D<float4>	t_diffuseTexture : register(t0);	// Texture bound in texture constant slot #0 (t0)
-SamplerState		s_diffuseSampler : register(s0);	// Sampler is bound in sampler constant slot #0 (s0)
-// #ToDo: add additional textures/samples, for normal maps, specular/glossy/emissive maps, etc.
+Texture2D<float4>	t_diffuseTexture	: register(t0);	// Texture bound in texture constant slot #0 (t0)
+Texture2D<float4>	t_normalTexture		: register(t1);	// Texture bound in texture constant slot #1 (t1)
+SamplerState		s_diffuseSampler	: register(s0);	// Sampler is bound in sampler constant slot #0 (s0)
+SamplerState		s_normalSampler		: register(s1);	// Sampler is bound in sampler constant slot #1 (s1)
+// #ToDo: add additional textures/samples, for specular/glossy/emissive maps, etc.
 
 
 //------------------------------------------------------------------------------------------------
@@ -143,22 +174,22 @@ SamplerState		s_diffuseSampler : register(s0);	// Sampler is bound in sampler co
 //------------------------------------------------------------------------------------------------
 VertexOutPixelIn VertexMain( VertexInput input )
 {
-    VertexOutPixelIn output;
+	VertexOutPixelIn output;
 
 	// Transform the position through the pipeline	
 	float4 modelPos = float4( input.a_position, 1.0 );	// VBOs provide vertexes in model space
-    float4 worldPos		= mul( u_modelToWorld, modelPos );		// Model space (+X local forward) to World space (+X east)
-    float4 cameraPos	= mul( u_worldToCamera, worldPos );		// World space (+X east) to Camera space (+X camera-forward)
-	float4 renderPos	= mul( u_cameraToRender, cameraPos );	// Camera space (+X cam-fwd) to Render space (+X right/+Z fwd)
-    float4 clipPos		= mul( u_renderToClip, renderPos );		// Render space to Clip space (range-map/FOV/aspect, and put Z in W, preparing for W-divide)
+	float4 worldPos		= mul( c_modelToWorld, modelPos );		// Model space (+X local forward) to World space (+X east)
+	float4 cameraPos	= mul( c_worldToCamera, worldPos );		// World space (+X east) to Camera space (+X camera-forward)
+	float4 renderPos	= mul( c_cameraToRender, cameraPos );	// Camera space (+X cam-fwd) to Render space (+X right/+Z fwd)
+	float4 clipPos		= mul( c_renderToClip, renderPos );		// Render space to Clip space (range-map/FOV/aspect, and put Z in W, preparing for W-divide)
 	
 	// Transform the tangents, normals, and bitangents (using W=0 for directions)
 	float4 modelTangent		= float4( input.a_tangent, 0.0 );
 	float4 modelBitangent	= float4( input.a_bitangent, 0.0 );
 	float4 modelNormal		= float4( input.a_normal, 0.0 );
-	float4 worldTangent		= mul( u_modelToWorld, modelTangent );
-	float4 worldBitangent	= mul( u_modelToWorld, modelBitangent );
-	float4 worldNormal		= mul( u_modelToWorld, modelNormal );
+	float4 worldTangent		= mul( c_modelToWorld, modelTangent );		// Note: here we multiply on the right (M*V) since our C++ matrices come in from our constant
+	float4 worldBitangent	= mul( c_modelToWorld, modelBitangent );	//	buffers from C++ as basis-major (as opposed to component-major).  Be careful below when
+	float4 worldNormal		= mul( c_modelToWorld, modelNormal );		//	we must reverse the multiplication order (V*M) when using HLSL's float3x3 constructor!
 
 	// Set the outputs we want to pass through Rasterization Stage (RS) down to the Pixel Shader (PS)
     output.v_position		= clipPos;
@@ -168,9 +199,28 @@ VertexOutPixelIn VertexMain( VertexInput input )
 	output.v_worldTangent	= worldTangent.xyz;
 	output.v_worldBitangent	= worldBitangent.xyz;
 	output.v_worldNormal	= worldNormal.xyz;
-	// #ToDo: we could also pass world position, or camera position, or tangent/bitangent/normals, etc.
+	output.v_modelTangent	= modelTangent.xyz;
+	output.v_modelBitangent	= modelBitangent.xyz;
+	output.v_modelNormal	= modelNormal.xyz;
 
     return output; // Pass to Rasterization Stage (RS) for barycentric interpolation, then into Pixel Shader (PS)
+}
+
+//------------------------------------------------------------------------------------------------
+float RangeMap( float inValue, float inStart, float inEnd, float outStart, float outEnd )
+{
+	float fraction = (inValue - inStart) / (inEnd - inStart);
+	float outValue = outStart + fraction * (outEnd - outStart);
+	return outValue;
+}
+
+
+//------------------------------------------------------------------------------------------------
+float RangeMapClamped( float inValue, float inStart, float inEnd, float outStart, float outEnd )
+{
+	float fraction = saturate( (inValue - inStart) / (inEnd - inStart) );
+	float outValue = outStart + fraction * (outEnd - outStart);
+	return outValue;
 }
 
 
@@ -184,7 +234,7 @@ float3 EncodeXYZToRGB( float3 vec )
 
 
 //------------------------------------------------------------------------------------------------
-// Used standard normal color encoding, mapping xyz in [-1,1] to rgb in [0,1]
+// Used standard normal color encoding, mapping rgb in [0,1] to xyz in [-1,1]
 //------------------------------------------------------------------------------------------------
 float3 DecodeRGBToXYZ( float3 color )
 {
@@ -207,38 +257,136 @@ float3 DecodeRGBToXYZ( float3 color )
 //------------------------------------------------------------------------------------------------
 float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 {
+	float ambience = 0.0;
+	
 	// Get the UV coordinates that were mapped onto this pixel
 	float2 uvCoords = input.v_uvTexCoords;
 	
 	// Sample the diffuse map texture to see what this looks like at this pixel
 	float4 diffuseTexel = t_diffuseTexture.Sample( s_diffuseSampler, uvCoords );
+	float4 normalTexel	= t_normalTexture.Sample( s_normalSampler, uvCoords );
 	float4 surfaceColor = input.v_color;
-	float4 modelColor = u_modelTint;
+	float4 modelColor = c_modelTint;
+	
+	// Decode normalTexel RGB into XYZ then renormalize; this is the per-pixel normal, in TBN space a.k.a. tangent space
+	float3 pixelNormalTBNSpace = normalize( DecodeRGBToXYZ( normalTexel.rgb ) );
 	
 	// Tint diffuse color based on overall model tinting (including alpha translucency)
 	float4 diffuseColor = diffuseTexel * surfaceColor * modelColor;
 	
 	// Fake directional light for now; #ToDo: add a (b4) or (b8) Light CBO
-	float3 lightDir = normalize( float3( 3.0, 1.0, -2.0 ) );
+//	float3 lightDir = normalize( float3( cos(0.5 * c_time), sin(0.5 * c_time), -1.0 ) );
+	float3 lightDir = normalize( float3( 10.0, 2.0, -3.0 ) );
 
 	// Get TBN basis vectors
-	float3 worldTangent		= normalize( input.v_worldTangent );
-	float3 worldBitangent	= normalize( input.v_worldBitangent );
-	float3 worldNormal		= normalize( input.v_worldNormal );
+	float3 surfaceTangentWorldSpace		= normalize( input.v_worldTangent );
+	float3 surfaceBitangentWorldSpace	= normalize( input.v_worldBitangent );
+	float3 surfaceNormalWorldSpace		= normalize( input.v_worldNormal );
 
+	float3 surfaceTangentModelSpace		= normalize( input.v_modelTangent );
+	float3 surfaceBitangentModelSpace	= normalize( input.v_modelBitangent );
+	float3 surfaceNormalModelSpace		= normalize( input.v_modelNormal );
+	
+	// Create TBN (surface-to-world) transformation matrix; WARNING: HLSL constructor stores these component-major, which is the opposite (transpose) of our basis-major matrices above!
+	float3x3 tbnToWorld = float3x3( surfaceTangentWorldSpace, surfaceBitangentWorldSpace, surfaceNormalWorldSpace );
+	// #ToDo: orthonormalize this (not just normalize); Do Gram-Schmidt and renormalize as we go, and remove above normalizations
+	float3 pixelNormalWorldSpace = mul( pixelNormalTBNSpace, tbnToWorld ); // V*M order because this matrix is component-major (not basis-major!)
+		
 	// #ToDo: add lighting and such later!
-	float diffuseLightDot = dot( -lightDir, worldNormal );
-	float lightStrength = clamp( diffuseLightDot, 0.1, 1.0 );
+	float diffuseLightDot = dot( -lightDir, pixelNormalWorldSpace );
+	if( c_debugInt == 10 || c_debugInt == 12 )
+	{
+		diffuseLightDot = dot( -lightDir, surfaceNormalWorldSpace  );
+	}
+
+//	float lightStrength = saturate( diffuseLightDot ); // Clamp in [0,1]
+//	if( lightStrength < ambience )
+//	{
+//		lightStrength = ambience;
+//	}
+	float lightStrength = saturate( RangeMapClamped( diffuseLightDot, -1.0, 1.0, -1 + 2*ambience, 1.0 ) );
 	float4 finalColor = float4( diffuseColor.rgb * lightStrength, diffuseColor.a ); 
 	if( finalColor.a <= 0.001 ) // a.k.a. "clip" in HLSL
 	{
 		discard;
 	}
 	
-//	finalColor.rgb = float3( uvCoords.xy, 0.f );
-//	finalColor.rgb = EncodeXYZToRGB( worldTangent );
-//	finalColor.rgb = EncodeXYZToRGB( worldBitangent );
-//	finalColor.rgb = EncodeXYZToRGB( worldNormal );
+	if (c_debugInt == 1)
+	{
+	    finalColor.rgba = diffuseTexel.rgba;
+	}
+	else if(c_debugInt == 2 )
+	{
+		finalColor.rgba = surfaceColor.rgba;
+	}
+	else if(c_debugInt == 3 )
+	{
+	    finalColor.rgb = float3(uvCoords.x, uvCoords.y, 0.f);
+	}
+	else if(c_debugInt == 4 )
+	{
+		finalColor.rgb = EncodeXYZToRGB( surfaceTangentModelSpace );
+	}
+	else if(c_debugInt == 5 )
+	{
+		finalColor.rgb = EncodeXYZToRGB( surfaceBitangentModelSpace );
+	}
+	else if(c_debugInt == 6 )
+	{
+		finalColor.rgb = EncodeXYZToRGB( surfaceNormalModelSpace );
+	}
+	else if(c_debugInt == 7 )
+	{
+		finalColor.rgba = normalTexel.rgba;
+	}
+	else if(c_debugInt == 8 )
+	{
+		finalColor.rgb = EncodeXYZToRGB( pixelNormalTBNSpace );
+	}
+	else if(c_debugInt == 9 )
+	{
+		finalColor.rgb = EncodeXYZToRGB( pixelNormalWorldSpace );
+	}
+	else if(c_debugInt == 10 )
+	{
+		// Lit, but ignore normal maps (use surface normals only) -- see above
+	}
+	else if(c_debugInt == 11 || c_debugInt == 12 )
+	{
+		finalColor.rgb = lightStrength.xxx;
+	}
+	else if(c_debugInt == 13 )
+	{
+		// unused, available
+	}
+	else if(c_debugInt == 14 )
+	{
+		finalColor.rgb = EncodeXYZToRGB( surfaceTangentWorldSpace );
+	}
+	else if(c_debugInt == 15 )
+	{
+		finalColor.rgb = EncodeXYZToRGB( surfaceBitangentWorldSpace );
+	}
+	else if(c_debugInt == 16 )
+	{
+		finalColor.rgb = EncodeXYZToRGB( surfaceNormalWorldSpace );
+	}
+	else if(c_debugInt == 17 )
+	{
+		float3 modelIBasisWorld = mul( c_modelToWorld, float4(1,0,0,0) ).xyz;
+		finalColor.rgb = EncodeXYZToRGB( normalize( modelIBasisWorld.xyz ) );
+	}
+	else if(c_debugInt == 18 )
+	{
+		float3 modelJBasisWorld = mul( c_modelToWorld, float4(0,1,0,0) ).xyz;
+		finalColor.rgb = EncodeXYZToRGB( normalize( modelJBasisWorld.xyz ) );
+	}
+	else if(c_debugInt == 19 )
+	{
+		float3 modelKBasisWorld = mul( c_modelToWorld, float4(0,0,1,0) ).xyz;
+		finalColor.rgb = EncodeXYZToRGB( normalize( modelKBasisWorld.xyz ) );
+	}
+		
 	return finalColor;
 }
 
