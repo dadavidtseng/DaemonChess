@@ -241,6 +241,7 @@ void Board::MovePiece(IntVec2 const& fromCoords, IntVec2 const& toCoords)
 
 void Board::PromotePawn(IntVec2 const& int_vec2, IntVec2 const& to_coords, const std::string& string)
 {
+
 }
 
 void Board::RemovePiece(IntVec2 const& int_vec2)

@@ -16,7 +16,8 @@ class Piece;
 class PlayerController;
 
 //----------------------------------------------------------------------------------------------------
-typedef std::vector<Piece*> PieceList;
+typedef std::vector<Piece*>    PieceList;
+typedef std::vector<PieceMove> PieceMoveList;
 
 //----------------------------------------------------------------------------------------------------
 /// @brief
@@ -66,6 +67,8 @@ public:
     bool       IsValidPromotionType(std::string const& promotionType) const;
     MoveResult DetermineValidMoveType(IntVec2 const& fromCoords, IntVec2 const& toCoords, Piece const* fromPiece, std::string const& promotionType) const;
 
+    PieceMove   GetLastPieceMove() const;
+
     Camera* m_screenCamera = nullptr;
     Clock*  m_gameClock    = nullptr;
     Board*  m_board        = nullptr;
@@ -75,6 +78,6 @@ public:
     float m_sunIntensity     = 0.85f;
     float m_ambientIntensity = 0.35f;
 
-    PieceList m_pieceList;
-    LastMove  m_lastMove;
+    PieceList     m_pieceList;
+    PieceMoveList m_pieceMoveList;
 };

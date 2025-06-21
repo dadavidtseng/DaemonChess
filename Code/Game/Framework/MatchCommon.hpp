@@ -36,7 +36,7 @@ enum class MoveResult : int8_t
     INVALID_CASTLE_OUT_OF_CHECK
 };
 
-struct LastMove
+struct PieceMove
 {
     Piece const* piece      = nullptr;
     IntVec2      fromCoords = IntVec2::ZERO;
