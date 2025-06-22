@@ -246,11 +246,19 @@ void Board::UpdateSquareInfoList(IntVec2 const& fromCoords,
     }
 }
 
-void Board::CapturePiece(IntVec2 const& fromCoords,
-                         IntVec2 const& toCoords)
+void Board::UpdateSquareInfoList(IntVec2 const& toCoords)
 {
-    // UpdateBoardSquareInfoList(fromCoords, toCoords);
-    m_match->UpdatePieceList(fromCoords, toCoords);
+    sSquareInfo const fromInfo = GetSquareInfoByCoords(toCoords);
+
+    for (auto it = m_squareInfoList.begin(); it != m_squareInfoList.end(); ++it)
+    {
+        if (it->m_coords == toCoords)
+        {
+            it->m_name               = "DEFAULT";
+            it->m_notation           = "*";
+            it->m_playerControllerId = -1;
+        }
+    }
 }
 
 IntVec2 Board::FindKingPosition(int playerId)
@@ -267,26 +275,4 @@ IntVec2 Board::FindKingPosition(int playerId)
     return IntVec2::ZERO; // 或者 IntVec2(-1, -1) 代表找不到
 }
 
-void Board::MovePiece(IntVec2 const& fromCoords, IntVec2 const& toCoords)
-{
-    m_match->UpdatePieceList(fromCoords, toCoords);
-}
 
-void Board::PromotePawn(IntVec2 const& int_vec2, IntVec2 const& to_coords, const std::string& string)
-{
-}
-
-void Board::RemovePiece(IntVec2 const& int_vec2)
-{
-    sSquareInfo const fromInfo = GetSquareInfoByCoords(int_vec2);
-
-    for (auto it = m_squareInfoList.begin(); it != m_squareInfoList.end(); ++it)
-    {
-        if (it->m_coords == int_vec2)
-        {
-            it->m_name               = "DEFAULT";
-            it->m_notation           = "*";
-            it->m_playerControllerId = -1;
-        }
-    }
-}

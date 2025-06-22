@@ -16,7 +16,7 @@ class Match;
 class PlayerController;
 
 //----------------------------------------------------------------------------------------------------
-enum class eGameState : int8_t
+enum class eGameState : uint8_t
 {
     ATTRACT,
     LOBBY,

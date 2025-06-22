@@ -36,16 +36,17 @@ public:
     String      GetBoardContents(int rowNum) const;
     bool        IsCoordValid(IntVec2 const& coords) const;
 
-    void    CreateLocalVertsForAABB3s();
-    void    CreateLocalVertsForBoardFrame();
-    void    UpdateSquareInfoList(IntVec2 const& fromCoords, IntVec2 const& toCoords);
-    void    UpdateSquareInfoList(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo);
-    void    CapturePiece(IntVec2 const& fromCoords, IntVec2 const& toCoords);
+    /// Render
+    void CreateLocalVertsForAABB3s();
+    void CreateLocalVertsForBoardFrame();
+
+    /// Mutators (non-const methods)
+    void UpdateSquareInfoList(IntVec2 const& toCoords);
+    void UpdateSquareInfoList(IntVec2 const& fromCoords, IntVec2 const& toCoords);
+    void UpdateSquareInfoList(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo);
+
     IntVec2 FindKingPosition(int playerId);
-    void    MovePiece(IntVec2 const& fromCoords, IntVec2 const& toCoords);
-    void    PromotePawn(IntVec2 const& int_vec2, IntVec2 const& to_coords, const std::string& string);
-    void    RemovePiece(IntVec2 const& int_vec2);
-    // PieceList                m_pieceList;
+
     std::vector<sSquareInfo> m_squareInfoList;
 
 private:

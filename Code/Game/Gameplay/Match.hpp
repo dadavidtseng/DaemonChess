@@ -10,13 +10,13 @@
 #include "Game/Framework/MatchCommon.hpp"
 #include "Game/Gameplay/Board.hpp"
 
-//----------------------------------------------------------------------------------------------------
+//-Forward-Declaration--------------------------------------------------------------------------------
 class Camera;
 class Piece;
 class PlayerController;
 
 //----------------------------------------------------------------------------------------------------
-typedef std::vector<Piece*>    PieceList;
+typedef std::vector<Piece*>     PieceList;
 typedef std::vector<sPieceMove> PieceMoveList;
 
 //----------------------------------------------------------------------------------------------------
@@ -29,10 +29,13 @@ public:
     ~Match();
 
     void Update();
-    void UpdateFromInput(float deltaSeconds);
-
     void Render() const;
 
+    Board*    m_board = nullptr;
+    PieceList m_pieceList;
+
+private:
+    void UpdateFromInput(float deltaSeconds);
     void CreateBoard();
 
     static bool OnChessMove(EventArgs& args);
@@ -42,15 +45,16 @@ public:
     static bool OnMatchInitialized(EventArgs& args);
 
     void OnChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo, bool isTeleport);
-    bool IsChessMoveValid(IntVec2 const& fromCoords, IntVec2 const& toCoords, bool isTeleport) const;
-
     bool ExecuteMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo, bool isTeleport);
+
     void ExecuteEnPassantCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords);
-    void ExecutePawnPromotion(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo) const;
+    void ExecutePawnPromotion(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo);
     void ExecuteCastling(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
-    void HandleCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
-    void UpdatePieceList(IntVec2 const& fromCoords, IntVec2 const& toCoords);
-    void RemovePieceList(IntVec2 const& toCoords);
+    void ExecuteKingsideCastling(IntVec2 const& fromCoords) const;
+    void ExecuteQueensideCastling(IntVec2 const& fromCoords) const;
+    void ExecuteCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords);
+
+    void RemovePieceFromPieceList(IntVec2 const& toCoords);
 
     eMoveResult ValidateChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promotionType, bool isTeleport) const;
     eMoveResult ValidatePieceMovement(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promotionType) const;
@@ -66,20 +70,18 @@ public:
     bool IsValidEnPassant(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
 
     eMoveResult ValidateCastling(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
-    bool       IsValidPromotionType(String const& promotionType) const;
-    eMoveResult DetermineValidMoveType(IntVec2 const& fromCoords, IntVec2 const& toCoords, Piece const* fromPiece, String const& promoteTo) const;
+    bool        IsValidPromotionType(String const& promoteTo) const;
+    eMoveResult DetermineValidMoveType(IntVec2 const& fromCoords, IntVec2 const& toCoords, Piece const* fromPiece) const;
 
     sPieceMove GetLastPieceMove() const;
 
     Camera* m_screenCamera = nullptr;
     Clock*  m_gameClock    = nullptr;
-    Board*  m_board        = nullptr;
 
     // DEBUG LIGHT
     Vec3  m_sunDirection     = Vec3(2.f, 1.f, -1.f).GetNormalized();
     float m_sunIntensity     = 0.85f;
     float m_ambientIntensity = 0.35f;
 
-    PieceList     m_pieceList;
     PieceMoveList m_pieceMoveList;
 };
