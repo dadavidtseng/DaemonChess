@@ -2,6 +2,8 @@
 
 # Table of Contents
 
+* [Project Overview](#project-overview)
+* [Technical Specifications](#project-overview)
 * [Key Features](#key-features)
 
 [//]: # (//----------------------------------------------------------------------------------------------------)
