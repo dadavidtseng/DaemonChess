@@ -127,7 +127,8 @@ void Match::CreateBoard()
 }
 
 void Match::ExecuteCapture(IntVec2 const& fromCoords,
-                           IntVec2 const& toCoords)
+                           IntVec2 const& toCoords,
+                           String const&  promoteTo)
 {
     Piece*       fromPiece = m_board->GetPieceByCoords(fromCoords);
     Piece const* toPiece   = m_board->GetPieceByCoords(toCoords);
@@ -137,9 +138,10 @@ void Match::ExecuteCapture(IntVec2 const& fromCoords,
     // If captured piece is a king, end the match
     if (toPiece->m_definition->m_type == ePieceType::KING)
     {
-        RemovePieceFromPieceList(toPiece->m_coords);
         fromPiece->UpdatePositionByCoords(toCoords);
-        m_board->UpdateSquareInfoList(fromCoords, toCoords);
+        IsValidPromotionType(promoteTo) ? m_board->UpdateSquareInfoList(fromCoords, toCoords, promoteTo) : m_board->UpdateSquareInfoList(fromCoords, toCoords);
+        RemovePieceFromPieceList(toPiece->m_coords);
+
         g_theDevConsole->AddLine(DevConsole::WARNING, "##################################################");
         g_theDevConsole->AddLine(DevConsole::WARNING, Stringf("[SYSTEM] Player #%d has won the match!", g_theGame->GetCurrentPlayerControllerId()));
         g_theDevConsole->AddLine(DevConsole::WARNING, "##################################################");
@@ -147,32 +149,11 @@ void Match::ExecuteCapture(IntVec2 const& fromCoords,
     }
     else
     {
-        RemovePieceFromPieceList(toPiece->m_coords);
         fromPiece->UpdatePositionByCoords(toCoords);
-        m_board->UpdateSquareInfoList(fromCoords, toCoords);
+        IsValidPromotionType(promoteTo) ? m_board->UpdateSquareInfoList(fromCoords, toCoords, promoteTo) : m_board->UpdateSquareInfoList(fromCoords, toCoords);
+        RemovePieceFromPieceList(toPiece->m_coords);
     }
 }
-
-
-// void Match::UpdatePieceList(IntVec2 const& fromCoords,
-//                             IntVec2 const& toCoords)
-// {
-//     UNUSED(fromCoords)
-//     for (auto it = m_pieceList.begin(); it != m_pieceList.end();)
-//     {
-//         Piece* piece = *it;
-//
-//         if (piece->m_coords == toCoords)
-//         {
-//             delete piece;
-//
-//             it = m_pieceList.erase(it);
-//             break;
-//         }
-//
-//         ++it;
-//     }
-// }
 
 void Match::RemovePieceFromPieceList(IntVec2 const& toCoords)
 {
@@ -305,8 +286,6 @@ eMoveResult Match::ValidateChessMove(IntVec2 const& fromCoords,
     {
         if (isTeleport)
         {
-
-
             return eMoveResult::VALID_MOVE_PROMOTION;
         }
         if (toOwner == g_theGame->GetCurrentPlayerControllerId()) return eMoveResult::INVALID_MOVE_DESTINATION_BLOCKED;
@@ -509,12 +488,12 @@ eMoveResult Match::ValidateKingMove(int            absDeltaX, int absDeltaY,
 bool Match::IsKingDistanceValid(IntVec2 const& toCoords) const
 {
     // Find enemy king position
-    int     enemyPlayer  = 1 - g_theGame->GetCurrentPlayerControllerId();
-    IntVec2 enemyKingPos = m_board->FindKingPosition(enemyPlayer);
+    int const     enemyPlayerControllerId = 1 - g_theGame->GetCurrentPlayerControllerId();
+    IntVec2 const enemyKingCoords         = m_board->FindKingCoordsByPlayerId(enemyPlayerControllerId);
 
     // Check if destination is adjacent to enemy king
-    int deltaX = abs(toCoords.x - enemyKingPos.x);
-    int deltaY = abs(toCoords.y - enemyKingPos.y);
+    int deltaX = abs(toCoords.x - enemyKingCoords.x);
+    int deltaY = abs(toCoords.y - enemyKingCoords.y);
 
     if (deltaX <= 1 && deltaY <= 1 && !(deltaX == 0 && deltaY == 0))
     {
@@ -526,7 +505,7 @@ bool Match::IsKingDistanceValid(IntVec2 const& toCoords) const
 
 bool Match::IsPathClear(IntVec2 const& fromCoords, IntVec2 const& toCoords, ePieceType const& pieceType) const
 {
-    // Knights don't need clear path
+    // Knights don't need to clear path
     if (pieceType == ePieceType::KNIGHT)
     {
         return true;
@@ -775,9 +754,7 @@ void Match::ExecutePawnPromotion(IntVec2 const& fromCoords,
     // fromPiece->UpdatePositionByCoords(toCoords);
     ExecuteCapture(fromCoords, toCoords);
 
-
-    m_board->UpdateSquareInfoList(fromCoords, toCoords, promoteTo);
-    // Promote the pawn
+    // m_board->UpdateSquareInfoList(fromCoords, toCoords, promoteTo);
 }
 
 void Match::ExecuteCastling(IntVec2 const& fromCoords,

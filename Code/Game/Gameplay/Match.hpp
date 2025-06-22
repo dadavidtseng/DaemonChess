@@ -52,7 +52,7 @@ private:
     void ExecuteCastling(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
     void ExecuteKingsideCastling(IntVec2 const& fromCoords) const;
     void ExecuteQueensideCastling(IntVec2 const& fromCoords) const;
-    void ExecuteCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords);
+    void ExecuteCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo = "");
 
     void RemovePieceFromPieceList(IntVec2 const& toCoords);
 
@@ -64,15 +64,14 @@ private:
     eMoveResult ValidateKnightMove(int absDeltaX, int absDeltaY) const;
     eMoveResult ValidateQueenMove(int deltaX, int deltaY, int absDeltaX, int absDeltaY) const;
     eMoveResult ValidateKingMove(int absDeltaX, int absDeltaY, IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
+    eMoveResult ValidateCastling(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
+    eMoveResult DetermineValidMoveType(IntVec2 const& fromCoords, IntVec2 const& toCoords, Piece const* fromPiece) const;
 
     bool IsKingDistanceValid(IntVec2 const& toCoords) const;
     bool IsPathClear(IntVec2 const& fromCoords, IntVec2 const& toCoords, ePieceType const& pieceType) const;
     bool IsValidEnPassant(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
-
-    eMoveResult ValidateCastling(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
-    bool        IsValidPromotionType(String const& promoteTo) const;
-    eMoveResult DetermineValidMoveType(IntVec2 const& fromCoords, IntVec2 const& toCoords, Piece const* fromPiece) const;
-
+    bool IsValidPromotionType(String const& promoteTo) const;
+    
     sPieceMove GetLastPieceMove() const;
 
     Camera* m_screenCamera = nullptr;

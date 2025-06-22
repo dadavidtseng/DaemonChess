@@ -45,7 +45,7 @@ public:
     void UpdateSquareInfoList(IntVec2 const& fromCoords, IntVec2 const& toCoords);
     void UpdateSquareInfoList(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo);
 
-    IntVec2 FindKingPosition(int playerId);
+    IntVec2 FindKingCoordsByPlayerId(int playerId) const;
 
     std::vector<sSquareInfo> m_squareInfoList;
 

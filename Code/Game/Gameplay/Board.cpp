@@ -201,6 +201,21 @@ void Board::CreateLocalVertsForBoardFrame()
     AddVertsForAABB3D(m_vertexes, m_indexes, rightFrame, Rgba8(40, 50, 60));
 }
 
+void Board::UpdateSquareInfoList(IntVec2 const& toCoords)
+{
+    sSquareInfo const fromInfo = GetSquareInfoByCoords(toCoords);
+
+    for (auto it = m_squareInfoList.begin(); it != m_squareInfoList.end(); ++it)
+    {
+        if (it->m_coords == toCoords)
+        {
+            it->m_name               = "DEFAULT";
+            it->m_notation           = "*";
+            it->m_playerControllerId = -1;
+        }
+    }
+}
+
 void Board::UpdateSquareInfoList(IntVec2 const& fromCoords,
                                  IntVec2 const& toCoords)
 {
@@ -233,8 +248,8 @@ void Board::UpdateSquareInfoList(IntVec2 const& fromCoords,
     {
         if (it->m_coords == toCoords)
         {
-            it->m_name               = promoteTo;              // 使用升變名稱
-            it->m_notation           = 'Q';    // 保留原來棋子的notation（可視需要替換）
+            it->m_name               = promoteTo;
+            it->m_notation           = 'N';
             it->m_playerControllerId = fromInfo.m_playerControllerId;
         }
         else if (it->m_coords == fromCoords)
@@ -246,33 +261,20 @@ void Board::UpdateSquareInfoList(IntVec2 const& fromCoords,
     }
 }
 
-void Board::UpdateSquareInfoList(IntVec2 const& toCoords)
+//----------------------------------------------------------------------------------------------------
+/// @brief Finds the coordinates of the king in `m_squareInfoList` belonging to the specified player.
+/// @param playerId The ID of the player whose king's position is being queried.
+/// @return Coordinates of the king; returns IntVec2::NEGATIVE_ONE if not found.
+IntVec2 Board::FindKingCoordsByPlayerId(int const playerId) const
 {
-    sSquareInfo const fromInfo = GetSquareInfoByCoords(toCoords);
-
-    for (auto it = m_squareInfoList.begin(); it != m_squareInfoList.end(); ++it)
+    for (sSquareInfo const& squareInfo : m_squareInfoList)
     {
-        if (it->m_coords == toCoords)
+        if (squareInfo.m_playerControllerId == playerId && squareInfo.m_name == "king")
         {
-            it->m_name               = "DEFAULT";
-            it->m_notation           = "*";
-            it->m_playerControllerId = -1;
-        }
-    }
-}
-
-IntVec2 Board::FindKingPosition(int playerId)
-{
-    for (sSquareInfo const& square : m_squareInfoList)
-    {
-        if (square.m_playerControllerId == playerId && square.m_name == "king")
-        {
-            return square.m_coords;
+            return squareInfo.m_coords;
         }
     }
 
-    // 若未找到，回傳錯誤值（例如 ZERO 或 INVALID）
-    return IntVec2::ZERO; // 或者 IntVec2(-1, -1) 代表找不到
+    ERROR_RECOVERABLE(Stringf("King not found for player ID %d in m_squareInfoList.", playerId))
+    return IntVec2::NEGATIVE_ONE;
 }
-
-
