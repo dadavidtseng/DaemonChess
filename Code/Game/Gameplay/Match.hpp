@@ -17,7 +17,7 @@ class PlayerController;
 
 //----------------------------------------------------------------------------------------------------
 typedef std::vector<Piece*>    PieceList;
-typedef std::vector<PieceMove> PieceMoveList;
+typedef std::vector<sPieceMove> PieceMoveList;
 
 //----------------------------------------------------------------------------------------------------
 /// @brief
@@ -41,34 +41,35 @@ public:
     static bool OnExitMatchTurn(EventArgs& args);
     static bool OnMatchInitialized(EventArgs& args);
 
-    bool IsChessMoveValid(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
-    void ExecuteMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, std::string const& promotionType);
-    void ExecuteEnPassantCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords) ;
-    void ExecutePawnPromotion(IntVec2 const& fromCoords, IntVec2 const& toCoords, std::string const& promotionType) const;
+    void OnChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo, bool isTeleport);
+    bool IsChessMoveValid(IntVec2 const& fromCoords, IntVec2 const& toCoords, bool isTeleport) const;
+
+    bool ExecuteMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo, bool isTeleport);
+    void ExecuteEnPassantCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords);
+    void ExecutePawnPromotion(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo) const;
     void ExecuteCastling(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
     void HandleCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
-    void OnChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promotionType, bool isTeleport);
     void UpdatePieceList(IntVec2 const& fromCoords, IntVec2 const& toCoords);
     void RemovePieceList(IntVec2 const& toCoords);
 
-    MoveResult ValidateChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, std::string const& promotionType = "") const;
-    MoveResult ValidatePieceMovement(IntVec2 const& fromCoords, IntVec2 const& toCoords, std::string const& promotionType) const;
-    MoveResult ValidatePawnMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, std::string const& promotionType) const;
-    MoveResult ValidateRookMove(int deltaX, int deltaY) const;
-    MoveResult ValidateBishopMove(int absDeltaX, int absDeltaY) const;
-    MoveResult ValidateKnightMove(int absDeltaX, int absDeltaY) const;
-    MoveResult ValidateQueenMove(int deltaX, int deltaY, int absDeltaX, int absDeltaY) const;
-    MoveResult ValidateKingMove(int absDeltaX, int absDeltaY, IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
+    eMoveResult ValidateChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promotionType, bool isTeleport) const;
+    eMoveResult ValidatePieceMovement(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promotionType) const;
+    eMoveResult ValidatePawnMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promotionType) const;
+    eMoveResult ValidateRookMove(int deltaX, int deltaY) const;
+    eMoveResult ValidateBishopMove(int absDeltaX, int absDeltaY) const;
+    eMoveResult ValidateKnightMove(int absDeltaX, int absDeltaY) const;
+    eMoveResult ValidateQueenMove(int deltaX, int deltaY, int absDeltaX, int absDeltaY) const;
+    eMoveResult ValidateKingMove(int absDeltaX, int absDeltaY, IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
 
     bool IsKingDistanceValid(IntVec2 const& toCoords) const;
     bool IsPathClear(IntVec2 const& fromCoords, IntVec2 const& toCoords, ePieceType const& pieceType) const;
     bool IsValidEnPassant(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
 
-    MoveResult ValidateCastling(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
-    bool       IsValidPromotionType(std::string const& promotionType) const;
-    MoveResult DetermineValidMoveType(IntVec2 const& fromCoords, IntVec2 const& toCoords, Piece const* fromPiece, std::string const& promotionType) const;
+    eMoveResult ValidateCastling(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
+    bool       IsValidPromotionType(String const& promotionType) const;
+    eMoveResult DetermineValidMoveType(IntVec2 const& fromCoords, IntVec2 const& toCoords, Piece const* fromPiece, String const& promoteTo) const;
 
-    PieceMove GetLastPieceMove() const;
+    sPieceMove GetLastPieceMove() const;
 
     Camera* m_screenCamera = nullptr;
     Clock*  m_gameClock    = nullptr;

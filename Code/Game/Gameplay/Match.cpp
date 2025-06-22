@@ -128,16 +128,17 @@ void Match::CreateBoard()
 
 //----------------------------------------------------------------------------------------------------
 bool Match::IsChessMoveValid(IntVec2 const& fromCoords,
-                             IntVec2 const& toCoords) const
+                             IntVec2 const& toCoords,
+                             bool const     isTeleport) const
 {
-    MoveResult const result = ValidateChessMove(fromCoords, toCoords);
+    // eMoveResult const result = ValidateChessMove(fromCoords, toCoords, isTeleport);
 
-    if (!IsMoveValid(result))
-    {
-        g_theDevConsole->AddLine(DevConsole::ERROR, GetMoveResultString(result));
-        return false;
-    }
-
+    // if (!IsMoveValid(result))
+    // {
+    //     g_theDevConsole->AddLine(DevConsole::ERROR, GetMoveResultString(result));
+    //     return false;
+    // }
+    //
     return true;
 }
 
@@ -164,29 +165,6 @@ void Match::HandleCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords) co
     }
 }
 
-void Match::OnChessMove(IntVec2 const& fromCoords,
-                        IntVec2 const& toCoords,
-                        String const&  promotionType,
-                        bool const     isTeleport)
-{
-    // if (isTeleport)
-    // {
-    //     g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("Move Player #%d's %s from %s to %s", g_theGame->GetCurrentPlayerControllerId(), m_board->GetPieceByCoords(fromCoords)->m_definition->m_name.c_str(), m_board->ChessCoordToString(fromCoords).c_str(),
-    //                                                          m_board->ChessCoordToString(toCoords).c_str()));
-    //     // ExecuteMove(fromCoords, toCoords, promotionType);
-    //
-    //     g_theEventSystem->FireEvent("OnExitMatchTurn");
-    //     return;
-    // }
-    if (!IsChessMoveValid(fromCoords, toCoords)) return;
-
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("Move Player #%d's %s from %s to %s", g_theGame->GetCurrentPlayerControllerId(), m_board->GetPieceByCoords(fromCoords)->m_definition->m_name.c_str(), m_board->ChessCoordToString(fromCoords).c_str(),
-                                                             m_board->ChessCoordToString(toCoords).c_str()));
-    ExecuteMove(fromCoords, toCoords, promotionType);
-
-    g_theEventSystem->FireEvent("OnExitMatchTurn");
-    // TODO: Add teleport event to cheat
-}
 
 void Match::UpdatePieceList(IntVec2 const& fromCoords,
                             IntVec2 const& toCoords)
@@ -291,14 +269,31 @@ bool Match::OnMatchInitialized(EventArgs& args)
     return true;
 }
 
-MoveResult Match::ValidateChessMove(IntVec2 const&     fromCoords,
-                                    IntVec2 const&     toCoords,
-                                    std::string const& promotionType) const
+//----------------------------------------------------------------------------------------------------
+void Match::OnChessMove(IntVec2 const& fromCoords,
+                        IntVec2 const& toCoords,
+                        String const&  promoteTo,
+                        bool const     isTeleport)
+{
+    // if (!IsChessMoveValid(fromCoords, toCoords, isTeleport)) return;
+
+    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("Move Player #%d's %s from %s to %s", g_theGame->GetCurrentPlayerControllerId(), m_board->GetPieceByCoords(fromCoords)->m_definition->m_name.c_str(), m_board->ChessCoordToString(fromCoords).c_str(),
+                                                             m_board->ChessCoordToString(toCoords).c_str()));
+
+    if (ExecuteMove(fromCoords, toCoords, promoteTo, isTeleport)) g_theEventSystem->FireEvent("OnExitMatchTurn");
+
+    // TODO: Add teleport event to cheat
+}
+
+eMoveResult Match::ValidateChessMove(IntVec2 const& fromCoords,
+                                     IntVec2 const& toCoords,
+                                     String const&  promotionType,
+                                     bool const     isTeleport) const
 {
     // 1. Check if coordinates are valid
     if (!m_board->IsCoordValid(fromCoords) || !m_board->IsCoordValid(toCoords))
     {
-        return MoveResult::INVALID_MOVE_BAD_LOCATION;
+        return eMoveResult::INVALID_MOVE_BAD_LOCATION;
     }
 
     // 2. Check if source square has a piece
@@ -306,19 +301,19 @@ MoveResult Match::ValidateChessMove(IntVec2 const&     fromCoords,
 
     if (fromPiece == nullptr)
     {
-        return MoveResult::INVALID_MOVE_NO_PIECE;
+        return eMoveResult::INVALID_MOVE_NO_PIECE;
     }
 
     // 3. Check if piece belongs to current player
     if (m_board->GetSquareInfoByCoords(fromCoords).m_playerControllerId != g_theGame->GetCurrentPlayerControllerId())
     {
-        return MoveResult::INVALID_MOVE_NOT_YOUR_PIECE;
+        return eMoveResult::INVALID_MOVE_NOT_YOUR_PIECE;
     }
 
     // 4. Check if trying to move to same square
     if (fromCoords == toCoords)
     {
-        return MoveResult::INVALID_MOVE_ZERO_DISTANCE;
+        return eMoveResult::INVALID_MOVE_ZERO_DISTANCE;
     }
 
     // 5. Check destination square
@@ -327,12 +322,12 @@ MoveResult Match::ValidateChessMove(IntVec2 const&     fromCoords,
 
     if (toPiece != nullptr && toOwner == g_theGame->GetCurrentPlayerControllerId())
     {
-        return MoveResult::INVALID_MOVE_DESTINATION_BLOCKED;
+        return eMoveResult::INVALID_MOVE_DESTINATION_BLOCKED;
     }
 
     // 6. Check piece-specific movement rules
-    MoveResult pieceValidation = ValidatePieceMovement(fromCoords, toCoords, promotionType);
-    if (pieceValidation != MoveResult::VALID_MOVE_NORMAL)
+    eMoveResult pieceValidation = ValidatePieceMovement(fromCoords, toCoords, promotionType);
+    if (pieceValidation != eMoveResult::VALID_MOVE_NORMAL)
     {
         return pieceValidation;
     }
@@ -340,7 +335,7 @@ MoveResult Match::ValidateChessMove(IntVec2 const&     fromCoords,
     // 7. Check if sliding pieces are blocked
     if (!IsPathClear(fromCoords, toCoords, fromPiece->m_definition->m_type))
     {
-        return MoveResult::INVALID_MOVE_PATH_BLOCKED;
+        return eMoveResult::INVALID_MOVE_PATH_BLOCKED;
     }
 
     // 8. Kings apart rule - king cannot move adjacent to enemy king
@@ -348,7 +343,7 @@ MoveResult Match::ValidateChessMove(IntVec2 const&     fromCoords,
     {
         if (!IsKingDistanceValid(toCoords))
         {
-            return MoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
+            return eMoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
         }
     }
 
@@ -356,17 +351,17 @@ MoveResult Match::ValidateChessMove(IntVec2 const&     fromCoords,
     return DetermineValidMoveType(fromCoords, toCoords, fromPiece, promotionType);
 }
 
-MoveResult Match::ValidatePieceMovement(IntVec2 const&     fromCoords,
-                                        IntVec2 const&     toCoords,
-                                        std::string const& promotionType) const
+eMoveResult Match::ValidatePieceMovement(IntVec2 const& fromCoords,
+                                         IntVec2 const& toCoords,
+                                         String const&  promotionType) const
 {
-    Piece const* fromPiece = m_board->GetPieceByCoords(fromCoords);
-    ePieceType   pieceType = fromPiece->m_definition->m_type;
+    Piece const*     fromPiece = m_board->GetPieceByCoords(fromCoords);
+    ePieceType const pieceType = fromPiece->m_definition->m_type;
 
-    int deltaX    = toCoords.x - fromCoords.x;
-    int deltaY    = toCoords.y - fromCoords.y;
-    int absDeltaX = abs(deltaX);
-    int absDeltaY = abs(deltaY);
+    int const deltaX    = toCoords.x - fromCoords.x;
+    int const deltaY    = toCoords.y - fromCoords.y;
+    int const absDeltaX = abs(deltaX);
+    int const absDeltaY = abs(deltaY);
 
     switch (pieceType)
     {
@@ -377,13 +372,13 @@ MoveResult Match::ValidatePieceMovement(IntVec2 const&     fromCoords,
     case ePieceType::QUEEN: return ValidateQueenMove(deltaX, deltaY, absDeltaX, absDeltaY);
     case ePieceType::KING: return ValidateKingMove(absDeltaX, absDeltaY, fromCoords, toCoords);
     case ePieceType::NONE:
-    default: return MoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
+    default: return eMoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
     }
 }
 
-MoveResult Match::ValidatePawnMove(IntVec2 const&     fromCoords,
-                                   IntVec2 const&     toCoords,
-                                   std::string const& promotionType) const
+eMoveResult Match::ValidatePawnMove(IntVec2 const& fromCoords,
+                                    IntVec2 const& toCoords,
+                                    String const&  promotionType) const
 {
     Piece const* fromPiece = m_board->GetPieceByCoords(fromCoords);
     Piece const* toPiece   = m_board->GetPieceByCoords(toCoords);
@@ -400,12 +395,12 @@ MoveResult Match::ValidatePawnMove(IntVec2 const&     fromCoords,
     {
         if (promotionType.empty())
         {
-            return MoveResult::VALID_MOVE_PROMOTION; // Need promotion parameter
+            return eMoveResult::VALID_MOVE_PROMOTION; // Need promotion parameter
         }
 
         if (!IsValidPromotionType(promotionType))
         {
-            return MoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
+            return eMoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
         }
     }
 
@@ -414,7 +409,7 @@ MoveResult Match::ValidatePawnMove(IntVec2 const&     fromCoords,
     {
         if (deltaY == direction) // 1 square forward
         {
-            return MoveResult::VALID_MOVE_NORMAL;
+            return eMoveResult::VALID_MOVE_NORMAL;
         }
         else if (deltaY == 2 * direction) // 2 squares forward
         {
@@ -422,11 +417,11 @@ MoveResult Match::ValidatePawnMove(IntVec2 const&     fromCoords,
             int startingRank = (currentPlayer == 0) ? 1 : 6;
             if (fromCoords.y == startingRank || !fromPiece->m_hasMoved)
             {
-                return MoveResult::VALID_MOVE_NORMAL;
+                return eMoveResult::VALID_MOVE_NORMAL;
             }
             else
             {
-                return MoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
+                return eMoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
             }
         }
     }
@@ -435,56 +430,56 @@ MoveResult Match::ValidatePawnMove(IntVec2 const&     fromCoords,
     {
         if (toPiece != nullptr)
         {
-            return MoveResult::VALID_CAPTURE_NORMAL; // Normal capture
+            return eMoveResult::VALID_CAPTURE_NORMAL; // Normal capture
         }
         else
         {
             // Check for en passant
             if (IsValidEnPassant(fromCoords, toCoords))
             {
-                return MoveResult::VALID_CAPTURE_ENPASSANT;
+                return eMoveResult::VALID_CAPTURE_ENPASSANT;
             }
             else
             {
-                return MoveResult::INVALID_ENPASSANT_STALE;
+                return eMoveResult::INVALID_ENPASSANT_STALE;
             }
         }
     }
 
-    return MoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
+    return eMoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
 }
 
-MoveResult Match::ValidateRookMove(int deltaX, int deltaY) const
+eMoveResult Match::ValidateRookMove(int deltaX, int deltaY) const
 {
     if ((deltaX == 0 && deltaY != 0) || (deltaX != 0 && deltaY == 0))
     {
-        return MoveResult::VALID_MOVE_NORMAL;
+        return eMoveResult::VALID_MOVE_NORMAL;
     }
 
-    return MoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
+    return eMoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
 }
 
-MoveResult Match::ValidateBishopMove(int absDeltaX, int absDeltaY) const
+eMoveResult Match::ValidateBishopMove(int absDeltaX, int absDeltaY) const
 {
     if (absDeltaX == absDeltaY && absDeltaX > 0)
     {
-        return MoveResult::VALID_MOVE_NORMAL;
+        return eMoveResult::VALID_MOVE_NORMAL;
     }
 
-    return MoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
+    return eMoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
 }
 
-MoveResult Match::ValidateKnightMove(int absDeltaX, int absDeltaY) const
+eMoveResult Match::ValidateKnightMove(int absDeltaX, int absDeltaY) const
 {
     if ((absDeltaX == 2 && absDeltaY == 1) || (absDeltaX == 1 && absDeltaY == 2))
     {
-        return MoveResult::VALID_MOVE_NORMAL;
+        return eMoveResult::VALID_MOVE_NORMAL;
     }
 
-    return MoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
+    return eMoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
 }
 
-MoveResult Match::ValidateQueenMove(int deltaX, int deltaY, int absDeltaX, int absDeltaY) const
+eMoveResult Match::ValidateQueenMove(int deltaX, int deltaY, int absDeltaX, int absDeltaY) const
 {
     // Queen moves like rook or bishop
     bool isRookMove   = (deltaX == 0 && deltaY != 0) || (deltaX != 0 && deltaY == 0);
@@ -492,15 +487,15 @@ MoveResult Match::ValidateQueenMove(int deltaX, int deltaY, int absDeltaX, int a
 
     if (isRookMove || isBishopMove)
     {
-        return MoveResult::VALID_MOVE_NORMAL;
+        return eMoveResult::VALID_MOVE_NORMAL;
     }
 
-    return MoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
+    return eMoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
 }
 
-MoveResult Match::ValidateKingMove(int            absDeltaX, int absDeltaY,
-                                   IntVec2 const& fromCoords,
-                                   IntVec2 const& toCoords) const
+eMoveResult Match::ValidateKingMove(int            absDeltaX, int absDeltaY,
+                                    IntVec2 const& fromCoords,
+                                    IntVec2 const& toCoords) const
 {
     // Check for castling
     if (absDeltaY == 0 && absDeltaX == 3)
@@ -516,10 +511,10 @@ MoveResult Match::ValidateKingMove(int            absDeltaX, int absDeltaY,
     // Normal king move (1 square in any direction)
     if (absDeltaX <= 1 && absDeltaY <= 1)
     {
-        return MoveResult::VALID_MOVE_NORMAL;
+        return eMoveResult::VALID_MOVE_NORMAL;
     }
 
-    return MoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
+    return eMoveResult::INVALID_MOVE_WRONG_MOVE_SHAPE;
 }
 
 bool Match::IsKingDistanceValid(IntVec2 const& toCoords) const
@@ -585,7 +580,7 @@ bool Match::IsPathClear(IntVec2 const& fromCoords, IntVec2 const& toCoords, ePie
 
 bool Match::IsValidEnPassant(IntVec2 const& fromCoords, IntVec2 const& toCoords) const
 {
-    PieceMove const lastMove = GetLastPieceMove();
+    sPieceMove const lastMove = GetLastPieceMove();
 
     // Check if last move was a pawn moving 2 squares
     if (lastMove.piece == nullptr || lastMove.piece->m_definition->m_type != ePieceType::PAWN)
@@ -613,14 +608,14 @@ bool Match::IsValidEnPassant(IntVec2 const& fromCoords, IntVec2 const& toCoords)
     return false;
 }
 
-MoveResult Match::ValidateCastling(IntVec2 const& fromCoords, IntVec2 const& toCoords) const
+eMoveResult Match::ValidateCastling(IntVec2 const& fromCoords, IntVec2 const& toCoords) const
 {
     Piece const* king = m_board->GetPieceByCoords(fromCoords);
 
     // King must not have moved
     if (king->m_hasMoved)
     {
-        return MoveResult::INVALID_CASTLE_KING_HAS_MOVED;
+        return eMoveResult::INVALID_CASTLE_KING_HAS_MOVED;
     }
 
     // Determine castling side
@@ -630,13 +625,13 @@ MoveResult Match::ValidateCastling(IntVec2 const& fromCoords, IntVec2 const& toC
     Piece const* rook = m_board->GetPieceByCoords(rookPos);
     if (rook == nullptr || rook->m_definition->m_type != ePieceType::ROOK)
     {
-        return MoveResult::INVALID_CASTLE_ROOK_HAS_MOVED;
+        return eMoveResult::INVALID_CASTLE_ROOK_HAS_MOVED;
     }
 
     // Rook must not have moved
     if (rook->m_hasMoved)
     {
-        return MoveResult::INVALID_CASTLE_ROOK_HAS_MOVED;
+        return eMoveResult::INVALID_CASTLE_ROOK_HAS_MOVED;
     }
 
     // Check if path is clear between king and rook
@@ -647,7 +642,7 @@ MoveResult Match::ValidateCastling(IntVec2 const& fromCoords, IntVec2 const& toC
     {
         if (m_board->GetPieceByCoords(IntVec2(x, fromCoords.y)) != nullptr)
         {
-            return MoveResult::INVALID_CASTLE_PATH_BLOCKED;
+            return eMoveResult::INVALID_CASTLE_PATH_BLOCKED;
         }
     }
 
@@ -656,7 +651,7 @@ MoveResult Match::ValidateCastling(IntVec2 const& fromCoords, IntVec2 const& toC
     // - King cannot pass through check
     // - King cannot end in check
 
-    return isKingSide ? MoveResult::VALID_CASTLE_KINGSIDE : MoveResult::VALID_CASTLE_QUEENSIDE;
+    return isKingSide ? eMoveResult::VALID_CASTLE_KINGSIDE : eMoveResult::VALID_CASTLE_QUEENSIDE;
 }
 
 bool Match::IsValidPromotionType(std::string const& promotionType) const
@@ -665,10 +660,10 @@ bool Match::IsValidPromotionType(std::string const& promotionType) const
         promotionType == "bishop" || promotionType == "knight");
 }
 
-MoveResult Match::DetermineValidMoveType(IntVec2 const&     fromCoords,
-                                         IntVec2 const&     toCoords,
-                                         Piece const*       fromPiece,
-                                         std::string const& promotionType) const
+eMoveResult Match::DetermineValidMoveType(IntVec2 const& fromCoords,
+                                          IntVec2 const& toCoords,
+                                          Piece const*   fromPiece,
+                                          String const&  promoteTo) const
 {
     Piece const* toPiece = m_board->GetPieceByCoords(toCoords);
 
@@ -682,18 +677,18 @@ MoveResult Match::DetermineValidMoveType(IntVec2 const&     fromCoords,
         {
             if (toPiece != nullptr)
             {
-                return MoveResult::VALID_MOVE_PROMOTION; // Promotion with capture
+                return eMoveResult::VALID_MOVE_PROMOTION; // Promotion with capture
             }
             else
             {
-                return MoveResult::VALID_MOVE_PROMOTION; // Promotion without capture
+                return eMoveResult::VALID_MOVE_PROMOTION; // Promotion without capture
             }
         }
 
         // Check for en passant (already validated in pawn move)
         if (abs(toCoords.x - fromCoords.x) == 1 && toPiece == nullptr)
         {
-            return MoveResult::VALID_CAPTURE_ENPASSANT;
+            return eMoveResult::VALID_CAPTURE_ENPASSANT;
         }
     }
 
@@ -704,33 +699,36 @@ MoveResult Match::DetermineValidMoveType(IntVec2 const&     fromCoords,
         if (absDeltaX == 2)
         {
             bool isKingSide = toCoords.x > fromCoords.x;
-            return isKingSide ? MoveResult::VALID_CASTLE_KINGSIDE : MoveResult::VALID_CASTLE_QUEENSIDE;
+            return isKingSide ? eMoveResult::VALID_CASTLE_KINGSIDE : eMoveResult::VALID_CASTLE_QUEENSIDE;
         }
     }
 
     // Check for capture
     if (toPiece != nullptr)
     {
-        return MoveResult::VALID_CAPTURE_NORMAL;
+        return eMoveResult::VALID_CAPTURE_NORMAL;
     }
 
     // Normal move
-    return MoveResult::VALID_MOVE_NORMAL;
+    return eMoveResult::VALID_MOVE_NORMAL;
 }
 
-PieceMove Match::GetLastPieceMove() const
+sPieceMove Match::GetLastPieceMove() const
 {
     return m_pieceMoveList.back();
 }
 
-void Match::ExecuteMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, std::string const& promotionType)
+bool Match::ExecuteMove(IntVec2 const& fromCoords,
+                        IntVec2 const& toCoords,
+                        String const&  promoteTo,
+                        bool const     isTeleport)
 {
-    MoveResult result = ValidateChessMove(fromCoords, toCoords, promotionType);
+    eMoveResult const result = ValidateChessMove(fromCoords, toCoords, promoteTo, isTeleport);
 
     if (!IsMoveValid(result))
     {
         g_theDevConsole->AddLine(DevConsole::ERROR, GetMoveResultString(result));
-        return;
+        return false;
     }
 
     Piece* fromPiece = m_board->GetPieceByCoords(fromCoords);
@@ -738,28 +736,27 @@ void Match::ExecuteMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, std:
     // Handle special moves based on result type
     switch (result)
     {
-    case MoveResult::VALID_CAPTURE_ENPASSANT:
+    case eMoveResult::VALID_CAPTURE_ENPASSANT:
         ExecuteEnPassantCapture(fromCoords, toCoords);
         break;
 
-    case MoveResult::VALID_MOVE_PROMOTION:
-        ExecutePawnPromotion(fromCoords, toCoords, promotionType);
+    case eMoveResult::VALID_MOVE_PROMOTION:
+        ExecutePawnPromotion(fromCoords, toCoords, promoteTo);
         break;
 
-    case MoveResult::VALID_CASTLE_KINGSIDE:
-    case MoveResult::VALID_CASTLE_QUEENSIDE:
+    case eMoveResult::VALID_CASTLE_KINGSIDE:
+    case eMoveResult::VALID_CASTLE_QUEENSIDE:
         ExecuteCastling(fromCoords, toCoords);
         break;
 
-    case MoveResult::VALID_CAPTURE_NORMAL:
-        // HandleCapture(fromCoords, toCoords);
+    case eMoveResult::VALID_CAPTURE_NORMAL:
+        HandleCapture(fromCoords, toCoords);
         // m_board->MovePiece(fromCoords, toCoords);
         fromPiece->UpdatePositionByCoords(toCoords);
-        fromPiece->m_hasMoved = true;
         m_board->UpdateSquareInfoList(fromCoords, toCoords);
 
         break;
-    case MoveResult::VALID_MOVE_NORMAL:
+    case eMoveResult::VALID_MOVE_NORMAL:
     default:
         fromPiece->UpdatePositionByCoords(toCoords);
         fromPiece->m_hasMoved = true;
@@ -772,6 +769,7 @@ void Match::ExecuteMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, std:
     m_pieceMoveList.push_back({fromPiece, fromCoords, toCoords});
 
     g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, GetMoveResultString(result));
+    return true;
 }
 
 void Match::ExecuteEnPassantCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords)
@@ -787,19 +785,20 @@ void Match::ExecuteEnPassantCapture(IntVec2 const& fromCoords, IntVec2 const& to
     // m_board->MovePiece(fromCoords, toCoords);
 }
 
-void Match::ExecutePawnPromotion(IntVec2 const& fromCoords, IntVec2 const& toCoords, std::string const& promotionType) const
+void Match::ExecutePawnPromotion(IntVec2 const& fromCoords,
+                                 IntVec2 const& toCoords,
+                                 String const&  promoteTo) const
 {
     // Handle capture if there's a piece at destination
     HandleCapture(fromCoords, toCoords);
 
     Piece* fromPiece        = m_board->GetPieceByCoords(fromCoords);
-    fromPiece->m_definition = PieceDefinition::GetDefByName(promotionType);
+    fromPiece->m_definition = PieceDefinition::GetDefByName(promoteTo);
     fromPiece->UpdatePositionByCoords(toCoords);
-    // fromPiece->m_hasMoved = true;
-    m_board->UpdateSquareInfoList(fromCoords, toCoords, promotionType);
+    m_board->UpdateSquareInfoList(fromCoords, toCoords, promoteTo);
     // m_board->UpdateBoardSquareInfoList(fromCoords, toCoords);
     // Promote the pawn
-    m_board->PromotePawn(fromCoords, toCoords, promotionType);
+    m_board->PromotePawn(fromCoords, toCoords, promoteTo);
 }
 
 void Match::ExecuteCastling(IntVec2 const& fromCoords, IntVec2 const& toCoords) const

@@ -11,7 +11,7 @@
 class Piece;
 
 //----------------------------------------------------------------------------------------------------
-enum class MoveResult : int8_t
+enum class eMoveResult : int8_t
 {
     UNKNOWN,
     VALID_MOVE_NORMAL,
@@ -36,12 +36,12 @@ enum class MoveResult : int8_t
     INVALID_CASTLE_OUT_OF_CHECK
 };
 
-struct PieceMove
+struct sPieceMove
 {
     Piece const* piece      = nullptr;
     IntVec2      fromCoords = IntVec2::ZERO;
     IntVec2      toCoords   = IntVec2::ZERO;
 };
 
-char const* GetMoveResultString(MoveResult const& result);
-bool        IsMoveValid(MoveResult const& result);
+char const* GetMoveResultString(eMoveResult const& result);
+bool        IsMoveValid(eMoveResult const& result);
