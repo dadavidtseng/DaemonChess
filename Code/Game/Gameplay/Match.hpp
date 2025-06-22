@@ -43,12 +43,13 @@ public:
 
     bool IsChessMoveValid(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
     void ExecuteMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, std::string const& promotionType);
-    void ExecuteEnPassantCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
+    void ExecuteEnPassantCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords) ;
     void ExecutePawnPromotion(IntVec2 const& fromCoords, IntVec2 const& toCoords, std::string const& promotionType) const;
     void ExecuteCastling(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
     void HandleCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
-    void OnChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promotionType);
+    void OnChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promotionType, bool isTeleport);
     void UpdatePieceList(IntVec2 const& fromCoords, IntVec2 const& toCoords);
+    void RemovePieceList(IntVec2 const& toCoords);
 
     MoveResult ValidateChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, std::string const& promotionType = "") const;
     MoveResult ValidatePieceMovement(IntVec2 const& fromCoords, IntVec2 const& toCoords, std::string const& promotionType) const;
@@ -59,7 +60,7 @@ public:
     MoveResult ValidateQueenMove(int deltaX, int deltaY, int absDeltaX, int absDeltaY) const;
     MoveResult ValidateKingMove(int absDeltaX, int absDeltaY, IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
 
-    bool IsKingDistanceValid(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
+    bool IsKingDistanceValid(IntVec2 const& toCoords) const;
     bool IsPathClear(IntVec2 const& fromCoords, IntVec2 const& toCoords, ePieceType const& pieceType) const;
     bool IsValidEnPassant(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
 
@@ -67,7 +68,7 @@ public:
     bool       IsValidPromotionType(std::string const& promotionType) const;
     MoveResult DetermineValidMoveType(IntVec2 const& fromCoords, IntVec2 const& toCoords, Piece const* fromPiece, std::string const& promotionType) const;
 
-    PieceMove   GetLastPieceMove() const;
+    PieceMove GetLastPieceMove() const;
 
     Camera* m_screenCamera = nullptr;
     Clock*  m_gameClock    = nullptr;

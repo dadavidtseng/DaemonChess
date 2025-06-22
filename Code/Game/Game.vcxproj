@@ -227,6 +227,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Docs\README.md" />
+    <None Include="..\..\Docs\README_General_Assignment_TC.md" />
+    <None Include="..\..\Docs\README_General_Assignment_EN.md" />
+    <None Include="..\..\Docs\README_Independent_Research_Team_Project_EN.md" />
+    <None Include="..\..\Docs\README_Independent_Research_Team_Project_TC.md" />
+    <None Include="..\..\Docs\README_Thesis_EN.md" />
+    <None Include="..\..\Docs\README_Thesis_TC.md" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\..\Docs\structure.puml" />

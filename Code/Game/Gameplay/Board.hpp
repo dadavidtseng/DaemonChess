@@ -38,9 +38,10 @@ public:
 
     void    CreateLocalVertsForAABB3s();
     void    CreateLocalVertsForBoardFrame();
-    void    UpdateBoardSquareInfoList(IntVec2 const& fromCoords, IntVec2 const& toCoords);
+    void    UpdateSquareInfoList(IntVec2 const& fromCoords, IntVec2 const& toCoords);
+    void    UpdateSquareInfoList(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo);
     void    CapturePiece(IntVec2 const& fromCoords, IntVec2 const& toCoords);
-    IntVec2 FindKingPosition(int enemy_player);
+    IntVec2 FindKingPosition(int playerId);
     void    MovePiece(IntVec2 const& fromCoords, IntVec2 const& toCoords);
     void    PromotePawn(IntVec2 const& int_vec2, IntVec2 const& to_coords, const std::string& string);
     void    RemovePiece(IntVec2 const& int_vec2);

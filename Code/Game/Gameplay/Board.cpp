@@ -201,7 +201,8 @@ void Board::CreateLocalVertsForBoardFrame()
     AddVertsForAABB3D(m_vertexes, m_indexes, rightFrame, Rgba8(40, 50, 60));
 }
 
-void Board::UpdateBoardSquareInfoList(IntVec2 const& fromCoords, IntVec2 const& toCoords)
+void Board::UpdateSquareInfoList(IntVec2 const& fromCoords,
+                                 IntVec2 const& toCoords)
 {
     sSquareInfo const fromInfo = GetSquareInfoByCoords(fromCoords);
 
@@ -222,6 +223,29 @@ void Board::UpdateBoardSquareInfoList(IntVec2 const& fromCoords, IntVec2 const& 
     }
 }
 
+void Board::UpdateSquareInfoList(IntVec2 const& fromCoords,
+                                 IntVec2 const& toCoords,
+                                 String const&  promoteTo)
+{
+    sSquareInfo const fromInfo = GetSquareInfoByCoords(fromCoords);
+
+    for (auto it = m_squareInfoList.begin(); it != m_squareInfoList.end(); ++it)
+    {
+        if (it->m_coords == toCoords)
+        {
+            it->m_name               = promoteTo;              // 使用升變名稱
+            it->m_notation           = 'Q';    // 保留原來棋子的notation（可視需要替換）
+            it->m_playerControllerId = fromInfo.m_playerControllerId;
+        }
+        else if (it->m_coords == fromCoords)
+        {
+            it->m_name               = "DEFAULT";
+            it->m_notation           = "*";
+            it->m_playerControllerId = -1;
+        }
+    }
+}
+
 void Board::CapturePiece(IntVec2 const& fromCoords,
                          IntVec2 const& toCoords)
 {
@@ -229,9 +253,18 @@ void Board::CapturePiece(IntVec2 const& fromCoords,
     m_match->UpdatePieceList(fromCoords, toCoords);
 }
 
-IntVec2 Board::FindKingPosition(int enemy_player)
+IntVec2 Board::FindKingPosition(int playerId)
 {
-    return IntVec2::ZERO;
+    for (sSquareInfo const& square : m_squareInfoList)
+    {
+        if (square.m_playerControllerId == playerId && square.m_name == "king")
+        {
+            return square.m_coords;
+        }
+    }
+
+    // 若未找到，回傳錯誤值（例如 ZERO 或 INVALID）
+    return IntVec2::ZERO; // 或者 IntVec2(-1, -1) 代表找不到
 }
 
 void Board::MovePiece(IntVec2 const& fromCoords, IntVec2 const& toCoords)
@@ -241,9 +274,19 @@ void Board::MovePiece(IntVec2 const& fromCoords, IntVec2 const& toCoords)
 
 void Board::PromotePawn(IntVec2 const& int_vec2, IntVec2 const& to_coords, const std::string& string)
 {
-
 }
 
 void Board::RemovePiece(IntVec2 const& int_vec2)
 {
+    sSquareInfo const fromInfo = GetSquareInfoByCoords(int_vec2);
+
+    for (auto it = m_squareInfoList.begin(); it != m_squareInfoList.end(); ++it)
+    {
+        if (it->m_coords == int_vec2)
+        {
+            it->m_name               = "DEFAULT";
+            it->m_notation           = "*";
+            it->m_playerControllerId = -1;
+        }
+    }
 }
