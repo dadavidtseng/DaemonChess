@@ -87,11 +87,8 @@ void Game::Render() const
     g_theRenderer->EndCamera(*m_screenCamera);
 
     //-End-of-Screen-Camera---------------------------------------------------------------------------
-    if (m_gameState == eGameState::MATCH ||
-        m_gameState == eGameState::FINISHED)
-    {
-        DebugRenderScreen(*m_screenCamera);
-    }
+
+    DebugRenderScreen(*m_screenCamera);
 }
 
 void Game::TogglePlayerControllerId()
@@ -316,6 +313,35 @@ void Game::UpdateCurrentControllerId(int const newID)
 void Game::RenderAttractMode() const
 {
     DebugDrawRing(Vec2(800.f, 400.f), 300.f, 10.f, Rgba8::YELLOW);
+
+    std::vector<std::string> asciiArt = {
+        "         ,....,",
+        "      ,::::::<",
+        "     ,::/^\"",
+        "    ,::/, `   e`",
+        "   ,::; |        '",
+        "   ,::|  \\___,-.  c",
+        "   ;::|     \\   ",
+        "   ;::|      \\",
+        "   ;::|   _.=`\\",
+        "   `;:|.=` _.=`\\",
+        "     '|_.=`   __\\",
+        "     `\\_..==`` ",
+        "      .'.___.-'.",
+        "     /          \\",
+        "    ('--......--')",
+        "    /'--......--'\\",
+        "    `\"--......--\""
+    };
+
+    Vec2 basePosition(480.f, 630.f);
+    float lineHeight = 30.f;
+
+    for (size_t i = 0; i < asciiArt.size(); ++i) {
+        Vec2 position = basePosition - Vec2(0.f, i * lineHeight);
+        DebugAddScreenText(Stringf(asciiArt[i].c_str()), position, lineHeight, Vec2(0.5f,0.5f), 0.f);
+    }
+    DebugAddScreenText(Stringf("Chess Simulator"), Vec2(600.f,60.f), lineHeight, Vec2(0.5f,0.5f), 0.f);
 }
 
 //----------------------------------------------------------------------------------------------------
