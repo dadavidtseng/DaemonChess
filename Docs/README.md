@@ -1,5 +1,9 @@
 # ChessSimulator
 
+# Table of Contents
+
+* [Key Features](#key-features)
+
 [//]: # (//----------------------------------------------------------------------------------------------------)
 
 ## Project Overview
