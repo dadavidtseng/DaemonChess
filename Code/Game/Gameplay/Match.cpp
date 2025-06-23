@@ -78,12 +78,12 @@ Match::Match()
 //----------------------------------------------------------------------------------------------------
 Match::~Match()
 {
-    SafeDeletePointer(m_screenCamera);
-    SafeDeletePointer(m_board);
+    GAME_SAFE_RELEASE(m_screenCamera);
+    GAME_SAFE_RELEASE(m_board);
 
     for (int i = 0; i < static_cast<int>(m_pieceList.size()); ++i)
     {
-        SafeDeletePointer(m_pieceList[i]);
+        GAME_SAFE_RELEASE(m_pieceList[i]);
     }
     m_pieceList.clear();
 }

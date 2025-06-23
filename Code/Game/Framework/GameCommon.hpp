@@ -52,7 +52,7 @@ void DebugDrawBoxRing(Vec2 const& center, float radius, float thickness, Rgba8 c
 
 //----------------------------------------------------------------------------------------------------
 template <typename T>
-void SafeDeletePointer(T*& pointer)
+void GAME_SAFE_RELEASE(T*& pointer)
 {
     if (pointer != nullptr)
     {

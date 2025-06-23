@@ -105,7 +105,7 @@ bool Game::OnGameStateChanged(EventArgs& args)
     {
         PieceDefinition::ClearAllDefs();
         BoardDefinition::ClearAllDefs();
-        SafeDeletePointer(g_theGame->m_match);
+        GAME_SAFE_RELEASE(g_theGame->m_match);
     }
 
     if (newGameState == "MATCH")
@@ -166,7 +166,7 @@ bool Game::IsFixedCameraMode() const
 void Game::UpdateFromInput()
 {
     PlayerController const* localPlayer = GetLocalPlayer(m_currentPlayerControllerId);
-
+	UNUSED(localPlayer)
     if (m_gameState == eGameState::ATTRACT)
     {
         if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
@@ -249,6 +249,7 @@ void Game::UpdateFromInput()
 //----------------------------------------------------------------------------------------------------
 void Game::UpdateEntities(float const gameDeltaSeconds, float const systemDeltaSeconds) const
 {
+	UNUSED(gameDeltaSeconds)
     if (m_match == nullptr) return;
     m_match->Update();
     GetLocalPlayer(m_currentPlayerControllerId)->Update(systemDeltaSeconds);
