@@ -83,6 +83,21 @@ struct VertexOutPixelIn
 	float3 v_modelNormal	: MODEL_NORMAL;
 };
 
+//------------------------------------------------------------------------------------------------
+// Light structure for Point and Spot lights
+//------------------------------------------------------------------------------------------------
+struct Light
+{
+	float4 color;				// RGB color + intensity in alpha
+	float3 worldPosition;		// World position for point/spot lights
+	float innerRadius;			// Inner radius for falloff
+	float outerRadius;			// Outer radius for falloff
+	float3 direction;			// Direction for spot lights (normalized)
+	float innerConeAngle;		// Inner cone angle (cosine) for spot lights
+	float outerConeAngle;		// Outer cone angle (cosine) for spot lights
+	int lightType;				// 0=point, 1=spot
+	float2 padding;				// Padding for alignment
+};
 
 //------------------------------------------------------------------------------------------------
 // CONSTANT BUFFERS (a.k.a. CBOs or Constant Buffer Objects, UBOs / Uniform Buffers in OpenGL)
@@ -119,12 +134,20 @@ cbuffer PerFrameConstants : register(b1)
 	float		EMPTY_PADDING;
 };
 
+#define MAX_LIGHTS 8
+
 cbuffer LightConstants : register(b2)
 {
-	float3 SunDirection;
-	float SunIntensity;
-	float AmbientIntensity;
-}
+	// Directional Light (Sun)
+	float4 c_sunColor;			// RGB color + intensity in alpha
+	float3 c_sunDirection;		// Normalized direction
+	float c_ambientIntensity;	// Global ambient light intensity
+
+	// Point and Spot Lights
+	int c_numLights;			// Number of active lights (0 to MAX_LIGHTS)
+	float3 padding1;			// 16-byte alignment padding
+	Light c_lightArray[MAX_LIGHTS];
+};
 
 //------------------------------------------------------------------------------------------------
 cbuffer CameraConstants : register(b3)
@@ -132,6 +155,8 @@ cbuffer CameraConstants : register(b3)
 	float4x4	c_worldToCamera;	// a.k.a. "View" matrix; world space (+X east) to camera-relative space (+X camera-forward)
 	float4x4	c_cameraToRender;	// a.k.a. "Game" matrix; axis-swaps from Game conventions (+X forward) to Render (+X right)
 	float4x4	c_renderToClip;		// a.k.a. "Projection" matrix (perpective or orthographic); render space to clip space
+	float3		c_cameraWorldPosition;	// Camera position in world space
+	float		EMPTY_PADDING;
 };
 
 
@@ -247,6 +272,158 @@ float3 DecodeRGBToXYZ( float3 color )
 	return (color * 2.0) - 1.0;
 }
 
+//------------------------------------------------------------------------------------------------
+// LIGHTING FUNCTIONS
+//------------------------------------------------------------------------------------------------
+
+// Calculate Blinn-Phong lighting for a given light
+void CalculateBlinnPhong(
+	float3 lightDirection,		// Direction TO light (normalized)
+	float3 lightColor,			// Light color * intensity
+	float3 pixelNormal,			// Surface normal (normalized)
+	float3 viewDirection,		// Direction TO camera (normalized)
+	float3 diffuseColor,		// Material diffuse color
+	float specularStrength,		// Material specular strength
+	float specularPower,		// Material specular power
+	inout float3 diffuseOut,	// Accumulated diffuse lighting
+	inout float3 specularOut	// Accumulated specular lighting
+)
+{
+	// Diffuse lighting (Lambert)
+	float NdotL = saturate(dot(pixelNormal, lightDirection));
+	diffuseOut += diffuseColor * lightColor * NdotL;
+
+	// Specular lighting (Blinn-Phong)
+	if (NdotL > 0.0 && specularStrength > 0.0)
+	{
+		float3 halfwayDir = normalize(lightDirection + viewDirection);
+		float NdotH = saturate(dot(pixelNormal, halfwayDir));
+		float specularIntensity = pow(NdotH, specularPower);
+		specularOut += diffuseColor * lightColor * specularStrength * specularIntensity;
+	}
+}
+
+// Calculate directional light contribution (Sun)
+void CalculateDirectionalLight(
+	float3 pixelNormal,
+	float3 lightDirection,
+	float4 lightColor,
+	float ambientIntensity,
+	float3 viewDirection,
+	float3 diffuseColor,
+	float specularStrength,
+	float specularPower,
+	inout float3 ambientOut,
+	inout float3 diffuseOut,
+	inout float3 specularOut
+)
+{
+	float NdotL = dot(-lightDirection, pixelNormal);
+
+	// Progressive ambience: remap part of negative result to positive
+	float lightStrength = saturate(RangeMapClamped(NdotL, -1.0, 1.0, ambientIntensity, 1.0));
+
+	// Ambient contribution
+	ambientOut += diffuseColor * lightColor.rgb * ambientIntensity;
+
+	// Diffuse and specular contributions
+	if (NdotL > 0.0)
+	{
+		CalculateBlinnPhong(
+			-lightDirection,
+			lightColor.rgb * lightColor.a,
+			pixelNormal,
+			viewDirection,
+			diffuseColor,
+			specularStrength,
+			specularPower,
+			diffuseOut,
+			specularOut
+		);
+	}
+}
+
+// Calculate point light contribution with distance falloff
+void CalculatePointLight(
+	Light light,
+	float3 worldPos,
+	float3 pixelNormal,
+	float3 viewDirection,
+	float3 diffuseColor,
+	float specularStrength,
+	float specularPower,
+	inout float3 diffuseOut,
+	inout float3 specularOut
+)
+{
+	float3 lightVector = light.worldPosition - worldPos;
+	float distToLight = length(lightVector);
+	float3 lightDirection = lightVector / distToLight;
+
+	// Distance-based falloff
+	float falloff = saturate(RangeMap(distToLight, light.innerRadius, light.outerRadius, 1.0, 0.0));
+
+	if (falloff > 0.0)
+	{
+		float3 effectiveLightColor = light.color.rgb * light.color.a * falloff;
+
+		CalculateBlinnPhong(
+			lightDirection,
+			effectiveLightColor,
+			pixelNormal,
+			viewDirection,
+			diffuseColor,
+			specularStrength,
+			specularPower,
+			diffuseOut,
+			specularOut
+		);
+	}
+}
+
+// Calculate spot light contribution with angular and distance falloff
+void CalculateSpotLight(
+	Light light,
+	float3 worldPos,
+	float3 pixelNormal,
+	float3 viewDirection,
+	float3 diffuseColor,
+	float specularStrength,
+	float specularPower,
+	inout float3 diffuseOut,
+	inout float3 specularOut
+)
+{
+	float3 lightVector = light.worldPosition - worldPos;
+	float distToLight = length(lightVector);
+	float3 lightDirection = lightVector / distToLight;
+
+	// Distance-based falloff
+	float distanceFalloff = saturate(RangeMap(distToLight, light.innerRadius, light.outerRadius, 1.0, 0.0));
+
+	// Angular falloff (spotlight cone)
+	float cosAngle = dot(-lightDirection, normalize(light.direction));
+	float angularFalloff = saturate(RangeMap(cosAngle, light.outerConeAngle, light.innerConeAngle, 0.0, 1.0));
+
+	float totalFalloff = distanceFalloff * angularFalloff;
+
+	if (totalFalloff > 0.0)
+	{
+		float3 effectiveLightColor = light.color.rgb * light.color.a * totalFalloff;
+
+		CalculateBlinnPhong(
+			lightDirection,
+			effectiveLightColor,
+			pixelNormal,
+			viewDirection,
+			diffuseColor,
+			specularStrength,
+			specularPower,
+			diffuseOut,
+			specularOut
+		);
+	}
+}
 
 //------------------------------------------------------------------------------------------------
 // PIXEL SHADER (PS)
@@ -263,7 +440,7 @@ float3 DecodeRGBToXYZ( float3 color )
 //------------------------------------------------------------------------------------------------
 float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 {
-	float ambience = 0.5;
+	float ambience = c_sunDirection;
 
 	// Get the UV coordinates that were mapped onto this pixel
 	float2 uvCoords = input.v_uvTexCoords;
@@ -280,6 +457,9 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 	float glossiness = specGlossEmitTexel.g;		// Green channel = Glossiness
 	float emissiveStrength = specGlossEmitTexel.b;	// Blue channel = Emissive strength
 
+	// Convert glossiness to specular power (higher values = sharper highlights)
+	float specularPower = glossiness * 128.0 + 1.0; // Range: 1-129
+
 	// Decode normalTexel RGB into XYZ then renormalize; this is the per-pixel normal, in TBN space a.k.a. tangent space
 	float3 pixelNormalTBNSpace = normalize( DecodeRGBToXYZ( normalTexel.rgb ) );
 
@@ -288,7 +468,8 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 
 	// Fake directional light for now; #ToDo: add a (b4) or (b8) Light CBO
 //	float3 lightDir = normalize( float3( cos(0.5 * c_time), sin(0.5 * c_time), -1.0 ) );
-	float3 lightDir = normalize( float3( 10.0, 2.0, -3.0 ) );
+	//float3 lightDir = normalize( float3( 10.0, 2.0, -3.0 ) );
+	float3 lightDir = normalize( SunDirection );
 
 	// Get TBN basis vectors
 	float3 surfaceTangentWorldSpace		= normalize( input.v_worldTangent );
@@ -299,30 +480,88 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 	float3 surfaceBitangentModelSpace	= normalize( input.v_modelBitangent );
 	float3 surfaceNormalModelSpace		= normalize( input.v_modelNormal );
 
-	// Create TBN (surface-to-world) transformation matrix; WARNING: HLSL constructor stores these component-major, which is the opposite (transpose) of our basis-major matrices above!
+	// Create TBN matrix and transform normal to world space
 	float3x3 tbnToWorld = float3x3( surfaceTangentWorldSpace, surfaceBitangentWorldSpace, surfaceNormalWorldSpace );
-	// #ToDo: orthonormalize this (not just normalize); Do Gram-Schmidt and renormalize as we go, and remove above normalizations
-	float3 pixelNormalWorldSpace = mul( pixelNormalTBNSpace, tbnToWorld ); // V*M order because this matrix is component-major (not basis-major!)
+	float3 pixelNormalWorldSpace = mul( pixelNormalTBNSpace, tbnToWorld );
 
-	// #ToDo: add lighting and such later!
-	float diffuseLightDot = dot( -lightDir, pixelNormalWorldSpace );
+	// Choose which normal to use based on debug mode
+	float3 finalNormal = pixelNormalWorldSpace;
 	if( c_debugInt == 10 || c_debugInt == 12 )
 	{
-		diffuseLightDot = dot( -lightDir, surfaceNormalWorldSpace  );
+		finalNormal = surfaceNormalWorldSpace;
 	}
 
-//	float lightStrength = saturate( diffuseLightDot ); // Clamp in [0,1]
-//	if( lightStrength < ambience )
-//	{
-//		lightStrength = ambience;
-//	}
-	float lightStrength = saturate( RangeMapClamped( diffuseLightDot, -1.0, 1.0, -1 + 2*ambience, 1.0 ) )*2.f;
+	// Calculate view direction (from pixel to camera)
+	float3 viewDirection = normalize(c_cameraWorldPosition - input.v_worldPos);
 
-	// Calculate emissive contribution
-	// Emissive strength comes from the blue channel, but emissive color is the RGB color of the diffuse map
-	float3 emissiveColor = diffuseColor.rgb * emissiveStrength;
+	// Initialize lighting accumulation
+	float3 ambientLighting = float3(0, 0, 0);
+	float3 diffuseLighting = float3(0, 0, 0);
+	float3 specularLighting = float3(0, 0, 0);
 
-	float4 finalColor = float4( diffuseColor.rgb * lightStrength, diffuseColor.a );
+	// Add directional light (Sun) contribution
+	if (c_sunColor.a > 0.0)
+	{
+		CalculateDirectionalLight(
+			finalNormal,
+			c_sunDirection,
+			c_sunColor,
+			c_ambientIntensity,
+			viewDirection,
+			diffuseColor.rgb,
+			specularStrength,
+			specularPower,
+			ambientLighting,
+			diffuseLighting,
+			specularLighting
+		);
+	}
+	else
+	{
+		// If no sun, still add ambient
+		ambientLighting = diffuseColor.rgb * c_ambientIntensity;
+	}
+
+	// Add point and spot lights
+	for (int i = 0; i < c_numLights && i < MAX_LIGHTS; ++i)
+	{
+		if (c_lightArray[i].lightType == 0) // Point light
+		{
+			CalculatePointLight(
+				c_lightArray[i],
+				input.v_worldPos,
+				finalNormal,
+				viewDirection,
+				diffuseColor.rgb,
+				specularStrength,
+				specularPower,
+				diffuseLighting,
+				specularLighting
+			);
+		}
+		else if (c_lightArray[i].lightType == 1) // Spot light
+		{
+			CalculateSpotLight(
+				c_lightArray[i],
+				input.v_worldPos,
+				finalNormal,
+				viewDirection,
+				diffuseColor.rgb,
+				specularStrength,
+				specularPower,
+				diffuseLighting,
+				specularLighting
+			);
+		}
+	}
+
+	// Add emissive contribution
+	float3 emissiveLighting = diffuseColor.rgb * emissiveStrength;
+
+	// Combine all lighting components
+	float3 finalRGB = ambientLighting + diffuseLighting + specularLighting + emissiveLighting;
+	float4 finalColor = float4( finalRGB, diffuseColor.a );
+
 	if( finalColor.a <= 0.001 ) // a.k.a. "clip" in HLSL
 	{
 		discard;

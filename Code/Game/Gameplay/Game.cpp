@@ -217,7 +217,7 @@ void Game::UpdateFromInput()
             m_currentDebugInt = (m_currentDebugInt + (int)m_currentDebugIntRange.m_min + 1) % (static_cast<int>(m_currentDebugIntRange.GetLength()) + 1);
         }
 
-        g_theRenderer->SetPerFrameConstants(0, m_currentDebugInt, 0);
+        g_theRenderer->SetPerFrameConstants((float)m_gameClock->GetDeltaSeconds(), m_currentDebugInt, 0);
 
         DebugAddMessage(Stringf("DebugInt=%d|RenderMode=%s", m_currentDebugInt, GetDebugIntString(m_currentDebugInt)), 0.f, Rgba8::YELLOW);
 

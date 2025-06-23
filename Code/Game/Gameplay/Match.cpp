@@ -108,12 +108,23 @@ void Match::Update()
 void Match::UpdateFromInput(float const deltaSeconds)
 {
     UNUSED(deltaSeconds)
+    if (g_theInput->WasKeyJustPressed(KEYCODE_F2))
+    {
+        m_sunDirection.x -= 1.f;
+        DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
+    }
+
+    if (g_theInput->WasKeyJustPressed(KEYCODE_F3))
+    {
+        m_sunDirection.x += 1.f;
+        DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
 void Match::Render() const
 {
-    g_theRenderer->SetLightConstants(m_sunDirection, m_sunIntensity, m_ambientIntensity);
+    // g_theRenderer->SetLightConstants(m_sunDirection, m_sunIntensity, m_ambientIntensity);
 
     m_board->Render();
 
