@@ -289,6 +289,20 @@ char const* GetDebugIntString(int const debugInt)
     case 7: return "Normal Map texel only";
     case 8: return "Pixel Normal in TBN space (decoded, raw)";
     case 9: return "Pixel Normal in World space (decoded, transformed)";
+    case 10: return "Pixel Normal in World space (decoded, transformed)";
+    case 11: return "Pixel Normal in World space (decoded, transformed)";
+    case 12: return "Pixel Normal in World space (decoded, transformed)";
+    case 13: return "Pixel Normal in World space (decoded, transformed)";
+    case 14: return "Pixel Normal in World space (decoded, transformed)";
+    case 15: return "Pixel Normal in World space (decoded, transformed)";
+    case 16: return "Pixel Normal in World space (decoded, transformed)";
+    case 17: return "Pixel Normal in World space (decoded, transformed)";
+    case 18: return "Pixel Normal in World space (decoded, transformed)";
+    case 19: return "// Show SpecGlossEmit texture";
+    case 20: return "// Show specular strength (red channel)";
+    case 21: return "// Show glossiness (green channel)";
+    case 22: return "// Show emissive strength (blue channel)";
+    case 23: return "// Show emissive color contribution";
 
     default: ERROR_AND_DIE(Stringf("Unhandled MoveResult debugInt value #%d", debugInt));
     }

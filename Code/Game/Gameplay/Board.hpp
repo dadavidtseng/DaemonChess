@@ -53,7 +53,8 @@ private:
     BoardDefinition*  m_definition = nullptr;
     VertexList_PCUTBN m_vertexes;
     IndexList         m_indexes;
-    Texture*          m_diffuseTexture = nullptr;
-    Texture*          m_normalTexture  = nullptr;
-    Shader const*     m_shader         = nullptr;
+    Texture*          m_diffuseTexture           = nullptr;
+    Texture*          m_normalTexture            = nullptr;
+    Texture*          m_specularGlossEmitTexture = nullptr;
+    Shader const*     m_shader                   = nullptr;
 };

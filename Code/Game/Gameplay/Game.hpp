@@ -8,8 +8,9 @@
 
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Math/FloatRange.hpp"
 
-//----------------------------------------------------------------------------------------------------
+//-Forward-Declaration--------------------------------------------------------------------------------
 class Camera;
 class Clock;
 class Match;
@@ -62,4 +63,5 @@ private:
     int                            m_currentPlayerControllerId = -1;
     bool                           m_isFixedCameraMode         = true;
     int                            m_currentDebugInt           = 0;
+    FloatRange                     m_currentDebugIntRange      = FloatRange(0.f, 23.f);
 };

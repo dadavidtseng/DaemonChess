@@ -38,8 +38,8 @@ extern RandomNumberGenerator* g_theRNG;
 //-----------------------------------------------------------------------------------------------
 // initial settings
 //
-constexpr float SCREEN_SIZE_X = 1600.f;
-constexpr float SCREEN_SIZE_Y = 800.f;
+float constexpr SCREEN_SIZE_X = 1600.f;
+float constexpr SCREEN_SIZE_Y = 800.f;
 
 //-----------------------------------------------------------------------------------------------
 // DebugRender-related
@@ -61,4 +61,4 @@ void GAME_SAFE_RELEASE(T*& pointer)
     }
 }
 
-char const* GetDebugIntString(int  debugInt);
+char const* GetDebugIntString(int debugInt);

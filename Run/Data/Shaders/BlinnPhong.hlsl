@@ -160,12 +160,12 @@ cbuffer ModelConstants : register(b4)
 //	m_d3dContext->VSSetShaderResources( textureSlot, 1, &texture->m_shaderResourceView );
 //	m_d3dContext->VSSetSamplers( samplerSlot, 1, &samplerState );
 //------------------------------------------------------------------------------------------------
-Texture2D<float4>	t_diffuseTexture	: register(t0);	// Texture bound in texture constant slot #0 (t0)
-Texture2D<float4>	t_normalTexture		: register(t1);	// Texture bound in texture constant slot #1 (t1)
-SamplerState		s_diffuseSampler	: register(s0);	// Sampler is bound in sampler constant slot #0 (s0)
-SamplerState		s_normalSampler		: register(s1);	// Sampler is bound in sampler constant slot #1 (s1)
-// #ToDo: add additional textures/samples, for specular/glossy/emissive maps, etc.
-
+Texture2D<float4>	t_diffuseTexture	: register(t0);			// Texture bound in texture constant slot #0 (t0)
+Texture2D<float4>	t_normalTexture		: register(t1);			// Texture bound in texture constant slot #1 (t1)
+Texture2D<float4>	t_specGlossEmitTexture : register(t2); 		// Texture bound in texture constant slot #2 (t2) - R=Specular, G=Gloss, B=Emissive
+SamplerState		s_diffuseSampler	: register(s0);			// Sampler is bound in sampler constant slot #0 (s0)
+SamplerState		s_normalSampler		: register(s1);			// Sampler is bound in sampler constant slot #1 (s1)
+SamplerState		s_specGlossEmitSampler : register(s2); 		// Sampler is bound in sampler constant slot #2 (s2)
 
 //------------------------------------------------------------------------------------------------
 // VERTEX SHADER (VS)
@@ -271,8 +271,14 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 	// Sample the diffuse map texture to see what this looks like at this pixel
 	float4 diffuseTexel = t_diffuseTexture.Sample( s_diffuseSampler, uvCoords );
 	float4 normalTexel	= t_normalTexture.Sample( s_normalSampler, uvCoords );
+	float4 specGlossEmitTexel = t_specGlossEmitTexture.Sample( s_specGlossEmitSampler, uvCoords );
 	float4 surfaceColor = input.v_color;
 	float4 modelColor = c_modelTint;
+
+	// Extract spec, gloss, and emissive values from the SpecGlossEmit texture
+	float specularStrength = specGlossEmitTexel.r;	// Red channel = Specular strength
+	float glossiness = specGlossEmitTexel.g;		// Green channel = Glossiness
+	float emissiveStrength = specGlossEmitTexel.b;	// Blue channel = Emissive strength
 
 	// Decode normalTexel RGB into XYZ then renormalize; this is the per-pixel normal, in TBN space a.k.a. tangent space
 	float3 pixelNormalTBNSpace = normalize( DecodeRGBToXYZ( normalTexel.rgb ) );
@@ -311,6 +317,10 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 //		lightStrength = ambience;
 //	}
 	float lightStrength = saturate( RangeMapClamped( diffuseLightDot, -1.0, 1.0, -1 + 2*ambience, 1.0 ) )*2.f;
+
+	// Calculate emissive contribution
+	// Emissive strength comes from the blue channel, but emissive color is the RGB color of the diffuse map
+	float3 emissiveColor = diffuseColor.rgb * emissiveStrength;
 
 	float4 finalColor = float4( diffuseColor.rgb * lightStrength, diffuseColor.a );
 	if( finalColor.a <= 0.001 ) // a.k.a. "clip" in HLSL
@@ -364,34 +374,55 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 	}
 	else if(c_debugInt == 13 )
 	{
-		// unused, available
+		finalColor.rgb = EncodeXYZToRGB( surfaceTangentWorldSpace );
 	}
 	else if(c_debugInt == 14 )
 	{
-		finalColor.rgb = EncodeXYZToRGB( surfaceTangentWorldSpace );
+		finalColor.rgb = EncodeXYZToRGB( surfaceBitangentWorldSpace );
 	}
 	else if(c_debugInt == 15 )
 	{
-		finalColor.rgb = EncodeXYZToRGB( surfaceBitangentWorldSpace );
-	}
-	else if(c_debugInt == 16 )
-	{
 		finalColor.rgb = EncodeXYZToRGB( surfaceNormalWorldSpace );
 	}
-	else if(c_debugInt == 17 )
+	else if(c_debugInt == 16 )
 	{
 		float3 modelIBasisWorld = mul( c_modelToWorld, float4(1,0,0,0) ).xyz;
 		finalColor.rgb = EncodeXYZToRGB( normalize( modelIBasisWorld.xyz ) );
 	}
-	else if(c_debugInt == 18 )
+	else if(c_debugInt == 17 )
 	{
 		float3 modelJBasisWorld = mul( c_modelToWorld, float4(0,1,0,0) ).xyz;
 		finalColor.rgb = EncodeXYZToRGB( normalize( modelJBasisWorld.xyz ) );
 	}
-	else if(c_debugInt == 19 )
+	else if(c_debugInt == 18 )
 	{
 		float3 modelKBasisWorld = mul( c_modelToWorld, float4(0,0,1,0) ).xyz;
 		finalColor.rgb = EncodeXYZToRGB( normalize( modelKBasisWorld.xyz ) );
+	}
+	else if(c_debugInt == 19 )
+	{
+		// Show SpecGlossEmit texture
+		finalColor.rgba = specGlossEmitTexel.rgba;
+	}
+	else if(c_debugInt == 20 )
+	{
+		// Show specular strength (red channel)
+		finalColor.rgb = specularStrength.xxx;
+	}
+	else if(c_debugInt == 21 )
+	{
+		// Show glossiness (green channel)
+		finalColor.rgb = glossiness.xxx;
+	}
+	else if(c_debugInt == 22 )
+	{
+		// Show emissive strength (blue channel)
+		finalColor.rgb = emissiveStrength.xxx;
+	}
+	else if(c_debugInt == 23 )
+	{
+		// Show emissive color contribution
+		finalColor.rgb = emissiveColor;
 	}
 
 	return finalColor;

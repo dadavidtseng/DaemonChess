@@ -166,7 +166,7 @@ bool Game::IsFixedCameraMode() const
 void Game::UpdateFromInput()
 {
     PlayerController const* localPlayer = GetLocalPlayer(m_currentPlayerControllerId);
-	UNUSED(localPlayer)
+    UNUSED(localPlayer)
     if (m_gameState == eGameState::ATTRACT)
     {
         if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
@@ -208,16 +208,14 @@ void Game::UpdateFromInput()
             m_gameClock->SetTimeScale(1.f);
         }
 
-        if (g_theInput->WasKeyJustPressed(NUMCODE_0)) m_currentDebugInt = 0;
-        if (g_theInput->WasKeyJustPressed(NUMCODE_1)) m_currentDebugInt = 1;
-        if (g_theInput->WasKeyJustPressed(NUMCODE_2)) m_currentDebugInt = 2;
-        if (g_theInput->WasKeyJustPressed(NUMCODE_3)) m_currentDebugInt = 3;
-        if (g_theInput->WasKeyJustPressed(NUMCODE_4)) m_currentDebugInt = 4;
-        if (g_theInput->WasKeyJustPressed(NUMCODE_5)) m_currentDebugInt = 5;
-        if (g_theInput->WasKeyJustPressed(NUMCODE_6)) m_currentDebugInt = 6;
-        if (g_theInput->WasKeyJustPressed(NUMCODE_7)) m_currentDebugInt = 7;
-        if (g_theInput->WasKeyJustPressed(NUMCODE_8)) m_currentDebugInt = 8;
-        if (g_theInput->WasKeyJustPressed(NUMCODE_9)) m_currentDebugInt = 9;
+        if (g_theInput->WasKeyJustPressed(KEYCODE_F6))
+        {
+            m_currentDebugInt = (m_currentDebugInt + (int)m_currentDebugIntRange.m_max) % (static_cast<int>(m_currentDebugIntRange.GetLength()) + 1);
+        }
+        if (g_theInput->WasKeyJustPressed(KEYCODE_F7))
+        {
+            m_currentDebugInt = (m_currentDebugInt + (int)m_currentDebugIntRange.m_min + 1) % (static_cast<int>(m_currentDebugIntRange.GetLength()) + 1);
+        }
 
         g_theRenderer->SetPerFrameConstants(0, m_currentDebugInt, 0);
 
@@ -249,7 +247,7 @@ void Game::UpdateFromInput()
 //----------------------------------------------------------------------------------------------------
 void Game::UpdateEntities(float const gameDeltaSeconds, float const systemDeltaSeconds) const
 {
-	UNUSED(gameDeltaSeconds)
+    UNUSED(gameDeltaSeconds)
     if (m_match == nullptr) return;
     m_match->Update();
     GetLocalPlayer(m_currentPlayerControllerId)->Update(systemDeltaSeconds);

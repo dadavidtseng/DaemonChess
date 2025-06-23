@@ -20,9 +20,10 @@ Board::Board(Match* owner)
     : Actor(owner)
 
 {
-    m_shader         = g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/BlinnPhong", eVertexType::VERTEX_PCUTBN);
-    m_diffuseTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Textures/woodfloor_d.png");
-    m_normalTexture  = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Textures/woodfloor_n.png");
+    m_shader                   = g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/BlinnPhong", eVertexType::VERTEX_PCUTBN);
+    m_diffuseTexture           = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures/FunkyBricks_d.png");
+    m_normalTexture            = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures/FunkyBricks_n.png");
+    m_specularGlossEmitTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures/FunkyBricks_sge.png");
     CreateLocalVertsForAABB3s();
     CreateLocalVertsForBoardFrame();
 }
@@ -50,6 +51,7 @@ void Board::Render() const
     g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
     g_theRenderer->BindTexture(m_diffuseTexture, 0);
     g_theRenderer->BindTexture(m_normalTexture, 1);
+    g_theRenderer->BindTexture(m_specularGlossEmitTexture, 2);
     g_theRenderer->BindShader(m_shader);
     g_theRenderer->DrawVertexArray(m_vertexes, m_indexes);
 }
@@ -160,8 +162,8 @@ void Board::CreateLocalVertsForAABB3s()
             AddVertsForAABB3D(m_vertexes, m_indexes, box, color);
         }
     }
-// AddVertsForQuad3D(m_vertexes, m_indexes, Vec3(0,0,2), Vec3(1,0,2),Vec3(0,1,2), Vec3(1,1,2));
-// AddVertsForQuad3D(m_vertexes, m_indexes,  Vec3(0,1,3),Vec3(0,0,3), Vec3(1,1,3),Vec3(1,0,3));
+    // AddVertsForQuad3D(m_vertexes, m_indexes, Vec3(0,0,2), Vec3(1,0,2),Vec3(0,1,2), Vec3(1,1,2));
+    // AddVertsForQuad3D(m_vertexes, m_indexes,  Vec3(0,1,3),Vec3(0,0,3), Vec3(1,1,3),Vec3(1,0,3));
     // AddVertsForAABB3D(m_vertexes, m_indexes, AABB3::ZERO_TO_ONE, Rgba8(240, 230, 210));
 }
 

@@ -56,11 +56,12 @@ struct PieceDefinition
     static std::vector<PieceDefinition*> s_pieceDefinitions;
     static void                          ClearAllDefs();
 
-    String                  m_name           = "DEFAULT";
-    ePieceType              m_type           = ePieceType::NONE;
-    Shader*                 m_shader         = nullptr;
-    Texture*                m_diffuseTexture = nullptr;
-    Texture*                m_normalTexture  = nullptr;
+    String                  m_name                     = "DEFAULT";
+    ePieceType              m_type                     = ePieceType::NONE;
+    Shader*                 m_shader                   = nullptr;
+    Texture*                m_diffuseTexture           = nullptr;
+    Texture*                m_normalTexture            = nullptr;
+    Texture*                m_specularGlossEmitTexture = nullptr;
     std::vector<sPiecePart> m_pieceParts;
     char                    m_glyph           = '?';
     VertexBuffer*           m_vertexBuffer[2] = {};

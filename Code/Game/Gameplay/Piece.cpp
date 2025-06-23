@@ -23,11 +23,12 @@ Piece::Piece(Match* owner, sSquareInfo const& squareInfo)
 {
     m_definition = PieceDefinition::GetDefByName(squareInfo.m_name);
 
-    m_shader         = m_definition->m_shader;
-    m_diffuseTexture = m_definition->m_diffuseTexture;
-    m_normalTexture  = m_definition->m_normalTexture;
-    m_coords         = squareInfo.m_coords;
-    m_id             = squareInfo.m_playerControllerId;
+    m_shader                   = m_definition->m_shader;
+    m_diffuseTexture           = m_definition->m_diffuseTexture;
+    m_normalTexture            = m_definition->m_normalTexture;
+    m_specularGlossEmitTexture = m_definition->m_specularGlossEmitTexture;
+    m_coords                   = squareInfo.m_coords;
+    m_id                       = squareInfo.m_playerControllerId;
 
     UpdatePositionByCoords(squareInfo.m_coords);
     // m_orientation = EulerAngles(45,0,0);
@@ -50,15 +51,15 @@ Vec3 Piece::CalculateKnightHopPosition(float t)
     Vec2 guide2 = start2D + direction * 0.75f + perpendicular;
 
     CubicBezierCurve2D horizontalCurve(start2D, guide1, guide2, end2D);
-    Vec2 xyPosition = horizontalCurve.EvaluateAtParametric(t);
+    Vec2               xyPosition = horizontalCurve.EvaluateAtParametric(t);
 
     // Z 軸：使用平滑函數創建跳躍高度
-    float distance = (m_targetPosition - m_startPosition).GetLength();
+    float distance     = (m_targetPosition - m_startPosition).GetLength();
     float maxHopHeight = distance * 0.6f; // 跳躍高度
 
     // 使用 Hesitate3 或 SmoothStep3 創建拋物線效果
     float hopProgress = SmoothStep3(t); // 或 Hesitate3(t)
-    float hopHeight = maxHopHeight * (4.0f * hopProgress * (1.0f - hopProgress)); // 拋物線公式
+    float hopHeight   = maxHopHeight * (4.0f * hopProgress * (1.0f - hopProgress)); // 拋物線公式
 
     // 組合最終位置
     return Vec3(xyPosition.x, xyPosition.y,
@@ -98,7 +99,7 @@ void Piece::Update(float const deltaSeconds)
         else
         {
             float smoothT = SmoothStep5(t); // 或 SmoothStep3, SmoothStep6
-            m_position = Interpolate(m_startPosition, m_targetPosition, smoothT);
+            m_position    = Interpolate(m_startPosition, m_targetPosition, smoothT);
         }
     }
 }
@@ -113,6 +114,8 @@ void Piece::Render() const
     g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
     g_theRenderer->BindTexture(m_diffuseTexture, 0);
     g_theRenderer->BindTexture(m_normalTexture, 1);
+    g_theRenderer->BindTexture(m_normalTexture, 1);
+    g_theRenderer->BindTexture(m_specularGlossEmitTexture, 2);
     g_theRenderer->BindShader(m_shader);
     unsigned int const indexCount = m_definition->GetIndexCountByID(m_id);
     g_theRenderer->DrawIndexedVertexBuffer(m_definition->m_vertexBuffer[m_id], m_definition->m_indexBuffer[m_id], indexCount);

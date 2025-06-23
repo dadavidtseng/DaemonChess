@@ -37,11 +37,12 @@ public:
     void UpdatePositionByCoords(IntVec2 const& newCoords, float moveTime);
 
 protected:
-    Texture*         m_diffuseTexture = nullptr;
-    Texture*         m_normalTexture  = nullptr;
-    Shader*          m_shader         = nullptr;
-    PieceDefinition* m_definition     = nullptr;
-    int              m_id             = -1;
+    Texture*         m_diffuseTexture           = nullptr;
+    Texture*         m_normalTexture            = nullptr;
+    Texture*         m_specularGlossEmitTexture = nullptr;
+    Shader*          m_shader                   = nullptr;
+    PieceDefinition* m_definition               = nullptr;
+    int              m_id                       = -1;
 
     bool    m_hasMoved       = false;
     bool    m_isMoving       = false;
@@ -49,7 +50,7 @@ protected:
     float   m_moveDuration   = 0.f;
     Vec3    m_targetPosition = Vec3::ZERO;
     IntVec2 m_targetCoords   = IntVec2::ZERO;
-    Vec3     m_startPosition = Vec3::ZERO;
+    Vec3    m_startPosition  = Vec3::ZERO;
     // IntVec2 m_currentCoords
     // IntVec2 m_prevCoords;
     // float m_secondSinceMOved = 0.f;

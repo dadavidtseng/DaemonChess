@@ -130,25 +130,25 @@ void App::Startup()
 void App::Shutdown()
 {
     // Destroy all Engine Subsystem
-    SafeDeletePointer(g_theGame);
-    SafeDeletePointer(g_theRNG);
-    SafeDeletePointer(g_theBitmapFont);
+    GAME_SAFE_RELEASE(g_theGame);
+    GAME_SAFE_RELEASE(g_theRNG);
+    GAME_SAFE_RELEASE(g_theBitmapFont);
 
     g_theAudio->Shutdown();
     g_theInput->Shutdown();
     g_theDevConsole->Shutdown();
 
-    SafeDeletePointer(m_devConsoleCamera);
+    GAME_SAFE_RELEASE(m_devConsoleCamera);
 
     DebugRenderSystemShutdown();
     g_theRenderer->Shutdown();
     g_theWindow->Shutdown();
     g_theEventSystem->Shutdown();
 
-    SafeDeletePointer(g_theAudio);
-    SafeDeletePointer(g_theRenderer);
-    SafeDeletePointer(g_theWindow);
-    SafeDeletePointer(g_theInput);
+    GAME_SAFE_RELEASE(g_theAudio);
+    GAME_SAFE_RELEASE(g_theRenderer);
+    GAME_SAFE_RELEASE(g_theWindow);
+    GAME_SAFE_RELEASE(g_theInput);
 }
 
 //----------------------------------------------------------------------------------------------------

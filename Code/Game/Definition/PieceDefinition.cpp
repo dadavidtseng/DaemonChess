@@ -18,8 +18,8 @@ STATIC std::vector<PieceDefinition*> PieceDefinition::s_pieceDefinitions;
 //----------------------------------------------------------------------------------------------------
 PieceDefinition::~PieceDefinition()
 {
-    for (VertexBuffer* buffer : m_vertexBuffer) SafeDeletePointer(buffer);
-    for (IndexBuffer* buffer : m_indexBuffer) SafeDeletePointer(buffer);
+    for (VertexBuffer* buffer : m_vertexBuffer) GAME_SAFE_RELEASE(buffer);
+    for (IndexBuffer* buffer : m_indexBuffer) GAME_SAFE_RELEASE(buffer);
 }
 
 bool PieceDefinition::LoadFromXmlElement(XmlElement const* element)
@@ -33,12 +33,14 @@ bool PieceDefinition::LoadFromXmlElement(XmlElement const* element)
     else if (type == "queen") m_type = ePieceType::QUEEN;
     else if (type == "king") m_type = ePieceType::KING;
 
-    String const shader         = ParseXmlAttribute(*element, "shader", "DEFAULT");
-    m_shader                    = g_theRenderer->CreateOrGetShaderFromFile(shader.c_str(), eVertexType::VERTEX_PCUTBN);
-    String const diffuseTexture = ParseXmlAttribute(*element, "diffuseTexture", "DEFAULT");
-    m_diffuseTexture            = g_theRenderer->CreateOrGetTextureFromFile(diffuseTexture.c_str());
-    String const normalTexture  = ParseXmlAttribute(*element, "normalTexture", "DEFAULT");
-    m_normalTexture             = g_theRenderer->CreateOrGetTextureFromFile(normalTexture.c_str());
+    String const shader                   = ParseXmlAttribute(*element, "shader", "DEFAULT");
+    m_shader                              = g_theRenderer->CreateOrGetShaderFromFile(shader.c_str(), eVertexType::VERTEX_PCUTBN);
+    String const diffuseTexture           = ParseXmlAttribute(*element, "diffuseTexture", "DEFAULT");
+    m_diffuseTexture                      = g_theRenderer->CreateOrGetTextureFromFile(diffuseTexture.c_str());
+    String const normalTexture            = ParseXmlAttribute(*element, "normalTexture", "DEFAULT");
+    m_normalTexture                       = g_theRenderer->CreateOrGetTextureFromFile(normalTexture.c_str());
+    String const specularGlossEmitTexture = ParseXmlAttribute(*element, "specularGlossEmitTexture", "DEFAULT");
+    m_specularGlossEmitTexture            = g_theRenderer->CreateOrGetTextureFromFile(specularGlossEmitTexture.c_str());
 
     XmlElement const* partElement = element->FirstChildElement("PiecePart");
 

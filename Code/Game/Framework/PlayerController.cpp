@@ -25,13 +25,12 @@ PlayerController::PlayerController(Game* owner)
     Mat44 c2r;
     c2r.SetIJK3D(Vec3::Z_BASIS, -Vec3::X_BASIS, Vec3::Y_BASIS);
     m_worldCamera->SetCameraToRenderTransform(c2r);
-
 }
 
 //----------------------------------------------------------------------------------------------------
 PlayerController::~PlayerController()
 {
-    SafeDeletePointer(m_worldCamera);
+    GAME_SAFE_RELEASE(m_worldCamera);
 }
 
 //----------------------------------------------------------------------------------------------------
