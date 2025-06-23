@@ -263,7 +263,7 @@ float3 DecodeRGBToXYZ( float3 color )
 //------------------------------------------------------------------------------------------------
 float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 {
-	float ambience = 0.0;
+	float ambience = 0.5;
 
 	// Get the UV coordinates that were mapped onto this pixel
 	float2 uvCoords = input.v_uvTexCoords;
@@ -310,7 +310,7 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 //	{
 //		lightStrength = ambience;
 //	}
-	float lightStrength = saturate( RangeMapClamped( diffuseLightDot, -1.0, 1.0, -1 + 2*ambience, 1.0 ) );
+	float lightStrength = saturate( RangeMapClamped( diffuseLightDot, -1.0, 1.0, -1 + 2*ambience, 1.0 ) )*2.f;
 
 	float4 finalColor = float4( diffuseColor.rgb * lightStrength, diffuseColor.a );
 	if( finalColor.a <= 0.001 ) // a.k.a. "clip" in HLSL

@@ -59,7 +59,7 @@ Match::Match()
         }
     }
 
-// #if defined DEBUG_MODE
+    // #if defined DEBUG_MODE
     DebugAddWorldBasis(Mat44(), -1.f);
 
     Mat44 transform;
@@ -72,7 +72,7 @@ Match::Match()
 
     transform.SetIJKT3D(-Vec3::X_BASIS, Vec3::Z_BASIS, Vec3::Y_BASIS, Vec3(0.f, -0.25f, 0.25f));
     DebugAddWorldText("Z-Up", transform, 0.25f, Vec2(1.f, 0.f), -1.f, Rgba8::BLUE);
-// #endif
+    // #endif
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -97,6 +97,12 @@ void Match::Update()
     UpdateFromInput(deltaSeconds);
 
     m_board->Update(deltaSeconds);
+
+    for (Piece* piece : m_pieceList)
+    {
+        if (piece == nullptr) continue;
+        piece->Update(deltaSeconds);
+    }
 }
 
 void Match::UpdateFromInput(float const deltaSeconds)
@@ -714,7 +720,7 @@ bool Match::ExecuteMove(IntVec2 const& fromCoords,
         break;
     case eMoveResult::VALID_MOVE_NORMAL:
     default:
-        fromPiece->UpdatePositionByCoords(toCoords);
+        fromPiece->UpdatePositionByCoords(toCoords, 2.f);
         fromPiece->m_hasMoved = true;
         m_board->UpdateSquareInfoList(fromCoords, toCoords);
 

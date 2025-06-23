@@ -27,10 +27,14 @@ class Piece final : public Actor
 public:
     explicit Piece(Match* owner, sSquareInfo const& squareInfo);
 
-    void Update(float deltaSeconds) override;
-    void Render() const override;
+    Vec3  CalculateKnightHopPosition(float x);
+    float EaseInOutQuad(float t);
+    float EaseInOutCubic(float x);
+    void  Update(float deltaSeconds) override;
+    void  Render() const override;
 
     void UpdatePositionByCoords(IntVec2 const& newCoords);
+    void UpdatePositionByCoords(IntVec2 const& newCoords, float moveTime);
 
 protected:
     Texture*         m_diffuseTexture = nullptr;
@@ -39,7 +43,13 @@ protected:
     PieceDefinition* m_definition     = nullptr;
     int              m_id             = -1;
 
-    bool m_hasMoved = false;
+    bool    m_hasMoved       = false;
+    bool    m_isMoving       = false;
+    float   m_moveTimer      = 0.f;
+    float   m_moveDuration   = 0.f;
+    Vec3    m_targetPosition = Vec3::ZERO;
+    IntVec2 m_targetCoords   = IntVec2::ZERO;
+    Vec3     m_startPosition = Vec3::ZERO;
     // IntVec2 m_currentCoords
     // IntVec2 m_prevCoords;
     // float m_secondSinceMOved = 0.f;
