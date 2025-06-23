@@ -1,6 +1,6 @@
 <Definitions>
     <!-- Pawn -->
-    <PieceDefinition name="pawn" type="pawn" shader="Data/Shaders/Diffuse" texture="Data/Images/metal.png">
+    <PieceDefinition name="pawn" type="pawn" shader="Data/Shaders/BlinnPhong" diffuseTexture="Data/Images/Textures/220{A011}.jpg" normalTexture="Data/Images/Textures/220_norm{A011}.jpg">
         <PiecePart name="sphere" startPosition="0,0,0.7" radius="0.2"/>
         <PiecePart name="cylinder" startPosition="0,0,0.5" endPosition="0,0,0.7" radius="0.25"/>
         <PiecePart name="cylinder" startPosition="0,0,0.2" endPosition="0,0,0.5" radius="0.2"/>
@@ -8,7 +8,7 @@
     </PieceDefinition>
 
     <!-- Bishop -->
-    <PieceDefinition name="bishop" type="bishop" shader="Data/Shaders/Diffuse" texture="Data/Images/metal.png">
+    <PieceDefinition name="bishop" type="bishop" shader="Data/Shaders/BlinnPhong" diffuseTexture="Data/Images/Textures/220{A011}.jpg" normalTexture="Data/Images/Textures/220_norm{A011}.jpg">
         <PiecePart name="sphere" startPosition="0,0,1.2" radius="0.05"/>
         <PiecePart name="sphere" startPosition="0,0,1" radius="0.2"/>
         <PiecePart name="cylinder" startPosition="0,0,0.8" endPosition="0,0,1" radius="0.25"/>
@@ -17,7 +17,7 @@
     </PieceDefinition>
 
     <!-- Knight -->
-    <PieceDefinition name="knight" type="knight" shader="Data/Shaders/Diffuse" texture="Data/Images/metal.png">
+    <PieceDefinition name="knight" type="knight" shader="Data/Shaders/BlinnPhong" diffuseTexture="Data/Images/Textures/220{A011}.jpg" normalTexture="Data/Images/Textures/220_norm{A011}.jpg">
 
         <PiecePart name="obb3" startPosition="0,0.1,0.9" halfDimension="0.05,0.15,0.1" orientation="0,0,30"/>
         <PiecePart name="obb3" startPosition="0,0,0.8" halfDimension="0.1,0.15,0.2" orientation="0,0,30"/>
@@ -26,7 +26,7 @@
     </PieceDefinition>
 
     <!-- Rook -->
-    <PieceDefinition name="rook" type="rook" shader="Data/Shaders/Diffuse" texture="Data/Images/metal.png">
+    <PieceDefinition name="rook" type="rook" shader="Data/Shaders/BlinnPhong" diffuseTexture="Data/Images/Textures/220{A011}.jpg" normalTexture="Data/Images/Textures/220_norm{A011}.jpg">
         <PiecePart name="aabb3" startPosition="-0.2,-0.2,0.8" endPosition="0.2,0.2,1"/>
         <PiecePart name="aabb3" startPosition="-0.25,-0.25,0.8" endPosition="0.25,0.25,0.9"/>
         <PiecePart name="aabb3" startPosition="-0.2,-0.2,0.2" endPosition="0.2,0.2,0.8"/>
@@ -34,7 +34,7 @@
     </PieceDefinition>
 
     <!-- Queen -->
-    <PieceDefinition name="queen" type="queen" shader="Data/Shaders/Diffuse" texture="Data/Images/metal.png">
+    <PieceDefinition name="queen" type="queen" shader="Data/Shaders/BlinnPhong" diffuseTexture="Data/Images/Textures/220{A011}.jpg" normalTexture="Data/Images/Textures/220_norm{A011}.jpg">
         <PiecePart name="obb3" startPosition="0,0,1.25" halfDimension="0.2,0.05,0.05" orientation="0,0,0"/>
         <PiecePart name="obb3" startPosition="0,0,1.25" halfDimension="0.2,0.05,0.05" orientation="45,0,0"/>
         <PiecePart name="obb3" startPosition="0,0,1.25" halfDimension="0.2,0.05,0.05" orientation="90,0,0"/>
@@ -45,7 +45,7 @@
     </PieceDefinition>
 
     <!-- King -->
-    <PieceDefinition name="king" type="king" shader="Data/Shaders/Diffuse" texture="Data/Images/metal.png">
+    <PieceDefinition name="king" type="king" shader="Data/Shaders/BlinnPhong" diffuseTexture="Data/Images/Textures/220{A011}.jpg" normalTexture="Data/Images/Textures/220_norm{A011}.jpg">
         <PiecePart name="sphere" startPosition="0,0,1.3" radius="0.07"/>
         <PiecePart name="obb3" startPosition="0,0,1.25" halfDimension="0.2,0.05,0.05" orientation="0,0,0"/>
         <PiecePart name="obb3" startPosition="0,0,1.25" halfDimension="0.2,0.05,0.05" orientation="90,0,0"/>

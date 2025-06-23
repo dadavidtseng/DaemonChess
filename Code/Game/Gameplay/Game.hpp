@@ -61,4 +61,5 @@ private:
     std::vector<PlayerController*> m_localPlayerControllerList;
     int                            m_currentPlayerControllerId = -1;
     bool                           m_isFixedCameraMode         = true;
+    int                            m_currentDebugInt           = 0;
 };

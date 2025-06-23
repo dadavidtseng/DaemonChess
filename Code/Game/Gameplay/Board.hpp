@@ -21,7 +21,7 @@ struct BoardDefinition;
 class Board final : public Actor
 {
 public:
-    explicit Board(Match* owner, Texture const* texture = nullptr);
+    explicit Board(Match* owner);
     ~Board() override;
 
     void Update(float deltaSeconds) override;
@@ -53,6 +53,7 @@ private:
     BoardDefinition*  m_definition = nullptr;
     VertexList_PCUTBN m_vertexes;
     IndexList         m_indexes;
-    Texture const*    m_texture = nullptr;
-    Shader const*     m_shader  = nullptr;
+    Texture*          m_diffuseTexture = nullptr;
+    Texture*          m_normalTexture  = nullptr;
+    Shader const*     m_shader         = nullptr;
 };

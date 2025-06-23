@@ -36,13 +36,13 @@ struct VertexInput
 {
 	// "v_" stands for for "Vertex" attribute which comes directly from VBO data (Squirrel's convention)
 	// The all-caps "semantic names" are arbitrary symbol to associate CPU-GPU and other linkages.
-	float3	a_position		: VERTEX_POSITION;		
+	float3	a_position		: VERTEX_POSITION;
 	float4	a_color			: VERTEX_COLOR; // Expanded to float[0.f,1.f] from byte[0,255] because "UNORM" in DXGI_FORMAT_R8G8B8A8_UNORM
-	float2	a_uvTexCoords	: VERTEX_UVTEXCOORDS; 
-	float3	a_tangent		: VERTEX_TANGENT; 
-	float3	a_bitangent		: VERTEX_BITANGENT; 
-	float3	a_normal		: VERTEX_NORMAL; 
-	
+	float2	a_uvTexCoords	: VERTEX_UVTEXCOORDS;
+	float3	a_tangent		: VERTEX_TANGENT;
+	float3	a_bitangent		: VERTEX_BITANGENT;
+	float3	a_normal		: VERTEX_NORMAL;
+
 	// Built-in / automatic attributes (not part of incoming VBO data)
 	// "SV_" means "System Variable" and is a built-in special reserved semantic
 	uint	a_vertexID	: SV_VertexID; // Which vertex number in the VBO collection this is (automatic variable)
@@ -51,7 +51,7 @@ struct VertexInput
 
 //------------------------------------------------------------------------------------------------
 // Output passed from the Vertex shader into the Pixel/fragment shader.
-// 
+//
 // Each of these values is automatically 3-way (barycentric) interpolated across the surface of
 //	the triangle on a per-pixel basis during the Rasterization Stage (RS).
 // "v_" stands for "Varying" meaning "barycentric-lepred" (Squirrel's personal convention)
@@ -69,7 +69,7 @@ struct VertexInput
 //	Pixel Shader input structure.  Since we use the same structure for both, they all automatically
 //	match up.
 //------------------------------------------------------------------------------------------------
-struct VertexOutPixelIn 
+struct VertexOutPixelIn
 {
 	float4 v_position		: SV_Position; // Required; VS output as clip-space vertex position; PS input as NDC pixel position.
 	float4 v_color			: SURFACE_COLOR;
@@ -119,18 +119,24 @@ cbuffer PerFrameConstants : register(b1)
 	float		EMPTY_PADDING;
 };
 
+cbuffer LightConstants : register(b2)
+{
+	float3 SunDirection;
+	float SunIntensity;
+	float AmbientIntensity;
+}
 
 //------------------------------------------------------------------------------------------------
-cbuffer CameraConstants : register(b2)
+cbuffer CameraConstants : register(b3)
 {
-	float4x4	c_renderToClip;		// a.k.a. "Projection" matrix (perpective or orthographic); render space to clip space
-	float4x4	c_cameraToRender;	// a.k.a. "Game" matrix; axis-swaps from Game conventions (+X forward) to Render (+X right)
 	float4x4	c_worldToCamera;	// a.k.a. "View" matrix; world space (+X east) to camera-relative space (+X camera-forward)
+	float4x4	c_cameraToRender;	// a.k.a. "Game" matrix; axis-swaps from Game conventions (+X forward) to Render (+X right)
+	float4x4	c_renderToClip;		// a.k.a. "Projection" matrix (perpective or orthographic); render space to clip space
 };
 
 
 //------------------------------------------------------------------------------------------------
-cbuffer ModelConstants : register(b3)
+cbuffer ModelConstants : register(b4)
 {
 	float4x4	c_modelToWorld;		// a.k.a. "Model" matrix; model local space (+X model forward) to world space (+X east)
 	float4		c_modelTint;		// Uniform Vec4 model tint (including alpha) to multiply against diffuse texel & vertex color
@@ -176,13 +182,13 @@ VertexOutPixelIn VertexMain( VertexInput input )
 {
 	VertexOutPixelIn output;
 
-	// Transform the position through the pipeline	
+	// Transform the position through the pipeline
 	float4 modelPos = float4( input.a_position, 1.0 );	// VBOs provide vertexes in model space
 	float4 worldPos		= mul( c_modelToWorld, modelPos );		// Model space (+X local forward) to World space (+X east)
 	float4 cameraPos	= mul( c_worldToCamera, worldPos );		// World space (+X east) to Camera space (+X camera-forward)
 	float4 renderPos	= mul( c_cameraToRender, cameraPos );	// Camera space (+X cam-fwd) to Render space (+X right/+Z fwd)
 	float4 clipPos		= mul( c_renderToClip, renderPos );		// Render space to Clip space (range-map/FOV/aspect, and put Z in W, preparing for W-divide)
-	
+
 	// Transform the tangents, normals, and bitangents (using W=0 for directions)
 	float4 modelTangent		= float4( input.a_tangent, 0.0 );
 	float4 modelBitangent	= float4( input.a_bitangent, 0.0 );
@@ -258,22 +264,22 @@ float3 DecodeRGBToXYZ( float3 color )
 float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 {
 	float ambience = 0.0;
-	
+
 	// Get the UV coordinates that were mapped onto this pixel
 	float2 uvCoords = input.v_uvTexCoords;
-	
+
 	// Sample the diffuse map texture to see what this looks like at this pixel
 	float4 diffuseTexel = t_diffuseTexture.Sample( s_diffuseSampler, uvCoords );
 	float4 normalTexel	= t_normalTexture.Sample( s_normalSampler, uvCoords );
 	float4 surfaceColor = input.v_color;
 	float4 modelColor = c_modelTint;
-	
+
 	// Decode normalTexel RGB into XYZ then renormalize; this is the per-pixel normal, in TBN space a.k.a. tangent space
 	float3 pixelNormalTBNSpace = normalize( DecodeRGBToXYZ( normalTexel.rgb ) );
-	
+
 	// Tint diffuse color based on overall model tinting (including alpha translucency)
 	float4 diffuseColor = diffuseTexel * surfaceColor * modelColor;
-	
+
 	// Fake directional light for now; #ToDo: add a (b4) or (b8) Light CBO
 //	float3 lightDir = normalize( float3( cos(0.5 * c_time), sin(0.5 * c_time), -1.0 ) );
 	float3 lightDir = normalize( float3( 10.0, 2.0, -3.0 ) );
@@ -286,12 +292,12 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 	float3 surfaceTangentModelSpace		= normalize( input.v_modelTangent );
 	float3 surfaceBitangentModelSpace	= normalize( input.v_modelBitangent );
 	float3 surfaceNormalModelSpace		= normalize( input.v_modelNormal );
-	
+
 	// Create TBN (surface-to-world) transformation matrix; WARNING: HLSL constructor stores these component-major, which is the opposite (transpose) of our basis-major matrices above!
 	float3x3 tbnToWorld = float3x3( surfaceTangentWorldSpace, surfaceBitangentWorldSpace, surfaceNormalWorldSpace );
 	// #ToDo: orthonormalize this (not just normalize); Do Gram-Schmidt and renormalize as we go, and remove above normalizations
 	float3 pixelNormalWorldSpace = mul( pixelNormalTBNSpace, tbnToWorld ); // V*M order because this matrix is component-major (not basis-major!)
-		
+
 	// #ToDo: add lighting and such later!
 	float diffuseLightDot = dot( -lightDir, pixelNormalWorldSpace );
 	if( c_debugInt == 10 || c_debugInt == 12 )
@@ -305,12 +311,13 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 //		lightStrength = ambience;
 //	}
 	float lightStrength = saturate( RangeMapClamped( diffuseLightDot, -1.0, 1.0, -1 + 2*ambience, 1.0 ) );
-	float4 finalColor = float4( diffuseColor.rgb * lightStrength, diffuseColor.a ); 
+
+	float4 finalColor = float4( diffuseColor.rgb * lightStrength, diffuseColor.a );
 	if( finalColor.a <= 0.001 ) // a.k.a. "clip" in HLSL
 	{
 		discard;
 	}
-	
+
 	if (c_debugInt == 1)
 	{
 	    finalColor.rgba = diffuseTexel.rgba;
@@ -386,7 +393,7 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 		float3 modelKBasisWorld = mul( c_modelToWorld, float4(0,0,1,0) ).xyz;
 		finalColor.rgb = EncodeXYZToRGB( normalize( modelKBasisWorld.xyz ) );
 	}
-		
+
 	return finalColor;
 }
 

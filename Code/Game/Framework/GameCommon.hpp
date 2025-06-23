@@ -60,3 +60,5 @@ void SafeDeletePointer(T*& pointer)
         pointer = nullptr;
     }
 }
+
+char const* GetDebugIntString(int  debugInt);

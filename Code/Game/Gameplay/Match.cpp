@@ -59,7 +59,7 @@ Match::Match()
         }
     }
 
-#if defined DEBUG_MODE
+// #if defined DEBUG_MODE
     DebugAddWorldBasis(Mat44(), -1.f);
 
     Mat44 transform;
@@ -72,7 +72,7 @@ Match::Match()
 
     transform.SetIJKT3D(-Vec3::X_BASIS, Vec3::Z_BASIS, Vec3::Y_BASIS, Vec3(0.f, -0.25f, 0.25f));
     DebugAddWorldText("Z-Up", transform, 0.25f, Vec2(1.f, 0.f), -1.f, Rgba8::BLUE);
-#endif
+// #endif
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -121,9 +121,7 @@ void Match::Render() const
 //----------------------------------------------------------------------------------------------------
 void Match::CreateBoard()
 {
-    Texture const* texture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/WhiteMarble_COLOR.jpg");
-
-    m_board = new Board(this, texture);
+    m_board = new Board(this);
 }
 
 void Match::ExecuteCapture(IntVec2 const& fromCoords,

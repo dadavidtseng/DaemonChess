@@ -33,10 +33,12 @@ bool PieceDefinition::LoadFromXmlElement(XmlElement const* element)
     else if (type == "queen") m_type = ePieceType::QUEEN;
     else if (type == "king") m_type = ePieceType::KING;
 
-    String const shader  = ParseXmlAttribute(*element, "shader", "DEFAULT");
-    m_shader             = g_theRenderer->CreateOrGetShaderFromFile(shader.c_str(), eVertexType::VERTEX_PCUTBN);
-    String const texture = ParseXmlAttribute(*element, "texture", "DEFAULT");
-    m_texture            = g_theRenderer->CreateOrGetTextureFromFile(texture.c_str());
+    String const shader         = ParseXmlAttribute(*element, "shader", "DEFAULT");
+    m_shader                    = g_theRenderer->CreateOrGetShaderFromFile(shader.c_str(), eVertexType::VERTEX_PCUTBN);
+    String const diffuseTexture = ParseXmlAttribute(*element, "diffuseTexture", "DEFAULT");
+    m_diffuseTexture            = g_theRenderer->CreateOrGetTextureFromFile(diffuseTexture.c_str());
+    String const normalTexture  = ParseXmlAttribute(*element, "normalTexture", "DEFAULT");
+    m_normalTexture             = g_theRenderer->CreateOrGetTextureFromFile(normalTexture.c_str());
 
     XmlElement const* partElement = element->FirstChildElement("PiecePart");
 

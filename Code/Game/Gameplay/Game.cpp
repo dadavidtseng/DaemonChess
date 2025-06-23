@@ -208,70 +208,20 @@ void Game::UpdateFromInput()
             m_gameClock->SetTimeScale(1.f);
         }
 
-        if (g_theInput->WasKeyJustPressed(NUMCODE_1))
-        {
-            Vec3 forward;
-            Vec3 right;
-            Vec3 up;
-            localPlayer->m_orientation.GetAsVectors_IFwd_JLeft_KUp(forward, right, up);
+        if (g_theInput->WasKeyJustPressed(NUMCODE_0)) m_currentDebugInt = 0;
+        if (g_theInput->WasKeyJustPressed(NUMCODE_1)) m_currentDebugInt = 1;
+        if (g_theInput->WasKeyJustPressed(NUMCODE_2)) m_currentDebugInt = 2;
+        if (g_theInput->WasKeyJustPressed(NUMCODE_3)) m_currentDebugInt = 3;
+        if (g_theInput->WasKeyJustPressed(NUMCODE_4)) m_currentDebugInt = 4;
+        if (g_theInput->WasKeyJustPressed(NUMCODE_5)) m_currentDebugInt = 5;
+        if (g_theInput->WasKeyJustPressed(NUMCODE_6)) m_currentDebugInt = 6;
+        if (g_theInput->WasKeyJustPressed(NUMCODE_7)) m_currentDebugInt = 7;
+        if (g_theInput->WasKeyJustPressed(NUMCODE_8)) m_currentDebugInt = 8;
+        if (g_theInput->WasKeyJustPressed(NUMCODE_9)) m_currentDebugInt = 9;
 
-            UpdateCurrentControllerId(0);
-            DebugAddWorldLine(localPlayer->m_position, localPlayer->m_position + forward * 20.f, 0.01f, 10.f, Rgba8(255, 255, 0), Rgba8(255, 255, 0), eDebugRenderMode::X_RAY);
-        }
+        g_theRenderer->SetPerFrameConstants(0, m_currentDebugInt, 0);
 
-        if (g_theInput->IsKeyDown(NUMCODE_2))
-        {
-            UpdateCurrentControllerId(1);
-            DebugAddWorldPoint(Vec3(localPlayer->m_position.x, localPlayer->m_position.y, 0.f), 0.25f, 60.f, Rgba8(150, 75, 0), Rgba8(150, 75, 0));
-        }
-
-        if (g_theInput->WasKeyJustPressed(NUMCODE_3))
-        {
-            Vec3 forward;
-            Vec3 right;
-            Vec3 up;
-            localPlayer->m_orientation.GetAsVectors_IFwd_JLeft_KUp(forward, right, up);
-
-            DebugAddWorldWireSphere(localPlayer->m_position + forward * 2.f, 1.f, 5.f, Rgba8::GREEN, Rgba8::RED);
-        }
-
-        if (g_theInput->WasKeyJustPressed(NUMCODE_4))
-        {
-            DebugAddWorldBasis(localPlayer->GetModelToWorldTransform(), 20.f);
-        }
-
-        if (g_theInput->WasKeyJustReleased(NUMCODE_5))
-        {
-            float const  positionX    = localPlayer->m_position.x;
-            float const  positionY    = localPlayer->m_position.y;
-            float const  positionZ    = localPlayer->m_position.z;
-            float const  orientationX = localPlayer->m_orientation.m_yawDegrees;
-            float const  orientationY = localPlayer->m_orientation.m_pitchDegrees;
-            float const  orientationZ = localPlayer->m_orientation.m_rollDegrees;
-            String const text         = Stringf("Position: (%.2f, %.2f, %.2f)\nOrientation: (%.2f, %.2f, %.2f)", positionX, positionY, positionZ, orientationX, orientationY, orientationZ);
-
-            Vec3 forward;
-            Vec3 right;
-            Vec3 up;
-            localPlayer->m_orientation.GetAsVectors_IFwd_JLeft_KUp(forward, right, up);
-
-            DebugAddBillboardText(text, localPlayer->m_position + forward, 0.1f, Vec2::HALF, 10.f, Rgba8::WHITE, Rgba8::RED);
-        }
-
-        if (g_theInput->WasKeyJustPressed(NUMCODE_6))
-        {
-            DebugAddWorldCylinder(localPlayer->m_position, localPlayer->m_position + Vec3::Z_BASIS * 2, 1.f, 10.f, true, Rgba8::WHITE, Rgba8::RED);
-        }
-
-
-        if (g_theInput->WasKeyJustReleased(NUMCODE_7))
-        {
-            float const orientationX = localPlayer->GetCamera()->GetOrientation().m_yawDegrees;
-            float const orientationY = localPlayer->GetCamera()->GetOrientation().m_pitchDegrees;
-            float const orientationZ = localPlayer->GetCamera()->GetOrientation().m_rollDegrees;
-
-            DebugAddMessage(Stringf("Camera Orientation: (%.2f, %.2f, %.2f)", orientationX, orientationY, orientationZ), 5.f);
-        }
+        DebugAddMessage(Stringf("DebugInt=%d|RenderMode=%s", m_currentDebugInt, GetDebugIntString(m_currentDebugInt)), 0.f, Rgba8::YELLOW);
 
         if (g_theInput->WasKeyJustPressed(KEYCODE_F4))
         {
@@ -285,7 +235,7 @@ void Game::UpdateFromInput()
             }
         }
 
-        DebugAddMessage(Stringf("Use the DevConsole(~) to enter commands"), 0.f, Rgba8::YELLOW);
+        // DebugAddMessage(Stringf("Use the DevConsole(~) to enter commands"), 0.f, Rgba8::YELLOW);
         String cameraMode = m_isFixedCameraMode ? "Fixed" : "Free";
         String gameState;
         if (m_currentPlayerControllerId == 0) gameState = "First player's turn.";
@@ -334,14 +284,15 @@ void Game::RenderAttractMode() const
         "    `\"--......--\""
     };
 
-    Vec2 basePosition(480.f, 630.f);
+    Vec2  basePosition(480.f, 630.f);
     float lineHeight = 30.f;
 
-    for (size_t i = 0; i < asciiArt.size(); ++i) {
+    for (size_t i = 0; i < asciiArt.size(); ++i)
+    {
         Vec2 position = basePosition - Vec2(0.f, i * lineHeight);
-        DebugAddScreenText(Stringf(asciiArt[i].c_str()), position, lineHeight, Vec2(0.5f,0.5f), 0.f);
+        DebugAddScreenText(Stringf(asciiArt[i].c_str()), position, lineHeight, Vec2(0.5f, 0.5f), 0.f);
     }
-    DebugAddScreenText(Stringf("Chess Simulator"), Vec2(600.f,60.f), lineHeight, Vec2(0.5f,0.5f), 0.f);
+    DebugAddScreenText(Stringf("Chess Simulator"), Vec2(600.f, 60.f), lineHeight, Vec2(0.5f, 0.5f), 0.f);
 }
 
 //----------------------------------------------------------------------------------------------------

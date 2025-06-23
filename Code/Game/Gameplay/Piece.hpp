@@ -10,6 +10,7 @@
 #include "Engine/Renderer/Shader.hpp"
 #include "Game/Gameplay/Actor.hpp"
 
+
 //----------------------------------------------------------------------------------------------------
 struct PieceDefinition;
 class Texture;
@@ -24,7 +25,7 @@ class Piece final : public Actor
     friend class Match;
 
 public:
-    explicit Piece(Match* owner, sSquareInfo const& squareInfo, Texture* texture = nullptr);
+    explicit Piece(Match* owner, sSquareInfo const& squareInfo);
 
     void Update(float deltaSeconds) override;
     void Render() const override;
@@ -32,12 +33,13 @@ public:
     void UpdatePositionByCoords(IntVec2 const& newCoords);
 
 protected:
-    Texture*         m_texture    = nullptr;
-    Shader*          m_shader     = nullptr;
-    PieceDefinition* m_definition = nullptr;
-    int              m_id         = -1;
+    Texture*         m_diffuseTexture = nullptr;
+    Texture*         m_normalTexture  = nullptr;
+    Shader*          m_shader         = nullptr;
+    PieceDefinition* m_definition     = nullptr;
+    int              m_id             = -1;
 
-    bool m_hasMoved       = false;
+    bool m_hasMoved = false;
     // IntVec2 m_currentCoords
     // IntVec2 m_prevCoords;
     // float m_secondSinceMOved = 0.f;

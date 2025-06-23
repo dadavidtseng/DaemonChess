@@ -4,6 +4,8 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Game/Framework/GameCommon.hpp"
+
+#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Math/MathUtils.hpp"
@@ -271,4 +273,23 @@ void DebugDrawBoxRing(Vec2 const& center, float radius, float thickness, Rgba8 c
     }
 
     g_theRenderer->DrawVertexArray(24, &verts[0]);
+}
+
+char const* GetDebugIntString(int const debugInt)
+{
+    switch (debugInt)
+    {
+    case 0: return "Lit (including normal maps)";
+    case 1: return "Diffuse Texel only";
+    case 2: return "Vertex Color only (C)";
+    case 3: return "UV TexCoords only (U)";
+    case 4: return "Vertex Tangents; raw, in Model Space (T)";
+    case 5: return "Vertex Bitangents; raw, in Model Space (B)";
+    case 6: return "Vertex Normals; raw, in Model Space (N)";
+    case 7: return "Normal Map texel only";
+    case 8: return "Pixel Normal in TBN space (decoded, raw)";
+    case 9: return "Pixel Normal in World space (decoded, transformed)";
+
+    default: ERROR_AND_DIE(Stringf("Unhandled MoveResult debugInt value #%d", debugInt));
+    }
 }
