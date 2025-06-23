@@ -821,3 +821,31 @@ void Match::ExecuteQueensideCastling(IntVec2 const& fromCoords) const
     rook->UpdatePositionByCoords(rookToCoords);
     m_board->UpdateSquareInfoList(rookFromCoords, rookToCoords);
 }
+
+//------------------------------------------------------------------------------------------------
+// Example usage in your game/test code
+//------------------------------------------------------------------------------------------------
+void TestLightingSetup(LightManager& lightManager)
+{
+    // Set up directional light (sun)
+    DirectionalLight sun(Vec3(1.0f, 2.0f, -3.0f).GetNormalized(), Rgba8::WHITE, 1.0f);
+    lightManager.SetDirectionalLight(sun);
+    lightManager.SetAmbientIntensity(0.1f);
+
+    // Add a red point light
+    Light pointLight(LightType::POINT, Vec3(5.0f, 0.0f, 2.0f), Rgba8::RED, 2.0f);
+    pointLight.SetRadii(1.0f, 10.0f);
+    lightManager.AddLight(pointLight);
+
+    // Add a blue spotlight
+    Light spotLight(LightType::SPOT, Vec3(-3.0f, 0.0f, 5.0f), Rgba8::BLUE, 3.0f);
+    spotLight.SetRadii(2.0f, 15.0f);
+    spotLight.SetDirection(Vec3(1.0f, 0.0f, -1.0f));
+    spotLight.SetConeAngles(15.0f, 45.0f); // Inner 15°, outer 45°
+    lightManager.AddLight(spotLight);
+
+    // Add a green moving point light (you can animate this in your update loop)
+    Light movingLight(LightType::POINT, Vec3(0.0f, 3.0f, 0.0f), Rgba8::GREEN, 1.5f);
+    movingLight.SetRadii(0.5f, 8.0f);
+    lightManager.AddLight(movingLight);
+}
