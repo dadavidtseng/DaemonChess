@@ -96,7 +96,7 @@ struct Light
 	float innerConeAngle;		// Inner cone angle (cosine) for spot lights
 	float outerConeAngle;		// Outer cone angle (cosine) for spot lights
 	int lightType;				// 0=point, 1=spot
-	float2 padding;				// Padding for alignment
+	float3 padding;				// Padding for alignment
 };
 
 //------------------------------------------------------------------------------------------------
@@ -131,7 +131,7 @@ cbuffer PerFrameConstants : register(b1)
 	float		c_time;
 	int			c_debugInt;
 	float		c_debugFloat;
-	float		EMPTY_PADDING;
+	float		EMPTY_PADDING_B1;
 };
 
 #define MAX_LIGHTS 8
@@ -145,8 +145,8 @@ cbuffer LightConstants : register(b2)
 
 	// Point and Spot Lights
 	int c_numLights;			// Number of active lights (0 to MAX_LIGHTS)
-	float3 padding1;			// 16-byte alignment padding
-	Light c_lightArray[MAX_LIGHTS];
+	float3 EMPTY_PADDING_B2;			// 16-byte alignment padding
+	Light c_lightArray[MAX_LIGHTS];	// Array of lights
 };
 
 //------------------------------------------------------------------------------------------------
@@ -156,7 +156,7 @@ cbuffer CameraConstants : register(b3)
 	float4x4	c_cameraToRender;	// a.k.a. "Game" matrix; axis-swaps from Game conventions (+X forward) to Render (+X right)
 	float4x4	c_renderToClip;		// a.k.a. "Projection" matrix (perpective or orthographic); render space to clip space
 	float3		c_cameraWorldPosition;	// Camera position in world space
-	float		EMPTY_PADDING;
+	float		EMPTY_PADDING_B3;
 };
 
 
@@ -315,13 +315,15 @@ void CalculateDirectionalLight(
 	float specularPower,
 	inout float3 ambientOut,
 	inout float3 diffuseOut,
-	inout float3 specularOut
+	inout float3 specularOut,
+	inout float lightStrengthOut
 )
 {
 	float NdotL = dot(-lightDirection, pixelNormal);
 
 	// Progressive ambience: remap part of negative result to positive
 	float lightStrength = saturate(RangeMapClamped(NdotL, -1.0, 1.0, ambientIntensity, 1.0));
+	lightStrengthOut = lightStrength;
 
 	// Ambient contribution
 	ambientOut += diffuseColor * lightColor.rgb * ambientIntensity;
@@ -357,7 +359,10 @@ void CalculatePointLight(
 )
 {
 	float3 lightVector = light.worldPosition - worldPos;
+
 	float distToLight = length(lightVector);
+	if (distToLight < 0.001) return; // 或其他處理方式
+
 	float3 lightDirection = lightVector / distToLight;
 
 	// Distance-based falloff
@@ -440,8 +445,6 @@ void CalculateSpotLight(
 //------------------------------------------------------------------------------------------------
 float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 {
-	float ambience = c_sunDirection;
-
 	// Get the UV coordinates that were mapped onto this pixel
 	float2 uvCoords = input.v_uvTexCoords;
 
@@ -465,11 +468,6 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 
 	// Tint diffuse color based on overall model tinting (including alpha translucency)
 	float4 diffuseColor = diffuseTexel * surfaceColor * modelColor;
-
-	// Fake directional light for now; #ToDo: add a (b4) or (b8) Light CBO
-//	float3 lightDir = normalize( float3( cos(0.5 * c_time), sin(0.5 * c_time), -1.0 ) );
-	//float3 lightDir = normalize( float3( 10.0, 2.0, -3.0 ) );
-	float3 lightDir = normalize( SunDirection );
 
 	// Get TBN basis vectors
 	float3 surfaceTangentWorldSpace		= normalize( input.v_worldTangent );
@@ -498,6 +496,7 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 	float3 ambientLighting = float3(0, 0, 0);
 	float3 diffuseLighting = float3(0, 0, 0);
 	float3 specularLighting = float3(0, 0, 0);
+	float lightStrength = 0.0;
 
 	// Add directional light (Sun) contribution
 	if (c_sunColor.a > 0.0)
@@ -513,7 +512,8 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 			specularPower,
 			ambientLighting,
 			diffuseLighting,
-			specularLighting
+			specularLighting,
+			lightStrength
 		);
 	}
 	else
@@ -523,12 +523,14 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 	}
 
 	// Add point and spot lights
-	for (int i = 0; i < c_numLights && i < MAX_LIGHTS; ++i)
+	for (int i = 0; i < c_numLights; i++)
 	{
-		if (c_lightArray[i].lightType == 0) // Point light
+		Light light = c_lightArray[i];
+
+		if (light.lightType == 0) // Point light
 		{
 			CalculatePointLight(
-				c_lightArray[i],
+				light,
 				input.v_worldPos,
 				finalNormal,
 				viewDirection,
@@ -539,10 +541,10 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 				specularLighting
 			);
 		}
-		else if (c_lightArray[i].lightType == 1) // Spot light
+		else if (light.lightType == 1) // Spot light
 		{
 			CalculateSpotLight(
-				c_lightArray[i],
+				light,
 				input.v_worldPos,
 				finalNormal,
 				viewDirection,
@@ -661,7 +663,8 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 	else if(c_debugInt == 23 )
 	{
 		// Show emissive color contribution
-		finalColor.rgb = emissiveColor;
+		//finalColor.rgb = emissiveColor;
+		finalColor.rgb = emissiveLighting;
 	}
 
 	return finalColor;
