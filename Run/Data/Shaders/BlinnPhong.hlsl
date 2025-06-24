@@ -86,15 +86,17 @@ struct VertexOutPixelIn
 //----------------------------------------------------------------------------------------------------
 struct Light
 {
-	float4 	color;				// RGB color + intensity in alpha
-	float3 	worldPosition;		// World position for point/spot lights
-	float 	innerRadius;		// Inner radius for falloff
-	float 	outerRadius;		// Outer radius for falloff
-	float3 	direction;			// Direction for spot lights (normalized)
-	float 	innerConeAngle;		// Inner cone angle (cosine) for spot lights
-	float 	outerConeAngle;		// Outer cone angle (cosine) for spot lights
-	int 	lightType;			// 0=point, 1=spot
-	float3 	padding;			// Padding for alignment
+	float4  color;              // 0-15   (16 bytes)
+	float3  worldPosition;      // 16-31  (16 bytes, 實際使用 12)
+	float   innerRadius;        // 32-35  (4 bytes)
+
+	float3  direction;          // 36-51  (16 bytes, 實際使用 12)
+	float   outerRadius;        // 52-55  (4 bytes)
+
+	float   innerConeAngle;     // 56-59  (4 bytes)
+	float   outerConeAngle;     // 60-63  (4 bytes)
+	int     lightType;          // 64-67  (4 bytes)
+	float   padding;            // 68-71  (4 bytes)
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -139,9 +141,9 @@ cbuffer PerFrameConstants : register(b1)
 cbuffer LightConstants : register(b2)
 {
 	// Directional Light (Sun)
-	float4 	c_sunColor;					// RGB color + intensity in alpha
-	float3 	c_sunDirection;				// Normalized direction
-	float	c_ambientIntensity;			// Global ambient light intensity
+	//float4 	c_sunColor;					// RGB color + intensity in alpha
+	//float3 	c_sunDirection;				// Normalized direction
+	//float	c_ambientIntensity;			// Global ambient light intensity
 
 	// Point and Spot Lights
 	int 	c_numLights;				// Number of active lights (0 to MAX_LIGHTS)
@@ -502,35 +504,39 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 	float lightStrength = 0.0;
 
 	// Add directional light (Sun) contribution
-	if (c_sunColor.a > 0.0)
-	{
-		CalculateDirectionalLight(
-			finalNormal,
-			c_sunDirection,
-			c_sunColor,
-			c_ambientIntensity,
-			viewDirection,
-			diffuseColor.rgb,
-			specularStrength,
-			specularPower,
-			ambientLighting,
-			diffuseLighting,
-			specularLighting,
-			lightStrength
-		);
-	}
-	else
-	{
-		// If no sun, still add ambient
-		ambientLighting = diffuseColor.rgb * c_ambientIntensity;
-	}
+
 
 	// Add point and spot lights
 	for (int i = 0; i < c_numLights; i++)
 	{
 		Light light = c_lightArray[i];
 
-		if (light.lightType == 0) // Point light
+		if(light.lightType == 0)
+		{
+			if (light.color.a > 0.0)
+			{
+				CalculateDirectionalLight(
+					finalNormal,
+					light.direction,
+					light.color,
+					light.color.a,
+					viewDirection,
+					diffuseColor.rgb,
+					specularStrength,
+					specularPower,
+					ambientLighting,
+					diffuseLighting,
+					specularLighting,
+					lightStrength
+				);
+			}
+			else
+			{
+				// If no sun, still add ambient
+				ambientLighting = diffuseColor.rgb * light.color.a;
+			}
+		}
+		else if (light.lightType == 1) // Point light
 		{
 			CalculatePointLight(
 				light,
@@ -544,7 +550,7 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 				specularLighting
 			);
 		}
-		else if (light.lightType == 1) // Spot light
+		else if (light.lightType == 2) // Spot light
 		{
 			float radius = 5.0;
 			float angle = 0.5 * c_time;
