@@ -88,13 +88,13 @@ struct Light
 {
 	float4 	color;				// RGB color + intensity in alpha
 	float3 	worldPosition;		// World position for point/spot lights
-	float 	innerRadius;			// Inner radius for falloff
-	float 	outerRadius;			// Outer radius for falloff
+	float 	innerRadius;		// Inner radius for falloff
+	float 	outerRadius;		// Outer radius for falloff
 	float3 	direction;			// Direction for spot lights (normalized)
 	float 	innerConeAngle;		// Inner cone angle (cosine) for spot lights
 	float 	outerConeAngle;		// Outer cone angle (cosine) for spot lights
-	int 	lightType;				// 0=point, 1=spot
-	float3 	padding;				// Padding for alignment
+	int 	lightType;			// 0=point, 1=spot
+	float3 	padding;			// Padding for alignment
 };
 
 //----------------------------------------------------------------------------------------------------
@@ -546,6 +546,15 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 		}
 		else if (light.lightType == 1) // Spot light
 		{
+			float radius = 5.0;
+			float angle = 0.5 * c_time;
+
+			light.worldPosition = float3(
+				cos(angle) * radius+light.worldPosition.x,
+				sin(angle) * radius+light.worldPosition.y,
+				light.worldPosition.z
+			);
+
 			CalculateSpotLight(
 				light,
 				input.v_worldPos,

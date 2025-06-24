@@ -303,6 +303,9 @@ char const* GetDebugIntString(int const debugInt)
     case 21: return "// Show glossiness (green channel)";
     case 22: return "// Show emissive strength (blue channel)";
     case 23: return "// Show emissive color contribution";
+    case 24: return "// Show emissive color contribution";
+    case 25: return "// Show emissive color contribution";
+    case 26: return "// Show emissive color contribution";
 
     default: ERROR_AND_DIE(Stringf("Unhandled MoveResult debugInt value #%d", debugInt));
     }

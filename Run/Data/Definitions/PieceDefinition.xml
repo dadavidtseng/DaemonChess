@@ -26,7 +26,7 @@
     </PieceDefinition>
 
     <!-- Rook -->
-    <PieceDefinition name="rook" type="rook" shader="Data/Shaders/BlinnPhong" diffuseTexture="Data/Images/PhongTextures/Cobblestone_Diffuse.png" normalTexture="Data/Images/PhongTextures/Cobblestone_Normal.png"  specularGlossEmitTexture="Data/Images/PhongTextures/Cobblestone_SpecGlossEmit.png">
+    <PieceDefinition name="rook" type="rook" shader="Data/Shaders/BlinnPhong" diffuseTexture="Data/Images/PhongTextures/FunkyBricks_d.png" normalTexture="Data/Images/PhongTextures/FunkyBricks_n.png"  specularGlossEmitTexture="Data/Images/PhongTextures/FunkyBricks_sge.png">
         <PiecePart name="aabb3" startPosition="-0.2,-0.2,0.8" endPosition="0.2,0.2,1"/>
         <PiecePart name="aabb3" startPosition="-0.25,-0.25,0.8" endPosition="0.25,0.25,0.9"/>
         <PiecePart name="aabb3" startPosition="-0.2,-0.2,0.2" endPosition="0.2,0.2,0.8"/>

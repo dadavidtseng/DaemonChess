@@ -72,7 +72,7 @@ void Game::Render() const
     //------------------------------------------------------------------------------------------------
     if (m_gameState == eGameState::MATCH)
     {
-        DebugAddWorldWireSphere(Vec3(2.f,2.f,2.f),0.01f, 0.f);
+        // DebugAddWorldWireSphere(Vec3(2.f,2.f,2.f),0.01f, 0.f);
         DebugRenderWorld(*localPlayer->GetCamera());
     }
     //------------------------------------------------------------------------------------------------
@@ -218,7 +218,7 @@ void Game::UpdateFromInput()
             m_currentDebugInt = (m_currentDebugInt + (int)m_currentDebugIntRange.m_min + 1) % (static_cast<int>(m_currentDebugIntRange.GetLength()) + 1);
         }
 
-        g_theRenderer->SetPerFrameConstants((float)m_gameClock->GetDeltaSeconds(), m_currentDebugInt, 0);
+        g_theRenderer->SetPerFrameConstants((float)m_gameClock->GetTotalSeconds(), m_currentDebugInt, 0);
 
         DebugAddMessage(Stringf("DebugInt=%d|RenderMode=%s", m_currentDebugInt, GetDebugIntString(m_currentDebugInt)), 0.f, Rgba8::YELLOW);
 

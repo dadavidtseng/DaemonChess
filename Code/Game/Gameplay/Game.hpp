@@ -63,5 +63,5 @@ private:
     int                            m_currentPlayerControllerId = -1;
     bool                           m_isFixedCameraMode         = true;
     int                            m_currentDebugInt           = 0;
-    FloatRange                     m_currentDebugIntRange      = FloatRange(0.f, 23.f);
+    FloatRange                     m_currentDebugIntRange      = FloatRange(0.f, 26.f);
 };
