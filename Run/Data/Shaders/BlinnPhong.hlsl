@@ -1,8 +1,8 @@
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // Blinn-Phong (lit) shader for Squirrel Eiserloh's C34 SD student Engine (Spring 2025)
 //
 // Requires Vertex_PCUTBN vertex data (including valid tangent, bitangent, normal).
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // D3D11 basic rendering pipeline stages (and D3D11 function prefixes):
 //	IA = Input Assembly (grouping verts 3 at a time to form triangles, or N to form lines, fans, chains, etc.)
 //	VS = Vertex Shader (transforming vertexes; moving them around, and computing them in different spaces)
@@ -25,13 +25,12 @@
 //	m_d3dContext->OMSetBlendState( m_blendStateAlpha, nullptr, 0xFFFFFFFF ); // Set alpha blend state in Output Merger
 //	m_d3dContext->OMSetRenderTargets( 1, &m_backBufferRTV, dsv );		// Set render target texture(s) for Output Merger
 //	m_d3dContext->OMSetDepthStencilState( m_depthStencilState, 0 );		// Set depth & stencil mode for Output Merger
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 
-
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // Input to the Vertex shader stage.
 // Information contained per vertex, pulled from the VBO being drawn.
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 struct VertexInput
 {
 	// "v_" stands for for "Vertex" attribute which comes directly from VBO data (Squirrel's convention)
@@ -48,8 +47,7 @@ struct VertexInput
 	uint	a_vertexID	: SV_VertexID; // Which vertex number in the VBO collection this is (automatic variable)
 };
 
-
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // Output passed from the Vertex shader into the Pixel/fragment shader.
 //
 // Each of these values is automatically 3-way (barycentric) interpolated across the surface of
@@ -68,7 +66,7 @@ struct VertexInput
 //	between the variable in the Vertex Shader output structure and the corresponding variable in the
 //	Pixel Shader input structure.  Since we use the same structure for both, they all automatically
 //	match up.
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 struct VertexOutPixelIn
 {
 	float4 v_position		: SV_Position; // Required; VS output as clip-space vertex position; PS input as NDC pixel position.
@@ -83,23 +81,23 @@ struct VertexOutPixelIn
 	float3 v_modelNormal	: MODEL_NORMAL;
 };
 
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // Light structure for Point and Spot lights
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 struct Light
 {
-	float4 color;				// RGB color + intensity in alpha
-	float3 worldPosition;		// World position for point/spot lights
-	float innerRadius;			// Inner radius for falloff
-	float outerRadius;			// Outer radius for falloff
-	float3 direction;			// Direction for spot lights (normalized)
-	float innerConeAngle;		// Inner cone angle (cosine) for spot lights
-	float outerConeAngle;		// Outer cone angle (cosine) for spot lights
-	int lightType;				// 0=point, 1=spot
-	float3 padding;				// Padding for alignment
+	float4 	color;				// RGB color + intensity in alpha
+	float3 	worldPosition;		// World position for point/spot lights
+	float 	innerRadius;			// Inner radius for falloff
+	float 	outerRadius;			// Outer radius for falloff
+	float3 	direction;			// Direction for spot lights (normalized)
+	float 	innerConeAngle;		// Inner cone angle (cosine) for spot lights
+	float 	outerConeAngle;		// Outer cone angle (cosine) for spot lights
+	int 	lightType;				// 0=point, 1=spot
+	float3 	padding;				// Padding for alignment
 };
 
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // CONSTANT BUFFERS (a.k.a. CBOs or Constant Buffer Objects, UBOs / Uniform Buffers in OpenGL)
 //	"c_" stands for "Constant", Squirrel's personal naming convention.
 //
@@ -125,31 +123,33 @@ struct Light
 // So you must "pad out" any variables with dummy variables to make sure they adhere to these
 //	rules, and make sure that your corresponding C++ struct has identical byte-layout to the shader struct.
 // I find it easiest to think of this as the CBO having multiple rows, each row float4 (Vec4 == 16B) in size.
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 cbuffer PerFrameConstants : register(b1)
 {
-	float		c_time;
-	int			c_debugInt;
-	float		c_debugFloat;
-	float		EMPTY_PADDING_B1;
+	float	c_time;
+	int		c_debugInt;
+	float	c_debugFloat;
+	float	EMPTY_PADDING_B1;
 };
 
+//----------------------------------------------------------------------------------------------------
 #define MAX_LIGHTS 8
 
+//----------------------------------------------------------------------------------------------------
 cbuffer LightConstants : register(b2)
 {
 	// Directional Light (Sun)
-	float4 c_sunColor;			// RGB color + intensity in alpha
-	float3 c_sunDirection;		// Normalized direction
-	float c_ambientIntensity;	// Global ambient light intensity
+	float4 	c_sunColor;					// RGB color + intensity in alpha
+	float3 	c_sunDirection;				// Normalized direction
+	float	c_ambientIntensity;			// Global ambient light intensity
 
 	// Point and Spot Lights
-	int c_numLights;			// Number of active lights (0 to MAX_LIGHTS)
-	float3 EMPTY_PADDING_B2;			// 16-byte alignment padding
-	Light c_lightArray[MAX_LIGHTS];	// Array of lights
+	int 	c_numLights;				// Number of active lights (0 to MAX_LIGHTS)
+	float3 	EMPTY_PADDING_B2;			// 16-byte alignment padding
+	Light 	c_lightArray[MAX_LIGHTS];	// Array of lights
 };
 
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 cbuffer CameraConstants : register(b3)
 {
 	float4x4	c_worldToCamera;	// a.k.a. "View" matrix; world space (+X east) to camera-relative space (+X camera-forward)
@@ -160,7 +160,7 @@ cbuffer CameraConstants : register(b3)
 };
 
 
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 cbuffer ModelConstants : register(b4)
 {
 	float4x4	c_modelToWorld;		// a.k.a. "Model" matrix; model local space (+X model forward) to world space (+X east)
@@ -168,7 +168,7 @@ cbuffer ModelConstants : register(b4)
 };
 
 
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // TEXTURE and SAMPLER constants
 //
 // There are 16 (on mobile) or 128 (on desktop) texture binding "slots" or "registers" (t0 through t15, or t127).
@@ -184,7 +184,7 @@ cbuffer ModelConstants : register(b4)
 //	use the VS versions of these C++ functions:
 //	m_d3dContext->VSSetShaderResources( textureSlot, 1, &texture->m_shaderResourceView );
 //	m_d3dContext->VSSetSamplers( samplerSlot, 1, &samplerState );
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 Texture2D<float4>	t_diffuseTexture	: register(t0);			// Texture bound in texture constant slot #0 (t0)
 Texture2D<float4>	t_normalTexture		: register(t1);			// Texture bound in texture constant slot #1 (t1)
 Texture2D<float4>	t_specGlossEmitTexture : register(t2); 		// Texture bound in texture constant slot #2 (t2) - R=Specular, G=Gloss, B=Emissive
@@ -192,7 +192,7 @@ SamplerState		s_diffuseSampler	: register(s0);			// Sampler is bound in sampler 
 SamplerState		s_normalSampler		: register(s1);			// Sampler is bound in sampler constant slot #1 (s1)
 SamplerState		s_specGlossEmitSampler : register(s2); 		// Sampler is bound in sampler constant slot #2 (s2)
 
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // VERTEX SHADER (VS)
 //
 // "Main" entry point for the Vertex Shader (VS) stage; this function (and functions it calls) are
@@ -202,7 +202,7 @@ SamplerState		s_specGlossEmitSampler : register(s2); 		// Sampler is bound in sa
 //
 // Inputs are typically vertex attributes (PCU, PCUTBN) coming from the VBO.
 // Outputs include anything we want to pass through the Rasterization Stage (RS) to the Pixel Shader (PS).
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 VertexOutPixelIn VertexMain( VertexInput input )
 {
 	VertexOutPixelIn output;
@@ -237,7 +237,7 @@ VertexOutPixelIn VertexMain( VertexInput input )
     return output; // Pass to Rasterization Stage (RS) for barycentric interpolation, then into Pixel Shader (PS)
 }
 
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 float RangeMap( float inValue, float inStart, float inEnd, float outStart, float outEnd )
 {
 	float fraction = (inValue - inStart) / (inEnd - inStart);
@@ -246,7 +246,7 @@ float RangeMap( float inValue, float inStart, float inEnd, float outStart, float
 }
 
 
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 float RangeMapClamped( float inValue, float inStart, float inEnd, float outStart, float outEnd )
 {
 	float fraction = saturate( (inValue - inStart) / (inEnd - inStart) );
@@ -255,26 +255,26 @@ float RangeMapClamped( float inValue, float inStart, float inEnd, float outStart
 }
 
 
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // Used standard normal color encoding, mapping xyz in [-1,1] to rgb in [0,1]
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 float3 EncodeXYZToRGB( float3 vec )
 {
 	return (vec + 1.0) * 0.5;
 }
 
 
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // Used standard normal color encoding, mapping rgb in [0,1] to xyz in [-1,1]
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 float3 DecodeRGBToXYZ( float3 color )
 {
 	return (color * 2.0) - 1.0;
 }
 
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // LIGHTING FUNCTIONS
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 
 // Calculate Blinn-Phong lighting for a given light
 void CalculateBlinnPhong(
@@ -303,6 +303,7 @@ void CalculateBlinnPhong(
 	}
 }
 
+//----------------------------------------------------------------------------------------------------
 // Calculate directional light contribution (Sun)
 void CalculateDirectionalLight(
 	float3 pixelNormal,
@@ -345,6 +346,7 @@ void CalculateDirectionalLight(
 	}
 }
 
+//----------------------------------------------------------------------------------------------------
 // Calculate point light contribution with distance falloff
 void CalculatePointLight(
 	Light light,
@@ -386,6 +388,7 @@ void CalculatePointLight(
 	}
 }
 
+//----------------------------------------------------------------------------------------------------
 // Calculate spot light contribution with angular and distance falloff
 void CalculateSpotLight(
 	Light light,
@@ -430,7 +433,7 @@ void CalculateSpotLight(
 	}
 }
 
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 // PIXEL SHADER (PS)
 //
 // "Main" entry point for the Pixel Shader (PS) stage; this function (and functions it calls) are
@@ -442,7 +445,7 @@ void CalculateSpotLight(
 // Output is the color sent to the render target, to be blended via the Output Merger (OM) blend mode settings.
 // If we have multiple outputs (colors to write to each of several different Render Targets), we can change
 //	this function to return a structure containing multiple float4 output colors, one per target.
-//------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------
 float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 {
 	// Get the UV coordinates that were mapped onto this pixel

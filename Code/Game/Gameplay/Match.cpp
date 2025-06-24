@@ -124,7 +124,7 @@ void Match::UpdateFromInput(float const deltaSeconds)
 //----------------------------------------------------------------------------------------------------
 void Match::Render() const
 {
-    // g_theRenderer->SetLightConstants(m_sunDirection, m_sunIntensity, m_ambientIntensity);
+    g_theRenderer->SetLightConstants(Rgba8::WHITE, m_sunDirection, m_ambientIntensity, 8);
 
     m_board->Render();
 
