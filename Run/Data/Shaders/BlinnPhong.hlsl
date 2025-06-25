@@ -296,12 +296,14 @@ void CalculateBlinnPhong(
 	diffuseOut += diffuseColor * lightColor * NdotL;
 
 	// Specular lighting (Blinn-Phong)
-	if (NdotL > 0.0 && specularStrength > 0.0)
+	//if (NdotL > 0.0 && specularStrength > 0.0)
+	if ( specularStrength > 0.0)
 	{
 		float3 halfwayDir = normalize(lightDirection + viewDirection);
 		float NdotH = saturate(dot(pixelNormal, halfwayDir));
 		float specularIntensity = pow(NdotH, specularPower);
-		specularOut += diffuseColor * lightColor * specularStrength * specularIntensity;
+		//specularOut += diffuseColor * lightColor * specularStrength * specularIntensity;
+		specularOut += lightColor * specularStrength * specularIntensity;
 	}
 }
 
@@ -332,20 +334,36 @@ void CalculateDirectionalLight(
 	ambientOut += diffuseColor * lightColor.rgb * ambientIntensity;
 
 	// Diffuse and specular contributions
+	//if (NdotL > 0.0)
+	//{
+	//	CalculateBlinnPhong(
+	//		-lightDirection,
+	//		lightColor.rgb * lightColor.a,
+	//		pixelNormal,
+	//		viewDirection,
+	//		diffuseColor,
+	//		specularStrength,
+	//		specularPower,
+	//		diffuseOut,
+	//		specularOut
+	//	);
+	// Diffuse and specular contributions
+	// 修復：分別處理 diffuse 和 specular，不要讓 diffuse 限制 specular
 	if (NdotL > 0.0)
 	{
-		CalculateBlinnPhong(
-			-lightDirection,
-			lightColor.rgb * lightColor.a,
-			pixelNormal,
-			viewDirection,
-			diffuseColor,
-			specularStrength,
-			specularPower,
-			diffuseOut,
-			specularOut
-		);
+		// 只有 diffuse 需要 NdotL > 0 的限制
+		diffuseOut += diffuseColor * lightColor.rgb * lightColor.a * NdotL;
 	}
+
+	// Specular 計算獨立進行，不受 NdotL 限制
+	if (specularStrength > 0.0)
+	{
+		float3 halfwayDir = normalize(-lightDirection + viewDirection);
+		float NdotH = saturate(dot(pixelNormal, halfwayDir));
+		float specularIntensity = pow(NdotH, specularPower);
+		specularOut += lightColor.rgb * lightColor.a * specularStrength * specularIntensity;
+	}
+
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -466,8 +484,9 @@ float4 PixelMain( VertexOutPixelIn input ) : SV_Target0
 	float emissiveStrength = specGlossEmitTexel.b;	// Blue channel = Emissive strength
 
 	// Convert glossiness to specular power (higher values = sharper highlights)
-	float specularPower = glossiness * 128.0 + 1.0; // Range: 1-129
-
+	//float specularPower = glossiness * 128.0 + 1.0; // Range: 1-129
+	float specularPower = max(1.0, glossiness * 64.0);
+	specularStrength = max(0.1, specularStrength);
 	// Decode normalTexel RGB into XYZ then renormalize; this is the per-pixel normal, in TBN space a.k.a. tangent space
 	float3 pixelNormalTBNSpace = normalize( DecodeRGBToXYZ( normalTexel.rgb ) );
 
