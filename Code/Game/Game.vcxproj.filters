@@ -23,6 +23,9 @@
     <Filter Include="Subsystem\Widget">
       <UniqueIdentifier>{1113438c-2275-4483-bb2c-904d85c5ca4c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Subsystem\Light">
+      <UniqueIdentifier>{e80d54d7-8a63-418d-9026-d1e582d6c46f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Gameplay\Actor.cpp">
@@ -72,6 +75,9 @@
     </ClCompile>
     <ClCompile Include="Framework\MatchCommon.cpp">
       <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Subsystem\Light\LightSubsystem.cpp">
+      <Filter>Subsystem\Light</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -123,10 +129,19 @@
     <ClInclude Include="Framework\MatchCommon.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
+    <ClInclude Include="Subsystem\Light\LightSubsystem.hpp">
+      <Filter>Subsystem\Light</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Docs\README.md">
       <Filter>Document</Filter>
     </None>
+    <None Include="..\..\Docs\README_General_Assignment_TC.md" />
+    <None Include="..\..\Docs\README_General_Assignment_EN.md" />
+    <None Include="..\..\Docs\README_Independent_Research_Team_Project_EN.md" />
+    <None Include="..\..\Docs\README_Independent_Research_Team_Project_TC.md" />
+    <None Include="..\..\Docs\README_Thesis_EN.md" />
+    <None Include="..\..\Docs\README_Thesis_TC.md" />
   </ItemGroup>
 </Project>

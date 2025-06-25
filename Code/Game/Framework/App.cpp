@@ -18,15 +18,17 @@
 #include "Engine/Platform/Window.hpp"
 #include "Game/Gameplay/Game.hpp"
 #include "Game/Framework/GameCommon.hpp"
+#include "Game/Subsystem/Light/LightSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
-App*                   g_theApp        = nullptr;       // Created and owned by Main_Windows.cpp
-AudioSystem*           g_theAudio      = nullptr;       // Created and owned by the App
-BitmapFont*            g_theBitmapFont = nullptr;       // Created and owned by the App
-Game*                  g_theGame       = nullptr;       // Created and owned by the App
-Renderer*              g_theRenderer   = nullptr;       // Created and owned by the App
-RandomNumberGenerator* g_theRNG        = nullptr;       // Created and owned by the App
-Window*                g_theWindow     = nullptr;       // Created and owned by the App
+App*                   g_theApp            = nullptr;       // Created and owned by Main_Windows.cpp
+AudioSystem*           g_theAudio          = nullptr;       // Created and owned by the App
+BitmapFont*            g_theBitmapFont     = nullptr;       // Created and owned by the App
+Game*                  g_theGame           = nullptr;       // Created and owned by the App
+Renderer*              g_theRenderer       = nullptr;       // Created and owned by the App
+RandomNumberGenerator* g_theRNG            = nullptr;       // Created and owned by the App
+Window*                g_theWindow         = nullptr;       // Created and owned by the App
+LightSubsystem*        g_theLightSubsystem = nullptr;       // Created and owned by the App
 
 //----------------------------------------------------------------------------------------------------
 STATIC bool App::m_isQuitting = false;
@@ -111,6 +113,9 @@ void App::Startup()
 
     //-End-of-AudioSystem-----------------------------------------------------------------------------
 
+    sLightConfig constexpr lightConfig;
+    g_theLightSubsystem = new LightSubsystem(lightConfig);
+
     g_theEventSystem->Startup();
     g_theWindow->Startup();
     g_theRenderer->Startup();
@@ -118,6 +123,7 @@ void App::Startup()
     g_theDevConsole->StartUp();
     g_theInput->Startup();
     g_theAudio->Startup();
+    g_theLightSubsystem->StartUp();
 
     g_theBitmapFont = g_theRenderer->CreateOrGetBitmapFontFromFile("Data/Fonts/SquirrelFixedFont"); // DO NOT SPECIFY FILE .EXTENSION!!  (Important later on.)
     g_theRNG        = new RandomNumberGenerator();
@@ -134,6 +140,7 @@ void App::Shutdown()
     GAME_SAFE_RELEASE(g_theRNG);
     GAME_SAFE_RELEASE(g_theBitmapFont);
 
+    g_theLightSubsystem->ShutDown();
     g_theAudio->Shutdown();
     g_theInput->Shutdown();
     g_theDevConsole->Shutdown();
@@ -199,6 +206,7 @@ void App::BeginFrame() const
     g_theDevConsole->BeginFrame();
     g_theInput->BeginFrame();
     g_theAudio->BeginFrame();
+    g_theLightSubsystem->BeginFrame();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -239,6 +247,7 @@ void App::EndFrame() const
     g_theDevConsole->EndFrame();
     g_theInput->EndFrame();
     g_theAudio->EndFrame();
+    g_theLightSubsystem->EndFrame();
 }
 
 //----------------------------------------------------------------------------------------------------

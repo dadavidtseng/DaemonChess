@@ -18,6 +18,7 @@
 #include "Game/Framework/MatchCommon.hpp"
 #include "Game/Gameplay/Game.hpp"
 #include "Game/Gameplay/Piece.hpp"
+#include "Game/Subsystem/Light/LightSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Match::Match()
@@ -111,12 +112,14 @@ void Match::UpdateFromInput(float const deltaSeconds)
     if (g_theInput->WasKeyJustPressed(KEYCODE_F2))
     {
         m_sunDirection.x -= 1.f;
+        g_theLightSubsystem->GetLight(2)->SetDirection(m_sunDirection);
         DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
     }
 
     if (g_theInput->WasKeyJustPressed(KEYCODE_F3))
     {
         m_sunDirection.x += 1.f;
+        g_theLightSubsystem->GetLight(2)->SetDirection(m_sunDirection);
         DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
     }
 }
@@ -124,7 +127,7 @@ void Match::UpdateFromInput(float const deltaSeconds)
 //----------------------------------------------------------------------------------------------------
 void Match::Render() const
 {
-    g_theRenderer->SetLightConstants(Rgba8::WHITE, m_sunDirection, m_ambientIntensity, 8);
+    // g_theRenderer->SetLightConstants(Rgba8::WHITE, m_sunDirection, m_ambientIntensity, 8);
 
     m_board->Render();
 

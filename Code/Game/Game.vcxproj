@@ -205,6 +205,7 @@
     <ClCompile Include="Gameplay\Match.cpp" />
     <ClCompile Include="Gameplay\Piece.cpp" />
     <ClCompile Include="Subsystem\Console\ConsoleSubsystem.cpp" />
+    <ClCompile Include="Subsystem\Light\LightSubsystem.cpp" />
     <ClCompile Include="Subsystem\Widget\WidgetSubsystem.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -223,6 +224,7 @@
     <ClInclude Include="Gameplay\Match.hpp" />
     <ClInclude Include="Gameplay\Piece.hpp" />
     <ClInclude Include="Subsystem\Console\ConsoleSubsystem.hpp" />
+    <ClInclude Include="Subsystem\Light\LightSubsystem.hpp" />
     <ClInclude Include="Subsystem\Widget\WidgetSubsystem.hpp" />
   </ItemGroup>
   <ItemGroup>
