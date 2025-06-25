@@ -27,9 +27,8 @@ class Piece final : public Actor
 public:
     explicit Piece(Match* owner, sSquareInfo const& squareInfo);
 
-    Vec3  CalculateKnightHopPosition(float x);
-    float EaseInOutQuad(float t);
-    float EaseInOutCubic(float x);
+    Vec3  CalculateKnightHopPosition(float t);
+
     void  Update(float deltaSeconds) override;
     void  Render() const override;
 
@@ -48,9 +47,10 @@ protected:
     bool    m_isMoving       = false;
     float   m_moveTimer      = 0.f;
     float   m_moveDuration   = 0.f;
-    Vec3    m_targetPosition = Vec3::ZERO;
+    // Vec3    m_targetPosition = Vec3::ZERO;
+    IntVec2 m_startCoords = IntVec2::ZERO;
     IntVec2 m_targetCoords   = IntVec2::ZERO;
-    Vec3    m_startPosition  = Vec3::ZERO;
+    // Vec3    m_startPosition  = Vec3::ZERO;
     // IntVec2 m_currentCoords
     // IntVec2 m_prevCoords;
     // float m_secondSinceMOved = 0.f;

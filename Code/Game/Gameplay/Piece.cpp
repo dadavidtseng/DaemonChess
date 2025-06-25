@@ -39,13 +39,13 @@ Vec3 Piece::CalculateKnightHopPosition(float t)
     // 將 3D 路徑分解為 XY 平面移動 + Z 軸跳躍
 
     // XY 平面：使用貝塞爾曲線創建弧形路徑
-    Vec2 start2D(m_startPosition.x, m_startPosition.y);
-    Vec2 end2D(m_targetPosition.x, m_targetPosition.y);
+    Vec2 start2D = m_match->m_board->GetWorldPositionByCoords(m_startCoords).GetXY();
+    Vec2 end2D   = m_match->m_board->GetWorldPositionByCoords(m_targetCoords).GetXY();
 
     // 創建弧形控制點（讓騎士走弧線而不是直線）
     Vec2 direction = end2D - start2D;
     Vec2 perpendicular(-direction.y, direction.x); // 垂直向量
-    perpendicular = perpendicular.GetNormalized() * direction.GetLength() * 0.3f; // 弧度調整
+    perpendicular = perpendicular.GetNormalized() * direction.GetLength() * 0.1f; // 弧度調整
 
     Vec2 guide1 = start2D + direction * 0.25f + perpendicular;
     Vec2 guide2 = start2D + direction * 0.75f + perpendicular;
@@ -54,7 +54,7 @@ Vec3 Piece::CalculateKnightHopPosition(float t)
     Vec2               xyPosition = horizontalCurve.EvaluateAtParametric(t);
 
     // Z 軸：使用平滑函數創建跳躍高度
-    float distance     = (m_targetPosition - m_startPosition).GetLength();
+    float distance     = (m_match->m_board->GetWorldPositionByCoords(m_targetCoords) - m_match->m_board->GetWorldPositionByCoords(m_startCoords)).GetLength();
     float maxHopHeight = distance * 0.6f; // 跳躍高度
 
     // 使用 Hesitate3 或 SmoothStep3 創建拋物線效果
@@ -63,7 +63,7 @@ Vec3 Piece::CalculateKnightHopPosition(float t)
 
     // 組合最終位置
     return Vec3(xyPosition.x, xyPosition.y,
-                Interpolate(m_startPosition.z, m_targetPosition.z, t) + hopHeight);
+                Interpolate(m_match->m_board->GetWorldPositionByCoords(m_startCoords).z, m_match->m_board->GetWorldPositionByCoords(m_targetCoords).z, t) + hopHeight);
 }
 
 
@@ -82,7 +82,7 @@ void Piece::Update(float const deltaSeconds)
     if (m_moveTimer >= m_moveDuration)
     {
         // 動畫完成
-        m_position = m_targetPosition;
+        m_position = m_match->m_board->GetWorldPositionByCoords(m_targetCoords);
         m_coords   = m_targetCoords;
         m_isMoving = false;
     }
@@ -99,7 +99,7 @@ void Piece::Update(float const deltaSeconds)
         else
         {
             float smoothT = SmoothStep5(t); // 或 SmoothStep3, SmoothStep6
-            m_position    = Interpolate(m_startPosition, m_targetPosition, smoothT);
+            m_position    = Interpolate(m_match->m_board->GetWorldPositionByCoords(m_coords), m_match->m_board->GetWorldPositionByCoords(m_targetCoords), smoothT);
         }
     }
 }
@@ -139,10 +139,11 @@ void Piece::UpdatePositionByCoords(IntVec2 const& newCoords,
     }
 
     // 設置動畫參數
-    m_startPosition  = m_position;
-    m_targetPosition = m_match->m_board->GetWorldPositionByCoords(newCoords);
-    m_targetCoords   = newCoords;
-    m_moveDuration   = moveTime;
-    m_moveTimer      = 0.0f;
-    m_isMoving       = true;
+    m_startCoords  = m_coords;
+    m_targetCoords = newCoords;
+    // m_targetPosition = m_match->m_board->GetWorldPositionByCoords(newCoords);
+    m_targetCoords = newCoords;
+    m_moveDuration = moveTime;
+    m_moveTimer    = 0.0f;
+    m_isMoving     = true;
 }

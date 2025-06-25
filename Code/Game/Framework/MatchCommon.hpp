@@ -36,6 +36,13 @@ enum class eMoveResult : int8_t
     INVALID_CASTLE_OUT_OF_CHECK
 };
 
+struct sMatchRaycastResult
+{
+    Piece*  m_hitPiece      = nullptr;
+    IntVec2 m_currentCoords = IntVec2::ZERO;
+    IntVec2 m_targetCoords  = IntVec2::ZERO;
+};
+
 struct sPieceMove
 {
     Piece const* piece      = nullptr;
