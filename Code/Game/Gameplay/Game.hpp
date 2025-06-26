@@ -35,13 +35,12 @@ public:
 
     void Update();
     void Render() const;
-    void TogglePlayerControllerId();
 
     static bool OnGameStateChanged(EventArgs& args);
 
     eGameState        GetCurrentGameState() const;
     int               GetCurrentPlayerControllerId() const;
-    void              SwitchPlayerControllerId();
+    void              TogglePlayerControllerId();
     void              ChangeGameState(eGameState newGameState);
     bool              IsFixedCameraMode() const;
     PlayerController* GetCurrentPlayer();
@@ -62,7 +61,7 @@ private:
     Clock*                         m_gameClock    = nullptr;
     std::vector<PlayerController*> m_localPlayerControllerList;
     int                            m_currentPlayerControllerId = -1;
-    bool                           m_isFixedCameraMode         = true;
+    bool                           m_isFixedCameraMode         = false;
     int                            m_currentDebugInt           = 0;
     FloatRange                     m_currentDebugIntRange      = FloatRange(0.f, 26.f);
 };

@@ -30,6 +30,7 @@ public:
 
     void Update();
     void Render() const;
+    void RenderGhostPiece() const;
 
     Board*    m_board = nullptr;
     PieceList m_pieceList;
@@ -72,7 +73,7 @@ private:
     bool IsPathClear(IntVec2 const& fromCoords, IntVec2 const& toCoords, ePieceType const& pieceType) const;
     bool IsValidEnPassant(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
     bool IsValidPromotionType(String const& promoteTo) const;
-    
+
     sPieceMove GetLastPieceMove() const;
 
     Camera* m_screenCamera = nullptr;
@@ -84,6 +85,9 @@ private:
     float m_ambientIntensity = 0.35f;
 
     PieceMoveList m_pieceMoveList;
-    Piece* m_selectedPiece = nullptr;
-
+    Piece*        m_selectedPiece = nullptr;
+    bool m_showGhostPiece = false;
+    Vec3 m_ghostPiecePosition = Vec3::ZERO;
+    Piece* m_ghostSourcePiece = nullptr;
+    bool m_isCheatMode = false;
 };

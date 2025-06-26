@@ -137,12 +137,6 @@ int Game::GetCurrentPlayerControllerId() const
     return m_currentPlayerControllerId;
 }
 
-void Game::SwitchPlayerControllerId()
-{
-    if (m_currentPlayerControllerId == 0) m_currentPlayerControllerId = 1;
-    else if (m_currentPlayerControllerId == 1) m_currentPlayerControllerId = 0;
-}
-
 void Game::ChangeGameState(eGameState const newGameState)
 {
     if (newGameState == m_gameState) return;

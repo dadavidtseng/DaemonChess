@@ -46,8 +46,8 @@ AABB3 Board::GetAABB3FromCoords(IntVec2 const& coords,
 {
     // Convert board coordinates to world position
     Vec3 worldPosition = Vec3(
-        (float)coords.x,
-        (float)coords.y,
+        (float)coords.x-1.f,
+        (float)coords.y-1.f,
         0.f  // Assuming board is at z=0
     );
 

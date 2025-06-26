@@ -41,6 +41,7 @@ Match::Match()
     m_gameClock = new Clock(Clock::GetSystemClock());
 
     CreateBoard();
+
     for (PieceDefinition* pieceDef : PieceDefinition::s_pieceDefinitions)
     {
         pieceDef->CreateMeshByID(0);
@@ -109,6 +110,9 @@ void Match::Update()
 
     // 檢查是否有任何 piece 或 board square 被選中
     bool hasAnySelection = false;
+    // Piece*  selectedPiece        = nullptr;
+    IntVec2 selectedSquareCoords = IntVec2::ZERO;
+    bool    hasSelectedSquare    = false;
 
     // 檢查是否有 piece 被選中
     for (Piece* piece : m_pieceList)
@@ -116,6 +120,7 @@ void Match::Update()
         if (piece != nullptr && piece->m_isSelected)
         {
             hasAnySelection = true;
+            m_selectedPiece = piece;
             break;
         }
     }
@@ -127,15 +132,119 @@ void Match::Update()
         {
             if (m_board->m_squareInfoList[i].m_isSelected)
             {
-                hasAnySelection = true;
+                hasAnySelection      = true;
+                hasSelectedSquare    = true;
+                selectedSquareCoords = m_board->m_squareInfoList[i].m_coords;
+                m_selectedPiece = m_board->GetPieceByCoords(selectedSquareCoords);
                 break;
             }
         }
     }
 
-    // 只有在沒有任何選擇的情況下才進行 raycast 和 highlighting
-    if (!hasAnySelection)
+    // 如果有選中的項目，進行 raycast 並檢查是否為有效移動位置
+    if (hasAnySelection)
     {
+        PlayerController* currentPlayer            = g_theGame->GetCurrentPlayer();
+        EulerAngles       currentPlayerOrientation = currentPlayer->m_worldCamera->GetOrientation();
+
+        Vec3 currentPlayerForwardNormal = currentPlayerOrientation.GetAsMatrix_IFwd_JLeft_KUp().GetIBasis3D().GetNormalized();
+        Ray3 ray                        = Ray3(currentPlayer->m_position, currentPlayerForwardNormal, 100.f);
+
+        float minLength        = FLT_MAX;
+        int   closestAABBIndex = -1;
+        bool  foundImpact      = false;
+
+        // 清除所有 highlight
+        for (int i = 0; i < (int)m_board->m_squareInfoList.size(); ++i)
+        {
+            m_board->m_squareInfoList[i].m_isHighlighted = false;
+        }
+
+        for (Piece* piece : m_pieceList)
+        {
+            if (piece != nullptr)
+            {
+                piece->m_isHighlighted = false;
+            }
+        }
+
+        // 清除 ghost render
+        m_showGhostPiece = false;
+        m_ghostSourcePiece = nullptr;
+
+        // Check board AABBs for raycast
+        for (int i = 0; i < (int)m_board->m_squareInfoList.size(); ++i)
+        {
+            RaycastResult3D const result = RaycastVsAABB3D(ray.m_startPosition, ray.m_forwardNormal, ray.m_maxLength,
+                                                           m_board->GetAABB3FromCoords(m_board->m_squareInfoList[i].m_coords, 0.2f).m_mins,
+                                                           m_board->GetAABB3FromCoords(m_board->m_squareInfoList[i].m_coords, 0.2f).m_maxs);
+
+            if (result.m_didImpact && result.m_impactLength < minLength)
+            {
+                minLength        = result.m_impactLength;
+                closestAABBIndex = i;
+                foundImpact      = true;
+            }
+        }
+
+        // 如果找到了 raycast 目標，檢查是否為有效移動位置
+        if (foundImpact && closestAABBIndex != -1)
+        {
+            IntVec2 targetCoords = m_board->m_squareInfoList[closestAABBIndex].m_coords;
+            IntVec2 fromCoords;
+            bool    canHighlight = false;
+            Piece*  sourcePiece = nullptr;
+
+            if (m_selectedPiece != nullptr)
+            {
+                // 有選中的棋子，檢查是否可以移動到目標位置
+                fromCoords             = m_selectedPiece->m_coords;
+                sourcePiece            = m_selectedPiece;
+                eMoveResult moveResult = ValidateChessMove(fromCoords, targetCoords, "", m_isCheatMode);
+                canHighlight           = (moveResult == eMoveResult::VALID_MOVE_NORMAL ||
+                    moveResult == eMoveResult::VALID_CAPTURE_NORMAL ||
+                    moveResult == eMoveResult::VALID_MOVE_PROMOTION ||
+                    moveResult == eMoveResult::VALID_CAPTURE_ENPASSANT ||
+                    moveResult == eMoveResult::VALID_CASTLE_KINGSIDE ||
+                    moveResult == eMoveResult::VALID_CASTLE_QUEENSIDE);
+            }
+            else if (hasSelectedSquare)
+            {
+                // 有選中的方格，檢查該方格是否有棋子，以及是否可以移動到目標位置
+                Piece const* pieceOnSelectedSquare = m_board->GetPieceByCoords(selectedSquareCoords);
+                if (pieceOnSelectedSquare != nullptr)
+                {
+                    fromCoords             = selectedSquareCoords;
+                    sourcePiece            = const_cast<Piece*>(pieceOnSelectedSquare);
+                    eMoveResult moveResult = ValidateChessMove(fromCoords, targetCoords, "", m_isCheatMode);
+                    canHighlight           = (moveResult == eMoveResult::VALID_MOVE_NORMAL ||
+                        moveResult == eMoveResult::VALID_CAPTURE_NORMAL ||
+                        moveResult == eMoveResult::VALID_MOVE_PROMOTION ||
+                        moveResult == eMoveResult::VALID_CAPTURE_ENPASSANT ||
+                        moveResult == eMoveResult::VALID_CASTLE_KINGSIDE ||
+                        moveResult == eMoveResult::VALID_CASTLE_QUEENSIDE);
+                }
+            }
+
+            // 如果是有效移動位置，只進行 highlight（不發送 ChessMove 事件）
+            if (canHighlight && sourcePiece != nullptr)
+            {
+                m_board->m_squareInfoList[closestAABBIndex].m_isHighlighted = true;
+                // 設置 ghost render
+                m_showGhostPiece = true;
+                m_ghostSourcePiece = sourcePiece;
+                m_ghostPiecePosition = m_board->GetWorldPositionByCoords(targetCoords);
+                m_ghostPiecePosition.z += 0.01f; // 稍微抬高一點避免 z-fighting
+            }
+        }
+    }
+    else
+    {
+        // 沒有任何選擇的情況下，清除 ghost render
+        m_showGhostPiece = false;
+        m_ghostSourcePiece = nullptr;
+
+        // 沒有任何選擇的情況下，進行正常的 raycast 和 highlighting
         PlayerController* currentPlayer            = g_theGame->GetCurrentPlayer();
         EulerAngles       currentPlayerOrientation = currentPlayer->m_worldCamera->GetOrientation();
 
@@ -219,22 +328,6 @@ void Match::Update()
             }
         }
     }
-    else
-    {
-        // 如果有任何選擇，清除所有 highlight（包括已選中的項目也不顯示 highlight）
-        for (int i = 0; i < (int)m_board->m_squareInfoList.size(); ++i)
-        {
-            m_board->m_squareInfoList[i].m_isHighlighted = false;
-        }
-
-        for (Piece* piece : m_pieceList)
-        {
-            if (piece != nullptr)
-            {
-                piece->m_isHighlighted = false;
-            }
-        }
-    }
 }
 
 void Match::UpdateFromInput(float const deltaSeconds)
@@ -254,19 +347,35 @@ void Match::UpdateFromInput(float const deltaSeconds)
         DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
     }
 
-    // 左鍵點擊 - 只用於選擇
+if (g_theInput->WasKeyJustPressed(KEYCODE_CONTROL))
+{
+    m_isCheatMode = true;
+}
+    if (g_theInput->WasKeyJustReleased(KEYCODE_CONTROL))
+    {
+        m_isCheatMode = false;
+    }
+
+    // 左鍵點擊處理
     if (g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
     {
         // 檢查是否有任何東西已經被選中
         bool hasAnySelection = false;
+        Piece* selectedPiece = nullptr;
+        IntVec2 selectedSquareCoords = IntVec2::ZERO;
+        bool hasSelectedSquare = false;
 
         // 檢查 piece 選擇狀態
         for (Piece* piece : m_pieceList)
         {
             if (piece != nullptr && piece->m_isSelected)
             {
-                hasAnySelection = true;
-                break;
+                if (piece->m_id == g_theGame->GetCurrentPlayerControllerId())
+                {
+                    hasAnySelection = true;
+                    selectedPiece = piece;
+                    break;
+                }
             }
         }
 
@@ -278,17 +387,113 @@ void Match::UpdateFromInput(float const deltaSeconds)
                 if (info.m_isSelected)
                 {
                     hasAnySelection = true;
+                    hasSelectedSquare = true;
+                    selectedSquareCoords = info.m_coords;
                     break;
                 }
             }
         }
 
-        // 如果沒有任何選擇，允許選擇目前 highlighted 的項目
-        if (!hasAnySelection)
+        // 如果有選中的項目，檢查是否點擊了有效的移動目標
+        if (hasAnySelection)
         {
+            // 進行 raycast 來找到點擊的目標
+            PlayerController* currentPlayer = g_theGame->GetCurrentPlayer();
+            EulerAngles currentPlayerOrientation = currentPlayer->m_worldCamera->GetOrientation();
+            Vec3 currentPlayerForwardNormal = currentPlayerOrientation.GetAsMatrix_IFwd_JLeft_KUp().GetIBasis3D().GetNormalized();
+            Ray3 ray = Ray3(currentPlayer->m_position, currentPlayerForwardNormal, 100.f);
+
+            float minLength = FLT_MAX;
+            int closestAABBIndex = -1;
+            bool foundImpact = false;
+
+            // Check board AABBs for raycast
+            for (int i = 0; i < (int)m_board->m_squareInfoList.size(); ++i)
+            {
+                RaycastResult3D const result = RaycastVsAABB3D(ray.m_startPosition, ray.m_forwardNormal, ray.m_maxLength,
+                                                               m_board->GetAABB3FromCoords(m_board->m_squareInfoList[i].m_coords, 0.2f).m_mins,
+                                                               m_board->GetAABB3FromCoords(m_board->m_squareInfoList[i].m_coords, 0.2f).m_maxs);
+
+                if (result.m_didImpact && result.m_impactLength < minLength)
+                {
+                    minLength = result.m_impactLength;
+                    closestAABBIndex = i;
+                    foundImpact = true;
+                }
+            }
+
+            // 如果找到了點擊目標，檢查是否為有效移動並執行
+            if (foundImpact && closestAABBIndex != -1)
+            {
+                IntVec2 targetCoords = m_board->m_squareInfoList[closestAABBIndex].m_coords;
+                IntVec2 fromCoords;
+                bool canMove = false;
+
+                if (selectedPiece != nullptr)
+                {
+                    // 有選中的棋子
+                    fromCoords = selectedPiece->m_coords;
+                    eMoveResult moveResult = ValidateChessMove(fromCoords, targetCoords, "", m_isCheatMode);
+                    canMove = (moveResult == eMoveResult::VALID_MOVE_NORMAL ||
+                        moveResult == eMoveResult::VALID_CAPTURE_NORMAL ||
+                        moveResult == eMoveResult::VALID_MOVE_PROMOTION ||
+                        moveResult == eMoveResult::VALID_CAPTURE_ENPASSANT ||
+                        moveResult == eMoveResult::VALID_CASTLE_KINGSIDE ||
+                        moveResult == eMoveResult::VALID_CASTLE_QUEENSIDE);
+                }
+                else if (hasSelectedSquare)
+                {
+                    // 有選中的方格
+                    Piece const* pieceOnSelectedSquare = m_board->GetPieceByCoords(selectedSquareCoords);
+                    if (pieceOnSelectedSquare != nullptr)
+                    {
+                        fromCoords = selectedSquareCoords;
+                        eMoveResult moveResult = ValidateChessMove(fromCoords, targetCoords, "", m_isCheatMode);
+                        canMove = (moveResult == eMoveResult::VALID_MOVE_NORMAL ||
+                            moveResult == eMoveResult::VALID_CAPTURE_NORMAL ||
+                            moveResult == eMoveResult::VALID_MOVE_PROMOTION ||
+                            moveResult == eMoveResult::VALID_CAPTURE_ENPASSANT ||
+                            moveResult == eMoveResult::VALID_CASTLE_KINGSIDE ||
+                            moveResult == eMoveResult::VALID_CASTLE_QUEENSIDE);
+                    }
+                }
+
+                // 如果是有效移動，發送 ChessMove 事件
+                if (canMove)
+                {
+                    EventArgs args;
+                    args.SetValue("from", m_board->ChessCoordToString(fromCoords));
+                    args.SetValue("to", m_board->ChessCoordToString(targetCoords));
+                    args.SetValue("promoteTo", "");
+                    String teleport = m_isCheatMode ? "true" : "false";
+                    args.SetValue("teleport", teleport);
+
+                    g_theEventSystem->FireEvent("ChessMove", args);
+
+                    // 移動完成後清除選擇
+                    for (sSquareInfo& info : m_board->m_squareInfoList)
+                    {
+                        info.m_isSelected = false;
+                        info.m_isHighlighted = false;
+                    }
+
+                    for (Piece* piece : m_pieceList)
+                    {
+                        if (piece != nullptr)
+                        {
+                            piece->m_isSelected = false;
+                            piece->m_isHighlighted = false;
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            // 如果沒有任何選擇，允許選擇目前 highlighted 的項目
             for (sSquareInfo& info : m_board->m_squareInfoList)
             {
-                if (info.m_isHighlighted)
+                if (info.m_isHighlighted && (m_isCheatMode || info.m_playerControllerId == g_theGame->GetCurrentPlayerControllerId()))
                 {
                     info.m_isSelected = true;
                     // 選中後不保持 highlight，因為一旦選中就不允許其他項目 highlight
@@ -298,7 +503,7 @@ void Match::UpdateFromInput(float const deltaSeconds)
 
             for (Piece* piece : m_pieceList)
             {
-                if (piece != nullptr && piece->m_isHighlighted)
+                if (piece != nullptr && piece->m_isHighlighted && (m_isCheatMode || piece->m_id == g_theGame->GetCurrentPlayerControllerId()))
                 {
                     piece->m_isSelected = true;
                     // 選中後不保持 highlight，因為一旦選中就不允許其他項目 highlight
@@ -343,7 +548,45 @@ void Match::Render() const
         piece->Render();
     }
 
+    // 渲染 ghost piece（如果需要的話）
+    if (m_showGhostPiece && m_ghostSourcePiece != nullptr)
+    {
+        RenderGhostPiece();
+    }
+
     RenderPlayerBasis();
+}
+
+// 新增 RenderGhostPiece 方法
+void Match::RenderGhostPiece() const
+{
+    if (m_ghostSourcePiece == nullptr) return;
+
+    // 保存原始位置和渲染狀態
+    Vec3 originalPosition = m_ghostSourcePiece->m_position;
+    bool originalIsSelected = m_ghostSourcePiece->m_isSelected;
+    bool originalIsHighlighted = m_ghostSourcePiece->m_isHighlighted;
+
+    // 暫時修改棋子的位置和狀態用於 ghost 渲染
+    const_cast<Piece*>(m_ghostSourcePiece)->m_position = m_ghostPiecePosition;
+    const_cast<Piece*>(m_ghostSourcePiece)->m_isSelected = false;
+    const_cast<Piece*>(m_ghostSourcePiece)->m_isHighlighted = false;
+
+    // 設置半透明渲染狀態
+    g_theRenderer->SetBlendMode(eBlendMode::ALPHA);
+    g_theRenderer->SetModelConstants(Mat44(), Rgba8(255, 255, 255, 128)); // 50% 透明度
+
+    // 渲染 ghost piece
+    m_ghostSourcePiece->RenderTargetPiece();
+
+    // 恢復正常渲染狀態
+    g_theRenderer->SetBlendMode(eBlendMode::ALPHA);
+    g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
+
+    // 恢復原始位置和狀態
+    const_cast<Piece*>(m_ghostSourcePiece)->m_position = originalPosition;
+    const_cast<Piece*>(m_ghostSourcePiece)->m_isSelected = originalIsSelected;
+    const_cast<Piece*>(m_ghostSourcePiece)->m_isHighlighted = originalIsHighlighted;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -909,6 +1152,7 @@ eMoveResult Match::DetermineValidMoveType(IntVec2 const& fromCoords,
 
 sPieceMove Match::GetLastPieceMove() const
 {
+    if (m_pieceMoveList.size() == 0) return sPieceMove{};
     return m_pieceMoveList.back();
 }
 

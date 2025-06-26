@@ -24,10 +24,10 @@ public:
     explicit Board(Match* owner);
     ~Board() override;
 
-    void Update(float deltaSeconds) override;
+    void  Update(float deltaSeconds) override;
     AABB3 GetAABB3FromCoords(IntVec2 const& coords, float aabb3Height) const;
-    void RenderSelectedBox() const;
-    void Render() const override;
+    void  RenderSelectedBox() const;
+    void  Render() const override;
 
     /// Query
     Vec3        GetWorldPositionByCoords(IntVec2 const& coords);
