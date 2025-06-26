@@ -44,6 +44,7 @@ public:
     void       SwitchPlayerControllerId();
     void       ChangeGameState(eGameState newGameState);
     bool       IsFixedCameraMode() const;
+    PlayerController* GetCurrentPlayer();
     Match*     m_match = nullptr;
 
 private:

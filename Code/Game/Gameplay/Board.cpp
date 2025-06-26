@@ -41,6 +41,20 @@ void Board::Update(float const deltaSeconds)
     m_orientation.m_rollDegrees += m_angularVelocity.m_rollDegrees * deltaSeconds;
 }
 
+void Board::RenderSelectedBox() const
+{
+    VertexList_PCU verts;
+
+    for (AABB3 box : m_AABBs)
+    {
+        AddVertsForWireframeAABB3D(verts, box, 0.01f);
+    }
+
+    g_theRenderer->BindTexture(nullptr);
+    g_theRenderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
+    g_theRenderer->DrawVertexArray(verts);
+}
+
 //----------------------------------------------------------------------------------------------------
 void Board::Render() const
 {
@@ -54,6 +68,8 @@ void Board::Render() const
     g_theRenderer->BindTexture(m_specularGlossEmitTexture, 2);
     g_theRenderer->BindShader(m_shader);
     g_theRenderer->DrawVertexArray(m_vertexes, m_indexes);
+
+    RenderSelectedBox();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -158,7 +174,7 @@ void Board::CreateLocalVertsForAABB3s()
 
             bool const isBlack = (x + y) % 2 == 0;
             Rgba8      color   = isBlack ? Rgba8(40, 50, 60) : Rgba8(240, 230, 210);
-
+            m_AABBs.push_back(box);
             AddVertsForAABB3D(m_vertexes, m_indexes, box, color);
         }
     }

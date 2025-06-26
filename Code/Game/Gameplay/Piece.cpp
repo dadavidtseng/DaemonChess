@@ -107,18 +107,55 @@ void Piece::Update(float const deltaSeconds)
 //----------------------------------------------------------------------------------------------------
 void Piece::Render() const
 {
-    g_theRenderer->SetModelConstants(GetModelToWorldTransform(), m_color);
-    g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
+    // g_theRenderer->SetModelConstants(GetModelToWorldTransform(), m_color);
+    // g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
+    // g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
+    // g_theRenderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
+    // g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
+    // g_theRenderer->BindTexture(m_diffuseTexture, 0);
+    // g_theRenderer->BindTexture(m_normalTexture, 1);
+    // g_theRenderer->BindTexture(m_normalTexture, 1);
+    // g_theRenderer->BindTexture(m_specularGlossEmitTexture, 2);
+    // g_theRenderer->BindShader(m_shader);
+    // unsigned int const indexCount = m_definition->GetIndexCountByID(m_id);
+    // g_theRenderer->DrawIndexedVertexBuffer(m_definition->m_vertexBuffer[m_id], m_definition->m_indexBuffer[m_id], indexCount);
+
+    if (m_isSelected)
+    {
+        RenderSelectedPiece();
+    }
+    // RenderSelectedPiece();
+    // RenderTargetPiece();
+}
+
+void Piece::RenderSelectedPiece() const
+{
+    VertexList_PCU verts;
+
+    AddVertsForWireframeCylinder3D(verts, m_position, m_position+Vec3::Z_BASIS, 0.25f,0.005f);
+
+
+g_theRenderer->SetModelConstants();
+    g_theRenderer->BindTexture(nullptr);
+    g_theRenderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
+    g_theRenderer->DrawVertexArray(verts);
+}
+
+void Piece::RenderTargetPiece() const
+{
+    g_theRenderer->SetModelConstants(GetModelToWorldTransform(), Rgba8(m_color.r, m_color.g, m_color.b));
+    g_theRenderer->SetBlendMode(eBlendMode::ALPHA);
     g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
     g_theRenderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
     g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
     g_theRenderer->BindTexture(m_diffuseTexture, 0);
-    g_theRenderer->BindTexture(m_normalTexture, 1);
-    g_theRenderer->BindTexture(m_normalTexture, 1);
+    // g_theRenderer->BindTexture(m_normalTexture, 1);
+    // g_theRenderer->BindTexture(m_normalTexture, 1);
     g_theRenderer->BindTexture(m_specularGlossEmitTexture, 2);
     g_theRenderer->BindShader(m_shader);
     unsigned int const indexCount = m_definition->GetIndexCountByID(m_id);
     g_theRenderer->DrawIndexedVertexBuffer(m_definition->m_vertexBuffer[m_id], m_definition->m_indexBuffer[m_id], indexCount);
+
 }
 
 void Piece::UpdatePositionByCoords(IntVec2 const& newCoords)

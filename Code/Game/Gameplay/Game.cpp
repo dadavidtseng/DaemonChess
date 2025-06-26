@@ -163,6 +163,19 @@ bool Game::IsFixedCameraMode() const
     return m_isFixedCameraMode;
 }
 
+PlayerController* Game::GetCurrentPlayer()
+{
+    for (PlayerController* m_localPlayerController : m_localPlayerControllerList)
+    {
+        if (m_localPlayerController &&
+            m_localPlayerController->GetControllerIndex() == m_currentPlayerControllerId)
+
+            return m_localPlayerController;
+    }
+
+    return nullptr;
+}
+
 //----------------------------------------------------------------------------------------------------
 void Game::UpdateFromInput()
 {

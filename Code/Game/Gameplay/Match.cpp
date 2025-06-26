@@ -9,6 +9,7 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
@@ -16,6 +17,7 @@
 #include "Game/Definition/PieceDefinition.hpp"
 #include "Game/Framework/GameCommon.hpp"
 #include "Game/Framework/MatchCommon.hpp"
+#include "Game/Framework/PlayerController.hpp"
 #include "Game/Gameplay/Game.hpp"
 #include "Game/Gameplay/Piece.hpp"
 #include "Game/Subsystem/Light/LightSubsystem.hpp"
@@ -104,6 +106,32 @@ void Match::Update()
         if (piece == nullptr) continue;
         piece->Update(deltaSeconds);
     }
+
+    PlayerController * currentPlayer = g_theGame->GetCurrentPlayer();
+    EulerAngles currentPlayerOrientation = currentPlayer->m_worldCamera->GetOrientation();
+
+    Vec3 currentPlayerForwardNormal = currentPlayerOrientation.GetAsMatrix_IFwd_JLeft_KUp().GetIBasis3D().GetNormalized();
+    Ray3 ray            = Ray3(currentPlayer->m_position, currentPlayerForwardNormal, 100.f );
+    for (auto aabb3 : m_board->m_AABBs)
+    {
+        RaycastResult3D result = RaycastVsAABB3D(ray.m_startPosition, ray.m_forwardNormal, ray.m_maxLength, aabb3.m_mins, aabb3.m_maxs);
+
+        if (result.m_didImpact)
+        {
+            DebugAddWorldPoint(result.m_impactPosition, 0.1f, 0.f);
+        }
+    }
+
+    for (Piece* piece : m_pieceList)
+    {
+        RaycastResult3D result = RaycastVsCylinderZ3D(currentPlayer->m_position, currentPlayerForwardNormal , ray.m_maxLength,(piece->m_position+Vec3::Z_BASIS*0.5f).GetXY(),FloatRange(piece->m_position.z, piece->m_position.z+1.f),0.25f );
+
+        if (result.m_didImpact)
+        {
+            piece->m_isSelected = true;
+        }
+    }
+
 }
 
 void Match::UpdateFromInput(float const deltaSeconds)
@@ -136,6 +164,8 @@ void Match::Render() const
         if (piece == nullptr) continue;
         piece->Render();
     }
+    RenderPlayerBasis();
+
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -825,30 +855,23 @@ void Match::ExecuteQueensideCastling(IntVec2 const& fromCoords) const
     m_board->UpdateSquareInfoList(rookFromCoords, rookToCoords);
 }
 
-//------------------------------------------------------------------------------------------------
-// Example usage in your game/test code
-//------------------------------------------------------------------------------------------------
-void TestLightingSetup(LightSubsystem& lightManager)
+void Match::RenderPlayerBasis() const
 {
-    // // Set up directional light (sun)
-    // // DirectionalLight sun(Vec3(1.0f, 2.0f, -3.0f).GetNormalized(), Rgba8::WHITE, 1.0f);
-    // // lightManager.SetDirectionalLight(sun);
-    // lightManager.SetAmbientIntensity(0.1f);
-    //
-    // // Add a red point light
-    // // Light pointLight(eLightType::POINT, Vec3(5.0f, 0.0f, 2.0f), Rgba8::RED, 2.0f);
-    // // pointLight.SetRadii(1.0f, 10.0f);
-    // lightManager.AddLight(pointLight);
-    //
-    // // Add a blue spotlight
-    // Light spotLight(eLightType::SPOT, Vec3(-3.0f, 0.0f, 5.0f), Rgba8::BLUE, 3.0f);
-    // spotLight.SetRadii(2.0f, 15.0f);
-    // spotLight.SetDirection(Vec3(1.0f, 0.0f, -1.0f));
-    // spotLight.SetConeAngles(15.0f, 45.0f); // Inner 15°, outer 45°
-    // lightManager.AddLight(spotLight);
-    //
-    // // Add a green moving point light (you can animate this in your update loop)
-    // Light movingLight(eLightType::POINT, Vec3(0.0f, 3.0f, 0.0f), Rgba8::GREEN, 1.5f);
-    // movingLight.SetRadii(0.5f, 8.0f);
-    // lightManager.AddLight(movingLight);
+    VertexList_PCU verts;
+
+    Vec3 const worldCameraPosition = g_theGame->GetCurrentPlayer()->m_worldCamera->GetPosition();
+    Vec3 const forwardNormal       = g_theGame->GetCurrentPlayer()->m_worldCamera->GetOrientation().GetAsMatrix_IFwd_JLeft_KUp().GetIBasis3D().GetNormalized();
+
+    // Add vertices in world space.
+    AddVertsForArrow3D(verts, worldCameraPosition + forwardNormal, worldCameraPosition + forwardNormal + Vec3::X_BASIS * 0.1f, 0.8f, 0.001f, 0.003f, Rgba8::RED);
+    AddVertsForArrow3D(verts, worldCameraPosition + forwardNormal, worldCameraPosition + forwardNormal + Vec3::Y_BASIS * 0.1f, 0.8f, 0.001f, 0.003f, Rgba8::GREEN);
+    AddVertsForArrow3D(verts, worldCameraPosition + forwardNormal, worldCameraPosition + forwardNormal + Vec3::Z_BASIS * 0.1f, 0.8f, 0.001f, 0.003f, Rgba8::BLUE);
+
+    g_theRenderer->SetModelConstants();
+    g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
+    g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
+    g_theRenderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
+    g_theRenderer->SetDepthMode(eDepthMode::DISABLED);
+    g_theRenderer->BindTexture(nullptr);
+    g_theRenderer->DrawVertexArray(static_cast<int>(verts.size()), verts.data());
 }

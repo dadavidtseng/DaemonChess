@@ -52,6 +52,7 @@ private:
     void ExecuteCastling(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
     void ExecuteKingsideCastling(IntVec2 const& fromCoords) const;
     void ExecuteQueensideCastling(IntVec2 const& fromCoords) const;
+    void RenderPlayerBasis() const;
     void ExecuteCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo = "");
 
     void RemovePieceFromPieceList(IntVec2 const& toCoords);
