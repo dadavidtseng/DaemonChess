@@ -17,7 +17,9 @@ struct sSquareInfo
     String  m_notation           = "DEFAULT";
     int     m_playerControllerId = -1;
     Rgba8   m_color              = Rgba8::WHITE;
-    IntVec2 m_coords              = IntVec2::ZERO;
+    IntVec2 m_coords             = IntVec2::ZERO;
+    bool    m_isHighlighted      = false;
+    bool    m_isSelected         = false;
 };
 
 
@@ -31,9 +33,9 @@ struct BoardDefinition
 
     static void                          InitializeDefs(char const* path);
     static std::vector<BoardDefinition*> s_boardDefinitions;
-    static void ClearAllDefs();
+    static void                          ClearAllDefs();
 
     std::vector<sSquareInfo> m_squareInfos;
-    EulerAngles              m_pieceOrientation   = EulerAngles::ZERO;
-    Rgba8                    m_pieceColor         = Rgba8::WHITE;
+    EulerAngles              m_pieceOrientation = EulerAngles::ZERO;
+    Rgba8                    m_pieceColor       = Rgba8::WHITE;
 };

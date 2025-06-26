@@ -41,13 +41,32 @@ void Board::Update(float const deltaSeconds)
     m_orientation.m_rollDegrees += m_angularVelocity.m_rollDegrees * deltaSeconds;
 }
 
+AABB3 Board::GetAABB3FromCoords(IntVec2 const& coords,
+                                float const    aabb3Height) const
+{
+    // Convert board coordinates to world position
+    Vec3 worldPosition = Vec3(
+        (float)coords.x,
+        (float)coords.y,
+        0.f  // Assuming board is at z=0
+    );
+
+    // Create AABB with standard tile size (assuming 1x1x1 tiles)
+    Vec3 mins = worldPosition;
+    Vec3 maxs = worldPosition + Vec3(1.f, 1.f, aabb3Height);
+    return AABB3(mins, maxs);
+}
+
 void Board::RenderSelectedBox() const
 {
     VertexList_PCU verts;
 
-    for (AABB3 box : m_AABBs)
+    for (sSquareInfo const & info : m_squareInfoList)
     {
-        AddVertsForWireframeAABB3D(verts, box, 0.01f);
+        if (info.m_isSelected||info.m_isHighlighted)
+        {
+            AddVertsForWireframeAABB3D(verts, GetAABB3FromCoords(info.m_coords, 0.2f), 0.01f);
+        }
     }
 
     g_theRenderer->BindTexture(nullptr);

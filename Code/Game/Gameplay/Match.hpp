@@ -84,4 +84,6 @@ private:
     float m_ambientIntensity = 0.35f;
 
     PieceMoveList m_pieceMoveList;
+    Piece* m_selectedPiece = nullptr;
+
 };

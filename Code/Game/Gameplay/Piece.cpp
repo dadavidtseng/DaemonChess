@@ -120,7 +120,7 @@ void Piece::Render() const
     // unsigned int const indexCount = m_definition->GetIndexCountByID(m_id);
     // g_theRenderer->DrawIndexedVertexBuffer(m_definition->m_vertexBuffer[m_id], m_definition->m_indexBuffer[m_id], indexCount);
 
-    if (m_isSelected)
+    if (m_isHighlighted||m_isSelected)
     {
         RenderSelectedPiece();
     }

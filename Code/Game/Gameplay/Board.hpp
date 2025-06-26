@@ -25,6 +25,7 @@ public:
     ~Board() override;
 
     void Update(float deltaSeconds) override;
+    AABB3 GetAABB3FromCoords(IntVec2 const& coords, float aabb3Height) const;
     void RenderSelectedBox() const;
     void Render() const override;
 
@@ -49,14 +50,14 @@ public:
     IntVec2 FindKingCoordsByPlayerId(int playerId) const;
 
     std::vector<sSquareInfo> m_squareInfoList;
-    std::vector<AABB3> m_AABBs;
-private:
-    BoardDefinition*   m_definition = nullptr;
-    VertexList_PCUTBN  m_vertexes;
-    IndexList          m_indexes;
-    Texture*           m_diffuseTexture           = nullptr;
-    Texture*           m_normalTexture            = nullptr;
-    Texture*           m_specularGlossEmitTexture = nullptr;
-    Shader const*      m_shader                   = nullptr;
+    std::vector<AABB3>       m_AABBs;
 
+private:
+    BoardDefinition*  m_definition = nullptr;
+    VertexList_PCUTBN m_vertexes;
+    IndexList         m_indexes;
+    Texture*          m_diffuseTexture           = nullptr;
+    Texture*          m_normalTexture            = nullptr;
+    Texture*          m_specularGlossEmitTexture = nullptr;
+    Shader const*     m_shader                   = nullptr;
 };

@@ -39,13 +39,13 @@ public:
 
     static bool OnGameStateChanged(EventArgs& args);
 
-    eGameState GetCurrentGameState() const;
-    int        GetCurrentPlayerControllerId() const;
-    void       SwitchPlayerControllerId();
-    void       ChangeGameState(eGameState newGameState);
-    bool       IsFixedCameraMode() const;
+    eGameState        GetCurrentGameState() const;
+    int               GetCurrentPlayerControllerId() const;
+    void              SwitchPlayerControllerId();
+    void              ChangeGameState(eGameState newGameState);
+    bool              IsFixedCameraMode() const;
     PlayerController* GetCurrentPlayer();
-    Match*     m_match = nullptr;
+    Match*            m_match = nullptr;
 
 private:
     void              UpdateFromInput();

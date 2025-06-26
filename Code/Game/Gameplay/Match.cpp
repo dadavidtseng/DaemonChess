@@ -107,31 +107,134 @@ void Match::Update()
         piece->Update(deltaSeconds);
     }
 
-    PlayerController * currentPlayer = g_theGame->GetCurrentPlayer();
-    EulerAngles currentPlayerOrientation = currentPlayer->m_worldCamera->GetOrientation();
+    // 檢查是否有任何 piece 或 board square 被選中
+    bool hasAnySelection = false;
 
-    Vec3 currentPlayerForwardNormal = currentPlayerOrientation.GetAsMatrix_IFwd_JLeft_KUp().GetIBasis3D().GetNormalized();
-    Ray3 ray            = Ray3(currentPlayer->m_position, currentPlayerForwardNormal, 100.f );
-    for (auto aabb3 : m_board->m_AABBs)
-    {
-        RaycastResult3D result = RaycastVsAABB3D(ray.m_startPosition, ray.m_forwardNormal, ray.m_maxLength, aabb3.m_mins, aabb3.m_maxs);
-
-        if (result.m_didImpact)
-        {
-            DebugAddWorldPoint(result.m_impactPosition, 0.1f, 0.f);
-        }
-    }
-
+    // 檢查是否有 piece 被選中
     for (Piece* piece : m_pieceList)
     {
-        RaycastResult3D result = RaycastVsCylinderZ3D(currentPlayer->m_position, currentPlayerForwardNormal , ray.m_maxLength,(piece->m_position+Vec3::Z_BASIS*0.5f).GetXY(),FloatRange(piece->m_position.z, piece->m_position.z+1.f),0.25f );
-
-        if (result.m_didImpact)
+        if (piece != nullptr && piece->m_isSelected)
         {
-            piece->m_isSelected = true;
+            hasAnySelection = true;
+            break;
         }
     }
 
+    // 如果沒有 piece 被選中，檢查是否有 board square 被選中
+    if (!hasAnySelection)
+    {
+        for (int i = 0; i < (int)m_board->m_squareInfoList.size(); ++i)
+        {
+            if (m_board->m_squareInfoList[i].m_isSelected)
+            {
+                hasAnySelection = true;
+                break;
+            }
+        }
+    }
+
+    // 只有在沒有任何選擇的情況下才進行 raycast 和 highlighting
+    if (!hasAnySelection)
+    {
+        PlayerController* currentPlayer            = g_theGame->GetCurrentPlayer();
+        EulerAngles       currentPlayerOrientation = currentPlayer->m_worldCamera->GetOrientation();
+
+        Vec3 currentPlayerForwardNormal = currentPlayerOrientation.GetAsMatrix_IFwd_JLeft_KUp().GetIBasis3D().GetNormalized();
+        Ray3 ray                        = Ray3(currentPlayer->m_position, currentPlayerForwardNormal, 100.f);
+
+        float  minLength        = FLT_MAX;
+        Piece* closestPiece     = nullptr;
+        int    closestAABBIndex = -1;
+        bool   foundImpact      = false;
+
+        // Check board AABBs
+        for (int i = 0; i < (int)m_board->m_squareInfoList.size(); ++i)
+        {
+            RaycastResult3D const result = RaycastVsAABB3D(ray.m_startPosition, ray.m_forwardNormal, ray.m_maxLength,
+                                                           m_board->GetAABB3FromCoords(m_board->m_squareInfoList[i].m_coords, 0.2f).m_mins,
+                                                           m_board->GetAABB3FromCoords(m_board->m_squareInfoList[i].m_coords, 0.2f).m_maxs);
+
+            if (result.m_didImpact && result.m_impactLength < minLength)
+            {
+                minLength        = result.m_impactLength;
+                closestAABBIndex = i;
+                closestPiece     = nullptr; // Clear piece selection
+                foundImpact      = true;
+            }
+        }
+
+        // Check pieces
+        for (Piece* piece : m_pieceList)
+        {
+            RaycastResult3D result = RaycastVsCylinderZ3D(
+                currentPlayer->m_position,
+                currentPlayerForwardNormal,
+                ray.m_maxLength,
+                (piece->m_position + Vec3::Z_BASIS * 0.5f).GetXY(),
+                FloatRange(piece->m_position.z, piece->m_position.z + 1.f),
+                0.25f
+            );
+
+            if (result.m_didImpact && result.m_impactLength < minLength)
+            {
+                minLength        = result.m_impactLength;
+                closestPiece     = piece;
+                closestAABBIndex = -1; // Clear AABB selection
+                foundImpact      = true;
+            }
+        }
+
+        // Handle selections based on closest impact
+        if (foundImpact)
+        {
+            // Clear all board selections first
+            for (int i = 0; i < (int)m_board->m_squareInfoList.size(); ++i)
+            {
+                m_board->m_squareInfoList[i].m_isHighlighted = false;
+            }
+
+            // Set board selection if closest impact was an AABB
+            if (closestAABBIndex != -1)
+            {
+                m_board->m_squareInfoList[closestAABBIndex].m_isHighlighted = true;
+            }
+
+            // Set piece selection
+            for (Piece* piece : m_pieceList)
+            {
+                piece->m_isHighlighted = (piece == closestPiece);
+            }
+        }
+        else
+        {
+            // No impacts found, clear all highlights
+            for (int i = 0; i < (int)m_board->m_squareInfoList.size(); ++i)
+            {
+                m_board->m_squareInfoList[i].m_isHighlighted = false;
+            }
+
+            for (Piece* piece : m_pieceList)
+            {
+                piece->m_isHighlighted = false;
+            }
+        }
+    }
+    else
+    {
+        // 如果有任何選擇，清除所有 highlight（包括已選中的項目也不顯示 highlight）
+        for (int i = 0; i < (int)m_board->m_squareInfoList.size(); ++i)
+        {
+            m_board->m_squareInfoList[i].m_isHighlighted = false;
+        }
+
+        for (Piece* piece : m_pieceList)
+        {
+            if (piece != nullptr)
+            {
+                piece->m_isHighlighted = false;
+            }
+        }
+    }
 }
 
 void Match::UpdateFromInput(float const deltaSeconds)
@@ -150,6 +253,80 @@ void Match::UpdateFromInput(float const deltaSeconds)
         g_theLightSubsystem->GetLight(2)->SetDirection(m_sunDirection);
         DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
     }
+
+    // 左鍵點擊 - 只用於選擇
+    if (g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
+    {
+        // 檢查是否有任何東西已經被選中
+        bool hasAnySelection = false;
+
+        // 檢查 piece 選擇狀態
+        for (Piece* piece : m_pieceList)
+        {
+            if (piece != nullptr && piece->m_isSelected)
+            {
+                hasAnySelection = true;
+                break;
+            }
+        }
+
+        // 檢查 board square 選擇狀態
+        if (!hasAnySelection)
+        {
+            for (sSquareInfo& info : m_board->m_squareInfoList)
+            {
+                if (info.m_isSelected)
+                {
+                    hasAnySelection = true;
+                    break;
+                }
+            }
+        }
+
+        // 如果沒有任何選擇，允許選擇目前 highlighted 的項目
+        if (!hasAnySelection)
+        {
+            for (sSquareInfo& info : m_board->m_squareInfoList)
+            {
+                if (info.m_isHighlighted)
+                {
+                    info.m_isSelected = true;
+                    // 選中後不保持 highlight，因為一旦選中就不允許其他項目 highlight
+                    info.m_isHighlighted = false;
+                }
+            }
+
+            for (Piece* piece : m_pieceList)
+            {
+                if (piece != nullptr && piece->m_isHighlighted)
+                {
+                    piece->m_isSelected = true;
+                    // 選中後不保持 highlight，因為一旦選中就不允許其他項目 highlight
+                    piece->m_isHighlighted = false;
+                }
+            }
+        }
+    }
+
+    // 右鍵點擊 - 用於取消選擇
+    if (g_theInput->WasKeyJustPressed(KEYCODE_RIGHT_MOUSE))
+    {
+        // 清除所有選擇和 highlight
+        for (sSquareInfo& info : m_board->m_squareInfoList)
+        {
+            info.m_isSelected    = false;
+            info.m_isHighlighted = false;
+        }
+
+        for (Piece* piece : m_pieceList)
+        {
+            if (piece != nullptr)
+            {
+                piece->m_isSelected    = false;
+                piece->m_isHighlighted = false;
+            }
+        }
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -162,10 +339,11 @@ void Match::Render() const
     for (Piece const* piece : m_pieceList)
     {
         if (piece == nullptr) continue;
+
         piece->Render();
     }
-    RenderPlayerBasis();
 
+    RenderPlayerBasis();
 }
 
 //----------------------------------------------------------------------------------------------------
