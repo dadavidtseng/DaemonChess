@@ -12,7 +12,7 @@
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Platform/Window.hpp"
-#include "Engine/Resource/OBJLoader.hpp"
+#include "Engine/Resource/ObjModelLoader.hpp"
 #include "Game/Definition/BoardDefinition.hpp"
 #include "Game/Definition/PieceDefinition.hpp"
 #include "Game/Framework/App.hpp"

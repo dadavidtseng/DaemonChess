@@ -12,7 +12,7 @@
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Renderer/Renderer.hpp"
-#include "Engine/Resource/OBJLoader.hpp"
+#include "Engine/Resource/ObjModelLoader.hpp"
 #include "Game/Definition/BoardDefinition.hpp"
 #include "Game/Framework/GameCommon.hpp"
 #include "Game/Gameplay/Match.hpp"
@@ -31,7 +31,7 @@ Board::Board(Match* owner)
     CreateLocalVertsForBoardFrame();
     bool hasNormals = false;
     bool hasUVs     = false;
-    bool success    = OBJLoader::Load("Data/Models/Woman/Woman.obj",
+    bool success    = ObjModelLoader::Load("Data/Models/Woman/Woman.obj",
                                    m_vertexWoman,
                                    m_indexWoman,
                                    hasNormals,
