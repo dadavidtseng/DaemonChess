@@ -135,7 +135,7 @@ void Match::Update()
                 hasAnySelection      = true;
                 hasSelectedSquare    = true;
                 selectedSquareCoords = m_board->m_squareInfoList[i].m_coords;
-                m_selectedPiece = m_board->GetPieceByCoords(selectedSquareCoords);
+                m_selectedPiece      = m_board->GetPieceByCoords(selectedSquareCoords);
                 break;
             }
         }
@@ -169,7 +169,7 @@ void Match::Update()
         }
 
         // 清除 ghost render
-        m_showGhostPiece = false;
+        m_showGhostPiece   = false;
         m_ghostSourcePiece = nullptr;
 
         // Check board AABBs for raycast
@@ -193,7 +193,7 @@ void Match::Update()
             IntVec2 targetCoords = m_board->m_squareInfoList[closestAABBIndex].m_coords;
             IntVec2 fromCoords;
             bool    canHighlight = false;
-            Piece*  sourcePiece = nullptr;
+            Piece*  sourcePiece  = nullptr;
 
             if (m_selectedPiece != nullptr)
             {
@@ -231,8 +231,8 @@ void Match::Update()
             {
                 m_board->m_squareInfoList[closestAABBIndex].m_isHighlighted = true;
                 // 設置 ghost render
-                m_showGhostPiece = true;
-                m_ghostSourcePiece = sourcePiece;
+                m_showGhostPiece     = true;
+                m_ghostSourcePiece   = sourcePiece;
                 m_ghostPiecePosition = m_board->GetWorldPositionByCoords(targetCoords);
                 m_ghostPiecePosition.z += 0.01f; // 稍微抬高一點避免 z-fighting
             }
@@ -241,7 +241,7 @@ void Match::Update()
     else
     {
         // 沒有任何選擇的情況下，清除 ghost render
-        m_showGhostPiece = false;
+        m_showGhostPiece   = false;
         m_ghostSourcePiece = nullptr;
 
         // 沒有任何選擇的情況下，進行正常的 raycast 和 highlighting
@@ -347,10 +347,10 @@ void Match::UpdateFromInput(float const deltaSeconds)
         DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
     }
 
-if (g_theInput->WasKeyJustPressed(KEYCODE_CONTROL))
-{
-    m_isCheatMode = true;
-}
+    if (g_theInput->WasKeyJustPressed(KEYCODE_CONTROL))
+    {
+        m_isCheatMode = true;
+    }
     if (g_theInput->WasKeyJustReleased(KEYCODE_CONTROL))
     {
         m_isCheatMode = false;
@@ -360,10 +360,10 @@ if (g_theInput->WasKeyJustPressed(KEYCODE_CONTROL))
     if (g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
     {
         // 檢查是否有任何東西已經被選中
-        bool hasAnySelection = false;
-        Piece* selectedPiece = nullptr;
+        bool    hasAnySelection      = false;
+        Piece*  selectedPiece        = nullptr;
         IntVec2 selectedSquareCoords = IntVec2::ZERO;
-        bool hasSelectedSquare = false;
+        bool    hasSelectedSquare    = false;
 
         // 檢查 piece 選擇狀態
         for (Piece* piece : m_pieceList)
@@ -373,7 +373,7 @@ if (g_theInput->WasKeyJustPressed(KEYCODE_CONTROL))
                 if (piece->m_id == g_theGame->GetCurrentPlayerControllerId())
                 {
                     hasAnySelection = true;
-                    selectedPiece = piece;
+                    selectedPiece   = piece;
                     break;
                 }
             }
@@ -386,8 +386,8 @@ if (g_theInput->WasKeyJustPressed(KEYCODE_CONTROL))
             {
                 if (info.m_isSelected)
                 {
-                    hasAnySelection = true;
-                    hasSelectedSquare = true;
+                    hasAnySelection      = true;
+                    hasSelectedSquare    = true;
                     selectedSquareCoords = info.m_coords;
                     break;
                 }
@@ -398,14 +398,14 @@ if (g_theInput->WasKeyJustPressed(KEYCODE_CONTROL))
         if (hasAnySelection)
         {
             // 進行 raycast 來找到點擊的目標
-            PlayerController* currentPlayer = g_theGame->GetCurrentPlayer();
-            EulerAngles currentPlayerOrientation = currentPlayer->m_worldCamera->GetOrientation();
-            Vec3 currentPlayerForwardNormal = currentPlayerOrientation.GetAsMatrix_IFwd_JLeft_KUp().GetIBasis3D().GetNormalized();
-            Ray3 ray = Ray3(currentPlayer->m_position, currentPlayerForwardNormal, 100.f);
+            PlayerController* currentPlayer              = g_theGame->GetCurrentPlayer();
+            EulerAngles       currentPlayerOrientation   = currentPlayer->m_worldCamera->GetOrientation();
+            Vec3              currentPlayerForwardNormal = currentPlayerOrientation.GetAsMatrix_IFwd_JLeft_KUp().GetIBasis3D().GetNormalized();
+            Ray3              ray                        = Ray3(currentPlayer->m_position, currentPlayerForwardNormal, 100.f);
 
-            float minLength = FLT_MAX;
-            int closestAABBIndex = -1;
-            bool foundImpact = false;
+            float minLength        = FLT_MAX;
+            int   closestAABBIndex = -1;
+            bool  foundImpact      = false;
 
             // Check board AABBs for raycast
             for (int i = 0; i < (int)m_board->m_squareInfoList.size(); ++i)
@@ -416,9 +416,9 @@ if (g_theInput->WasKeyJustPressed(KEYCODE_CONTROL))
 
                 if (result.m_didImpact && result.m_impactLength < minLength)
                 {
-                    minLength = result.m_impactLength;
+                    minLength        = result.m_impactLength;
                     closestAABBIndex = i;
-                    foundImpact = true;
+                    foundImpact      = true;
                 }
             }
 
@@ -427,14 +427,14 @@ if (g_theInput->WasKeyJustPressed(KEYCODE_CONTROL))
             {
                 IntVec2 targetCoords = m_board->m_squareInfoList[closestAABBIndex].m_coords;
                 IntVec2 fromCoords;
-                bool canMove = false;
+                bool    canMove = false;
 
                 if (selectedPiece != nullptr)
                 {
                     // 有選中的棋子
-                    fromCoords = selectedPiece->m_coords;
+                    fromCoords             = selectedPiece->m_coords;
                     eMoveResult moveResult = ValidateChessMove(fromCoords, targetCoords, "", m_isCheatMode);
-                    canMove = (moveResult == eMoveResult::VALID_MOVE_NORMAL ||
+                    canMove                = (moveResult == eMoveResult::VALID_MOVE_NORMAL ||
                         moveResult == eMoveResult::VALID_CAPTURE_NORMAL ||
                         moveResult == eMoveResult::VALID_MOVE_PROMOTION ||
                         moveResult == eMoveResult::VALID_CAPTURE_ENPASSANT ||
@@ -447,9 +447,9 @@ if (g_theInput->WasKeyJustPressed(KEYCODE_CONTROL))
                     Piece const* pieceOnSelectedSquare = m_board->GetPieceByCoords(selectedSquareCoords);
                     if (pieceOnSelectedSquare != nullptr)
                     {
-                        fromCoords = selectedSquareCoords;
+                        fromCoords             = selectedSquareCoords;
                         eMoveResult moveResult = ValidateChessMove(fromCoords, targetCoords, "", m_isCheatMode);
-                        canMove = (moveResult == eMoveResult::VALID_MOVE_NORMAL ||
+                        canMove                = (moveResult == eMoveResult::VALID_MOVE_NORMAL ||
                             moveResult == eMoveResult::VALID_CAPTURE_NORMAL ||
                             moveResult == eMoveResult::VALID_MOVE_PROMOTION ||
                             moveResult == eMoveResult::VALID_CAPTURE_ENPASSANT ||
@@ -473,7 +473,7 @@ if (g_theInput->WasKeyJustPressed(KEYCODE_CONTROL))
                     // 移動完成後清除選擇
                     for (sSquareInfo& info : m_board->m_squareInfoList)
                     {
-                        info.m_isSelected = false;
+                        info.m_isSelected    = false;
                         info.m_isHighlighted = false;
                     }
 
@@ -481,7 +481,7 @@ if (g_theInput->WasKeyJustPressed(KEYCODE_CONTROL))
                     {
                         if (piece != nullptr)
                         {
-                            piece->m_isSelected = false;
+                            piece->m_isSelected    = false;
                             piece->m_isHighlighted = false;
                         }
                     }
@@ -545,7 +545,7 @@ void Match::Render() const
     {
         if (piece == nullptr) continue;
 
-        piece->Render();
+        // piece->Render();
     }
 
     // 渲染 ghost piece（如果需要的話）
@@ -563,30 +563,23 @@ void Match::RenderGhostPiece() const
     if (m_ghostSourcePiece == nullptr) return;
 
     // 保存原始位置和渲染狀態
-    Vec3 originalPosition = m_ghostSourcePiece->m_position;
-    bool originalIsSelected = m_ghostSourcePiece->m_isSelected;
+    Vec3 originalPosition      = m_ghostSourcePiece->m_position;
+    bool originalIsSelected    = m_ghostSourcePiece->m_isSelected;
     bool originalIsHighlighted = m_ghostSourcePiece->m_isHighlighted;
 
     // 暫時修改棋子的位置和狀態用於 ghost 渲染
-    const_cast<Piece*>(m_ghostSourcePiece)->m_position = m_ghostPiecePosition;
-    const_cast<Piece*>(m_ghostSourcePiece)->m_isSelected = false;
-    const_cast<Piece*>(m_ghostSourcePiece)->m_isHighlighted = false;
-
-    // 設置半透明渲染狀態
-    g_theRenderer->SetBlendMode(eBlendMode::ALPHA);
-    g_theRenderer->SetModelConstants(Mat44(), Rgba8(255, 255, 255, 128)); // 50% 透明度
+    m_ghostSourcePiece->m_position      = m_ghostPiecePosition;
+    m_ghostSourcePiece->m_isSelected    = false;
+    m_ghostSourcePiece->m_isHighlighted = false;
 
     // 渲染 ghost piece
     m_ghostSourcePiece->RenderTargetPiece();
 
-    // 恢復正常渲染狀態
-    g_theRenderer->SetBlendMode(eBlendMode::ALPHA);
-    g_theRenderer->SetModelConstants(Mat44(), Rgba8::WHITE);
 
     // 恢復原始位置和狀態
-    const_cast<Piece*>(m_ghostSourcePiece)->m_position = originalPosition;
-    const_cast<Piece*>(m_ghostSourcePiece)->m_isSelected = originalIsSelected;
-    const_cast<Piece*>(m_ghostSourcePiece)->m_isHighlighted = originalIsHighlighted;
+    m_ghostSourcePiece->m_position      = originalPosition;
+    m_ghostSourcePiece->m_isSelected    = originalIsSelected;
+    m_ghostSourcePiece->m_isHighlighted = originalIsHighlighted;
 }
 
 //----------------------------------------------------------------------------------------------------

@@ -12,6 +12,7 @@
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Platform/Window.hpp"
+#include "Engine/Resource/OBJLoader.hpp"
 #include "Game/Definition/BoardDefinition.hpp"
 #include "Game/Definition/PieceDefinition.hpp"
 #include "Game/Framework/App.hpp"
@@ -23,10 +24,11 @@
 Game::Game()
 {
     g_theEventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
-    m_gameClock               = new Clock(Clock::GetSystemClock());
-    m_screenCamera            = new Camera();
-    Vec2 const bottomLeft     = Vec2::ZERO;
-    Vec2 const screenTopRight = Vec2(SCREEN_SIZE_X, SCREEN_SIZE_Y);
+    m_gameClock                 = new Clock(Clock::GetSystemClock());
+    m_screenCamera              = new Camera();
+    Vec2 const bottomLeft       = Vec2::ZERO;
+    IntVec2    clientDimensions = Window::s_mainWindow->GetClientDimensions();
+    Vec2 const screenTopRight   = Vec2(clientDimensions.x, clientDimensions.y);
     m_screenCamera->SetOrthoGraphicView(bottomLeft, screenTopRight);
     m_screenCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
     CreateLocalPlayer(0);
@@ -269,7 +271,19 @@ void Game::UpdateCurrentControllerId(int const newID)
 //----------------------------------------------------------------------------------------------------
 void Game::RenderAttractMode() const
 {
-    DebugDrawRing(Vec2(800.f, 400.f), 300.f, 10.f, Rgba8::YELLOW);
+    // DebugDrawRing(Vec2(800.f, 400.f), 300.f, 10.f, Rgba8::YELLOW);
+    IntVec2 clientDimensions = Window::s_mainWindow->GetClientDimensions();
+
+    VertexList_PCU verts2;
+    AddVertsForDisc2D(verts2, Vec2((float)clientDimensions.x * 0.5f, (float)clientDimensions.y * 0.5f), 300.f, 10.f, Rgba8::YELLOW);
+    g_theRenderer->SetModelConstants();
+    g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
+    g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
+    g_theRenderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
+    g_theRenderer->SetDepthMode(eDepthMode::DISABLED);
+    g_theRenderer->BindTexture(nullptr);
+    g_theRenderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
+    g_theRenderer->DrawVertexArray(verts2);
 
     std::vector<std::string> asciiArt = {
         "         ,....,",

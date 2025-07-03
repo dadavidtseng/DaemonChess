@@ -5,11 +5,14 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Board.hpp"
 
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Resource/OBJLoader.hpp"
 #include "Game/Definition/BoardDefinition.hpp"
 #include "Game/Framework/GameCommon.hpp"
 #include "Game/Gameplay/Match.hpp"
@@ -26,6 +29,28 @@ Board::Board(Match* owner)
     m_specularGlossEmitTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures/FunkyBricks_sge.png");
     CreateLocalVertsForAABB3s();
     CreateLocalVertsForBoardFrame();
+    bool hasNormals = false;
+    bool hasUVs     = false;
+    bool success    = OBJLoader::Load("Data/Models/Woman/Woman.obj",
+                                   m_vertexWoman,
+                                   m_indexWoman,
+                                   hasNormals,
+                                   hasUVs);
+    if (success)
+    {
+        // 成功載入，可以使用vertices和indices來建立mesh
+        // vertices包含頂點資料（位置、顏色、UV、法線等）
+        // indices包含索引資料用於繪製三角形
+
+        // 建立DirectX11的頂點緩衝區和索引緩衝區
+        // CreateVertexBuffer(vertices.data(), vertices.size());
+        // CreateIndexBuffer(indices.data(), indices.size());
+    }
+    else
+    {
+        // 載入失敗
+        DebuggerPrintf("Failed to load OBJ file\n");
+    }
 }
 
 Board::~Board()
@@ -39,6 +64,11 @@ void Board::Update(float const deltaSeconds)
     m_orientation.m_yawDegrees += m_angularVelocity.m_yawDegrees * deltaSeconds;
     m_orientation.m_pitchDegrees += m_angularVelocity.m_pitchDegrees * deltaSeconds;
     m_orientation.m_rollDegrees += m_angularVelocity.m_rollDegrees * deltaSeconds;
+
+    if (g_theInput->IsKeyDown(KEYCODE_I)) m_testPos.y++;
+    if (g_theInput->IsKeyDown(KEYCODE_J)) m_testPos.x--;
+    if (g_theInput->IsKeyDown(KEYCODE_K)) m_testPos.y--;
+    if (g_theInput->IsKeyDown(KEYCODE_L)) m_testPos.x++;
 }
 
 AABB3 Board::GetAABB3FromCoords(IntVec2 const& coords,
@@ -46,8 +76,8 @@ AABB3 Board::GetAABB3FromCoords(IntVec2 const& coords,
 {
     // Convert board coordinates to world position
     Vec3 worldPosition = Vec3(
-        (float)coords.x-1.f,
-        (float)coords.y-1.f,
+        (float)coords.x - 1.f,
+        (float)coords.y - 1.f,
         0.f  // Assuming board is at z=0
     );
 
@@ -61,9 +91,9 @@ void Board::RenderSelectedBox() const
 {
     VertexList_PCU verts;
 
-    for (sSquareInfo const & info : m_squareInfoList)
+    for (sSquareInfo const& info : m_squareInfoList)
     {
-        if (info.m_isSelected||info.m_isHighlighted)
+        if (info.m_isSelected || info.m_isHighlighted)
         {
             AddVertsForWireframeAABB3D(verts, GetAABB3FromCoords(info.m_coords, 0.2f), 0.01f);
         }
@@ -89,6 +119,19 @@ void Board::Render() const
     g_theRenderer->DrawVertexArray(m_vertexes, m_indexes);
 
     RenderSelectedBox();
+
+    Mat44 m2w;
+    m2w.SetTranslation3D(m_testPos);
+    m2w.Append(m_orientation.GetAsMatrix_IFwd_JLeft_KUp());
+    g_theRenderer->SetModelConstants(m2w);
+    g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
+    g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
+    g_theRenderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
+    g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
+    g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Models/Woman/Woman_Diffuse.png"), 0);
+    g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Models/Woman/Woman_Normal.png"), 1);
+    g_theRenderer->BindShader(m_shader);
+    g_theRenderer->DrawVertexArray(m_vertexWoman, m_indexWoman);
 }
 
 //----------------------------------------------------------------------------------------------------

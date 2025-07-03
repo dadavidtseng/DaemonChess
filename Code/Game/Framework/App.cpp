@@ -59,6 +59,7 @@ void App::Startup()
     //-Start-of-Window--------------------------------------------------------------------------------
 
     sWindowConfig windowConfig;
+    windowConfig.m_windowType   = eWindowType::FULLSCREEN_CROP;
     windowConfig.m_aspectRatio  = 2.f;
     windowConfig.m_inputSystem  = g_theInput;
     windowConfig.m_windowTitle  = "ChessSimulator";

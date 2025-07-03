@@ -60,4 +60,7 @@ private:
     Texture*          m_normalTexture            = nullptr;
     Texture*          m_specularGlossEmitTexture = nullptr;
     Shader const*     m_shader                   = nullptr;
+    Vec3              m_testPos                  = Vec3::ZERO;
+    VertexList_PCUTBN     m_vertexWoman;
+    IndexList         m_indexWoman;
 };
