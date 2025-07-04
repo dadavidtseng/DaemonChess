@@ -1,6 +1,8 @@
 # ChessSimulator
 
-<img src="https://github.com/user-attachments/assets/8b79aafe-c6cd-4925-af62-19b2ac03692a" alt="Logo" width="300">
+<div style="width: 100%;">
+  <img src="https://github.com/user-attachments/assets/8b79aafe-c6cd-4925-af62-19b2ac03692a" alt="Logo" style="width: 100%;">
+</div>
 
 ## Table of Contents
 
