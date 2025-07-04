@@ -18,15 +18,11 @@
 * [Contact](#contact)
 * [Acknowledgments](#acknowledgments)
 
----
-
 ## Project Overview
 
 ChessSimulator is a turn-based 3D chess simulator that delivers an immersive gaming experience using modern graphics technology. This project showcases advanced 3D graphics programming techniques, including the Blinn-Phong shading model, real-time lighting effects, and upcoming networked multiplayer functionality.
 
 More than just a fully functional chess game, this project serves as a comprehensive learning platform demonstrating modern game development techniques, covering everything from low-level graphics APIs to high-level game logic implementation.
-
----
 
 ## Technical Specifications
 
@@ -35,8 +31,6 @@ More than just a fully functional chess game, this project serves as a comprehen
 - **Target Platform**: Microsoft Windows (x64)
 - **Build System**: Visual Studio 2022, JetBrains Rider
 - **Minimum Requirements**: Windows 10, DirectX 11 compatible graphics card
-
----
 
 ## Key Features
 
@@ -59,13 +53,9 @@ More than just a fully functional chess game, this project serves as a comprehen
 - **OBJ File Support**: Planned upgrade to OBJ file format
 - **TCP Networking**: Multiplayer support in development
 
----
-
 ## System Architecture
 
 ![UML](https://cdn-0.plantuml.com/plantuml/png/PP312i8m38RlUOgTXRw2R2fu4do5q4KiTEt8ua7KTtTBjKHt2VnV_fIFjfCWoss803xYD3NTEC83uFNDHnne1ZMV8zw9zpa9vnY9xUw4ugy_vK2ULk10bv22X9piQfUHUmiwBvaBqBF6kUVsGxLimQpTR9mhkilGf48rhjt_GMcfjCwQhRC-gfkYhDbSGakfNtxq3G00)
-
----
 
 ## How to Build and Use
 
@@ -101,8 +91,6 @@ More than just a fully functional chess game, this project serves as a comprehen
 - **Camera Adjustment**: Use mouse drag to adjust viewing angle
 - **Game Rules**: Follows standard chess rules
 
----
-
 ## Development Roadmap
 
 ### Completed Features
@@ -126,8 +114,6 @@ More than just a fully functional chess game, this project serves as a comprehen
 - [ ] Custom board themes
 - [ ] Tournament mode
 
----
-
 ## Performance Considerations
 
 This project has been optimized for performance through several key improvements:
@@ -136,8 +122,6 @@ This project has been optimized for performance through several key improvements
 - **Frustum Culling**: Only renders visible objects
 - **Memory Management**: Efficient resource loading and cleanup
 - **Shader Optimization**: Streamlined HLSL code
-
----
 
 ## Contributing
 
