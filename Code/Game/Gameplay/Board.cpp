@@ -12,7 +12,10 @@
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Resource/ModelResource.hpp"
 #include "Engine/Resource/ObjModelLoader.hpp"
+#include "Engine/Resource/ResourceHandle.hpp"
+#include "Engine/Resource/ResourceSubsystem.hpp"
 #include "Game/Definition/BoardDefinition.hpp"
 #include "Game/Framework/GameCommon.hpp"
 #include "Game/Gameplay/Match.hpp"
@@ -32,23 +35,12 @@ Board::Board(Match* owner)
     bool hasNormals = false;
     bool hasUVs     = false;
     bool success    = ObjModelLoader::Load("Data/Models/Woman/Woman.obj",
-                                   m_vertexWoman,
-                                   m_indexWoman,
-                                   hasNormals,
-                                   hasUVs);
-    if (success)
+                                        m_vertexWoman,
+                                        m_indexWoman,
+                                        hasNormals,
+                                        hasUVs);
+    if (!success)
     {
-        // 成功載入，可以使用vertices和indices來建立mesh
-        // vertices包含頂點資料（位置、顏色、UV、法線等）
-        // indices包含索引資料用於繪製三角形
-
-        // 建立DirectX11的頂點緩衝區和索引緩衝區
-        // CreateVertexBuffer(vertices.data(), vertices.size());
-        // CreateIndexBuffer(indices.data(), indices.size());
-    }
-    else
-    {
-        // 載入失敗
         DebuggerPrintf("Failed to load OBJ file\n");
     }
 }
@@ -132,6 +124,43 @@ void Board::Render() const
     g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Models/Woman/Woman_Normal.png"), 1);
     g_theRenderer->BindShader(m_shader);
     g_theRenderer->DrawVertexArray(m_vertexWoman, m_indexWoman);
+
+    //1. 初始化資源系統
+    auto& resourceSystem = ResourceSubsystem::GetInstance();
+    resourceSystem.Initialize(4); // 4 個工作執行緒
+
+    // 2. 方法一：使用新的資源系統載入模型
+    {
+        ResourceHandle<ModelResource> modelHandle =
+            resourceSystem.LoadResource<ModelResource>("Data/Models/Woman/Woman.obj");
+
+        if (modelHandle.IsValid())
+        {
+            ModelResource* model = modelHandle.Get();
+
+            // 取得頂點和索引資料
+            const VertexList_PCUTBN& vertices = model->GetVertices();
+            const IndexList& indices = model->GetIndices();
+            bool hasNormals = model->HasNormals();
+            bool hasUVs = model->HasUVs();
+
+            // 渲染程式碼保持不變
+            Mat44 m2w;
+            m2w.SetTranslation3D(m_testPos);
+            m2w.Append(m_orientation.GetAsMatrix_IFwd_JLeft_KUp());
+            g_theRenderer->SetModelConstants(m2w);
+            g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
+            g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
+            g_theRenderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
+            g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
+            g_theRenderer->BindTexture(
+                g_theRenderer->CreateOrGetTextureFromFile("Data/Models/Woman/Woman_Diffuse.png"), 0);
+            g_theRenderer->BindTexture(
+                g_theRenderer->CreateOrGetTextureFromFile("Data/Models/Woman/Woman_Normal.png"), 1);
+            g_theRenderer->BindShader(m_shader);
+            g_theRenderer->DrawVertexArray(vertices, indices);
+        }
+    }
 }
 
 //----------------------------------------------------------------------------------------------------

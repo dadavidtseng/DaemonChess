@@ -5,7 +5,6 @@
 //----------------------------------------------------------------------------------------------------
 #pragma once
 
-#include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Shader.hpp"
 #include "Game/Gameplay/Actor.hpp"

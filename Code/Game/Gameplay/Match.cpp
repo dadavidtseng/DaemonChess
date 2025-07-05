@@ -545,7 +545,7 @@ void Match::Render() const
     {
         if (piece == nullptr) continue;
 
-        // piece->Render();
+        piece->Render();
     }
 
     // 渲染 ghost piece（如果需要的話）
