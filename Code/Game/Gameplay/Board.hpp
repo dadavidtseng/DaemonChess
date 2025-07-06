@@ -8,9 +8,11 @@
 
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Shader.hpp"
+#include "Engine/Resource/ResourceHandle.hpp"
 #include "Game/Definition/BoardDefinition.hpp"
 #include "Game/Gameplay/Actor.hpp"
 
+class ModelResource;
 //----------------------------------------------------------------------------------------------------
 class Match;
 class Piece;
@@ -65,4 +67,5 @@ private:
     Vec3              m_testPos                  = Vec3::ZERO;
     VertexList_PCUTBN m_vertexWoman;
     IndexList         m_indexWoman;
+    ResourceHandle<ModelResource> m_resourceHandle;
 };
