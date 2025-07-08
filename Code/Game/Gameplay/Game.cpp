@@ -27,7 +27,7 @@ Game::Game()
     m_gameClock                 = new Clock(Clock::GetSystemClock());
     m_screenCamera              = new Camera();
     Vec2 const bottomLeft       = Vec2::ZERO;
-    IntVec2    clientDimensions = Window::s_mainWindow->GetClientDimensions();
+    Vec2    clientDimensions = Window::s_mainWindow->GetClientDimensions();
     Vec2 const screenTopRight   = Vec2(clientDimensions.x, clientDimensions.y);
     m_screenCamera->SetOrthoGraphicView(bottomLeft, screenTopRight);
     m_screenCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
@@ -272,7 +272,7 @@ void Game::UpdateCurrentControllerId(int const newID)
 void Game::RenderAttractMode() const
 {
     // DebugDrawRing(Vec2(800.f, 400.f), 300.f, 10.f, Rgba8::YELLOW);
-    IntVec2 clientDimensions = Window::s_mainWindow->GetClientDimensions();
+    Vec2 clientDimensions = Window::s_mainWindow->GetClientDimensions();
 
     VertexList_PCU verts2;
     AddVertsForDisc2D(verts2, Vec2((float)clientDimensions.x * 0.5f, (float)clientDimensions.y * 0.5f), 300.f, 10.f, Rgba8::YELLOW);
