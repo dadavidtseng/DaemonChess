@@ -455,27 +455,27 @@ bool Command_NetStatus(EventArgs& args)
         return false;
     }
 
-    NetworkMode mode = g_theNetworkSubsystem->GetNetworkMode();
-    ConnectionState state = g_theNetworkSubsystem->GetConnectionState();
+    eNetworkMode mode = g_theNetworkSubsystem->GetNetworkMode();
+    eConnectionState state = g_theNetworkSubsystem->GetConnectionState();
 
     std::string modeStr = "NONE";
-    if (mode == NetworkMode::SERVER) modeStr = "SERVER";
-    else if (mode == NetworkMode::CLIENT) modeStr = "CLIENT";
+    if (mode == eNetworkMode::SERVER) modeStr = "SERVER";
+    else if (mode == eNetworkMode::CLIENT) modeStr = "CLIENT";
 
     std::string stateStr = "DISCONNECTED";
     switch (state)
     {
-    case ConnectionState::CONNECTING: stateStr = "CONNECTING"; break;
-    case ConnectionState::CONNECTED: stateStr = "CONNECTED"; break;
-    case ConnectionState::DISCONNECTING: stateStr = "DISCONNECTING"; break;
-    case ConnectionState::ERROR_STATE: stateStr = "ERROR"; break;
-    case ConnectionState::DISABLED: stateStr = "DISABLED"; break;
+    case eConnectionState::CONNECTING: stateStr = "CONNECTING"; break;
+    case eConnectionState::CONNECTED: stateStr = "CONNECTED"; break;
+    case eConnectionState::DISCONNECTING: stateStr = "DISCONNECTING"; break;
+    case eConnectionState::ERROR_STATE: stateStr = "ERROR"; break;
+    case eConnectionState::DISABLED: stateStr = "DISABLED"; break;
     }
 
     g_theDevConsole->AddLine(Rgba8(0, 255, 255),
         Stringf("[Network] Mode: %s, State: %s", modeStr.c_str(), stateStr.c_str()));
 
-    if (mode == NetworkMode::SERVER)
+    if (mode == eNetworkMode::SERVER)
     {
         int clientCount = g_theNetworkSubsystem->GetConnectedClientCount();
         g_theDevConsole->AddLine(Rgba8(0, 255, 255),
