@@ -11,6 +11,7 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Network/NetworkSubsystem.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game/Definition/BoardDefinition.hpp"
@@ -25,12 +26,14 @@
 //----------------------------------------------------------------------------------------------------
 Match::Match()
 {
+    // Register network protocol event handlers
+    RegisterNetworkCommands();
+
     g_theEventSystem->SubscribeEventCallbackFunction("ChessMove", OnChessMove);
     g_theEventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnEnterMatchState);
     g_theEventSystem->SubscribeEventCallbackFunction("OnEnterMatchTurn", OnEnterMatchTurn);
     g_theEventSystem->SubscribeEventCallbackFunction("OnExitMatchTurn", OnExitMatchTurn);
     g_theEventSystem->SubscribeEventCallbackFunction("OnMatchInitialized", OnMatchInitialized);
-    // g_theEventSystem->SubscribeEventCallbackFunction("net_send_test", OnGameDataReceived);
 
     m_screenCamera = new Camera();
 
@@ -83,6 +86,8 @@ Match::Match()
 //----------------------------------------------------------------------------------------------------
 Match::~Match()
 {
+    UnregisterNetworkCommands();
+
     GAME_SAFE_RELEASE(m_screenCamera);
     GAME_SAFE_RELEASE(m_board);
 
@@ -90,6 +95,7 @@ Match::~Match()
     {
         GAME_SAFE_RELEASE(m_pieceList[i]);
     }
+
     m_pieceList.clear();
 }
 
@@ -151,7 +157,7 @@ void Match::Update()
         Vec3 currentPlayerForwardNormal = currentPlayerOrientation.GetAsMatrix_IFwd_JLeft_KUp().GetIBasis3D().GetNormalized();
         Ray3 ray                        = Ray3(currentPlayer->m_position, currentPlayerForwardNormal, 100.f);
 
-        float minLength        = FLT_MAX;
+        float minLength        = FLOAT_MAX;
         int   closestAABBIndex = -1;
         bool  foundImpact      = false;
 
@@ -252,7 +258,7 @@ void Match::Update()
         Vec3 currentPlayerForwardNormal = currentPlayerOrientation.GetAsMatrix_IFwd_JLeft_KUp().GetIBasis3D().GetNormalized();
         Ray3 ray                        = Ray3(currentPlayer->m_position, currentPlayerForwardNormal, 100.f);
 
-        float  minLength        = FLT_MAX;
+        float  minLength        = FLOAT_MAX;
         Piece* closestPiece     = nullptr;
         int    closestAABBIndex = -1;
         bool   foundImpact      = false;
@@ -636,19 +642,19 @@ void Match::RemovePieceFromPieceList(IntVec2 const& toCoords)
     }
 }
 
-bool Match::OnChessMove(EventArgs& args)
-{
-    String const from       = args.GetValue("from", "DEFAULT");
-    String const to         = args.GetValue("to", "DEFAULT");
-    String const promotion  = args.GetValue("promoteTo", "DEFAULT");
-    bool const   isTeleport = args.GetValue("teleport", false);
-
-    IntVec2 const fromCoords = g_theGame->m_match->m_board->StringToChessCoord(from);
-    IntVec2 const toCoords   = g_theGame->m_match->m_board->StringToChessCoord(to);
-
-    g_theGame->m_match->OnChessMove(fromCoords, toCoords, promotion, isTeleport);
-    return true;
-}
+// bool Match::OnChessMove(EventArgs& args)
+// {
+//     String const from       = args.GetValue("from", "DEFAULT");
+//     String const to         = args.GetValue("to", "DEFAULT");
+//     String const promotion  = args.GetValue("promoteTo", "DEFAULT");
+//     bool const   isTeleport = args.GetValue("teleport", false);
+//
+//     IntVec2 const fromCoords = g_theGame->m_match->m_board->StringToChessCoord(from);
+//     IntVec2 const toCoords   = g_theGame->m_match->m_board->StringToChessCoord(to);
+//
+//     g_theGame->m_match->OnChessMove(fromCoords, toCoords, promotion, isTeleport);
+//     return true;
+// }
 
 bool Match::OnEnterMatchState(EventArgs& args)
 {
@@ -1328,4 +1334,670 @@ STATIC bool Match::OnGameDataReceived(EventArgs& args)
 
     }
     return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+void Match::RegisterNetworkCommands()
+{
+    g_theEventSystem->SubscribeEventCallbackFunction("ChessServerInfo", OnChessServerInfo);
+    g_theEventSystem->SubscribeEventCallbackFunction("ChessListen", OnChessListen);
+    g_theEventSystem->SubscribeEventCallbackFunction("ChessConnect", OnChessConnect);
+    g_theEventSystem->SubscribeEventCallbackFunction("ChessDisconnect", OnChessDisconnect);
+    g_theEventSystem->SubscribeEventCallbackFunction("ChessPlayerInfo", OnChessPlayerInfo);
+    g_theEventSystem->SubscribeEventCallbackFunction("ChessBegin", OnChessBegin);
+    g_theEventSystem->SubscribeEventCallbackFunction("ChessValidate", OnChessValidate);
+    g_theEventSystem->SubscribeEventCallbackFunction("ChessMove", OnChessMove);
+    g_theEventSystem->SubscribeEventCallbackFunction("ChessResign", OnChessResign);
+    g_theEventSystem->SubscribeEventCallbackFunction("ChessOfferDraw", OnChessOfferDraw);
+    g_theEventSystem->SubscribeEventCallbackFunction("ChessAcceptDraw", OnChessAcceptDraw);
+    g_theEventSystem->SubscribeEventCallbackFunction("ChessRejectDraw", OnChessRejectDraw);
+    g_theEventSystem->SubscribeEventCallbackFunction("RemoteCmd", OnRemoteCmd);
+}
+
+//----------------------------------------------------------------------------------------------------
+void Match::UnregisterNetworkCommands()
+{
+    g_theEventSystem->UnsubscribeEventCallbackFunction("ChessServerInfo", OnChessServerInfo);
+    g_theEventSystem->UnsubscribeEventCallbackFunction("ChessListen", OnChessListen);
+    g_theEventSystem->UnsubscribeEventCallbackFunction("ChessConnect", OnChessConnect);
+    g_theEventSystem->UnsubscribeEventCallbackFunction("ChessDisconnect", OnChessDisconnect);
+    g_theEventSystem->UnsubscribeEventCallbackFunction("ChessPlayerInfo", OnChessPlayerInfo);
+    g_theEventSystem->UnsubscribeEventCallbackFunction("ChessBegin", OnChessBegin);
+    g_theEventSystem->UnsubscribeEventCallbackFunction("ChessValidate", OnChessValidate);
+    g_theEventSystem->UnsubscribeEventCallbackFunction("ChessMove", OnChessMove);
+    g_theEventSystem->UnsubscribeEventCallbackFunction("ChessResign", OnChessResign);
+    g_theEventSystem->UnsubscribeEventCallbackFunction("ChessOfferDraw", OnChessOfferDraw);
+    g_theEventSystem->UnsubscribeEventCallbackFunction("ChessAcceptDraw", OnChessAcceptDraw);
+    g_theEventSystem->UnsubscribeEventCallbackFunction("ChessRejectDraw", OnChessRejectDraw);
+    g_theEventSystem->UnsubscribeEventCallbackFunction("RemoteCmd", OnRemoteCmd);
+}
+
+//----------------------------------------------------------------------------------------------------
+// NETWORK PROTOCOL EVENT HANDLERS
+//----------------------------------------------------------------------------------------------------
+
+bool Match::OnChessServerInfo(EventArgs& args)
+{
+    Match* match = g_theGame->m_match;
+    if (!match) return false;
+
+    std::string ip = args.GetValue("ip", "");
+    int port = args.GetValue("port", -1);
+
+    // If connected, reject changes and warn
+    if (match->m_isConnected)
+    {
+        g_theDevConsole->AddLine(DevConsole::WARNING,
+            "Cannot change server info while connected. Disconnect first.");
+
+        // Still show current values
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+            Stringf("Current settings - IP: %s, Port: %d, Connected: %s, Player: %s",
+                match->m_serverIP.c_str(), match->m_serverPort,
+                match->m_isConnected ? "YES" : "NO", match->m_myPlayerName.c_str()));
+        return false;
+    }
+
+    // Update values if provided
+    if (!ip.empty())
+    {
+        match->m_serverIP = ip;
+    }
+    if (port > 0)
+    {
+        match->m_serverPort = port;
+    }
+
+    // Print current values
+    g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+        Stringf("Chess Server Info - IP: %s, Port: %d, Connected: %s, Player: %s, Game State: %s",
+            match->m_serverIP.c_str(), match->m_serverPort,
+            match->m_isConnected ? "YES" : "NO", match->m_myPlayerName.c_str(),
+            match->GetGameState() == eChessGameState::PLAYER1_MOVING ? "Player1Moving" :
+            match->GetGameState() == eChessGameState::PLAYER2_MOVING ? "Player2Moving" :
+            match->GetGameState() == eChessGameState::GAME_OVER ? "GameOver" : "Waiting"));
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool Match::OnChessListen(EventArgs& args)
+{
+    Match* match = g_theGame->m_match;
+    if (!match) return false;
+
+    int port = args.GetValue("port", match->m_serverPort);
+    match->m_serverPort = port;
+
+    bool success = g_theNetworkSubsystem->StartServer(port);
+    if (success)
+    {
+        match->m_isServer = true;
+        match->m_gameState = eChessGameState::WAITING_FOR_OPPONENT;
+        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+            Stringf("Chess server listening on port %d", port));
+    }
+    else
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR,
+            Stringf("Failed to start chess server on port %d", port));
+    }
+
+    return success;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool Match::OnChessConnect(EventArgs& args)
+{
+    Match* match = g_theGame->m_match;
+    if (!match) return false;
+
+    std::string ip = args.GetValue("ip", match->m_serverIP);
+    int port = args.GetValue("port", match->m_serverPort);
+
+    match->m_serverIP = ip;
+    match->m_serverPort = port;
+
+    bool success = g_theNetworkSubsystem->ConnectToServer(ip, port);
+    if (success)
+    {
+        match->m_isServer = false;
+        match->m_isConnected = true;
+        match->m_gameState = eChessGameState::WAITING_FOR_OPPONENT;
+        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+            Stringf("Connecting to chess server at %s:%d", ip.c_str(), port));
+    }
+    else
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR,
+            Stringf("Failed to connect to chess server at %s:%d", ip.c_str(), port));
+    }
+
+    return success;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool Match::OnChessDisconnect(EventArgs& args)
+{
+    Match* match = g_theGame->m_match;
+    if (!match) return false;
+
+    std::string reason = args.GetValue("reason", "");
+    bool isRemote = args.GetValue("remote", false);
+
+    if (isRemote)
+    {
+        // Received disconnect from opponent
+        g_theDevConsole->AddLine(DevConsole::WARNING,
+            Stringf("Opponent disconnected. Reason: %s", reason.c_str()));
+
+        // Just disconnect locally, don't send back
+        if (match->m_isServer)
+        {
+            g_theNetworkSubsystem->StopServer();
+        }
+        else
+        {
+            g_theNetworkSubsystem->DisconnectFromServer();
+        }
+    }
+    else
+    {
+        // Local disconnect request
+        match->SendChessCommand(Stringf("ChessDisconnect reason=\"%s\"", reason.c_str()));
+
+        // Disconnect after sending
+        if (match->m_isServer)
+        {
+            g_theNetworkSubsystem->StopServer();
+        }
+        else
+        {
+            g_theNetworkSubsystem->DisconnectFromServer();
+        }
+    }
+
+    match->m_isConnected = false;
+    match->m_gameState = eChessGameState::WAITING_FOR_CONNECTION;
+    match->m_player1Name = "";
+    match->m_player2Name = "";
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool Match::OnChessPlayerInfo(EventArgs& args)
+{
+    Match* match = g_theGame->m_match;
+    if (!match) return false;
+
+    std::string name = args.GetValue("name", "");
+    bool isRemote = args.GetValue("remote", false);
+
+    if (isRemote)
+    {
+        // Set opponent's name
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+            Stringf("Opponent player name: %s", name.c_str()));
+        // We'll set the specific player slot when ChessBegin is called
+    }
+    else
+    {
+        // Set my name and send to opponent
+        match->m_myPlayerName = name;
+        match->SendChessCommand(Stringf("ChessPlayerInfo name=%s", name.c_str()));
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+            Stringf("My player name set to: %s", name.c_str()));
+    }
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool Match::OnChessBegin(EventArgs& args)
+{
+    Match* match = g_theGame->m_match;
+    if (!match) return false;
+
+    std::string firstPlayer = args.GetValue("firstPlayer", "");
+    bool isRemote = args.GetValue("remote", false);
+
+    if (!isRemote)
+    {
+        // Local command - if no firstPlayer specified, default to me
+        if (firstPlayer.empty())
+        {
+            firstPlayer = match->m_myPlayerName;
+        }
+        match->SendChessCommand(Stringf("ChessBegin firstPlayer=%s", firstPlayer.c_str()));
+    }
+
+    // Set up the game
+    match->m_player1Name = firstPlayer;
+    match->m_amIPlayer1 = (firstPlayer == match->m_myPlayerName);
+
+    // Set player2 name to the other player
+    if (match->m_amIPlayer1)
+    {
+        // I'm player1, so opponent is player2
+        match->m_player2Name = "Opponent"; // This should be set by ChessPlayerInfo
+    }
+    else
+    {
+        // Opponent is player1, I'm player2
+        match->m_player2Name = match->m_myPlayerName;
+    }
+
+    match->m_gameState = eChessGameState::PLAYER1_MOVING;
+    match->m_moveNumber = 0;
+    match->m_isConnected = true;
+
+    // Reset board to starting position
+    // You may want to implement a ResetToStartingPosition() method on your board
+
+    g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+        Stringf("Chess game begun! %s (white) vs %s (black). %s to move.",
+            match->m_player1Name.c_str(), match->m_player2Name.c_str(),
+            match->m_player1Name.c_str()));
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool Match::OnChessValidate(EventArgs& args)
+{
+    Match* match = g_theGame->m_match;
+    if (!match) return false;
+
+    bool isRemote = args.GetValue("remote", false);
+
+    if (!isRemote)
+    {
+        // Send validation request to opponent
+        std::string stateStr = match->GetGameState() == eChessGameState::PLAYER1_MOVING ? "Player1Moving" :
+                              match->GetGameState() == eChessGameState::PLAYER2_MOVING ? "Player2Moving" :
+                              "GameOver";
+
+        std::string boardStr = match->GetBoardStateString();
+
+        match->SendChessCommand(Stringf("ChessValidate state=%s player1=%s player2=%s move=%d board=%s",
+            stateStr.c_str(), match->m_player1Name.c_str(), match->m_player2Name.c_str(),
+            match->m_moveNumber, boardStr.c_str()));
+    }
+    else
+    {
+        // Validate received data against our state
+        std::string state = args.GetValue("state", "");
+        std::string player1 = args.GetValue("player1", "");
+        std::string player2 = args.GetValue("player2", "");
+        int move = args.GetValue("move", -1);
+        std::string board = args.GetValue("board", "");
+
+        if (!match->ValidateGameState(state, player1, player2, move, board))
+        {
+            match->DisconnectWithReason("VALIDATION FAILED");
+            return false;
+        }
+    }
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool Match::OnChessMove(EventArgs& args)
+{
+    Match* match = g_theGame->m_match;
+    if (!match) return false;
+
+    String const from = args.GetValue("from", "DEFAULT");
+    String const to = args.GetValue("to", "DEFAULT");
+    String const promotion = args.GetValue("promoteTo", "DEFAULT");
+    bool const isTeleport = args.GetValue("teleport", false);
+    bool isRemote = args.GetValue("remote", false);
+
+    if (from == "DEFAULT" || to == "DEFAULT")
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR, "ChessMove requires from= and to= parameters");
+        return false;
+    }
+
+    IntVec2 const fromCoords = match->m_board->StringToChessCoord(from);
+    IntVec2 const toCoords = match->m_board->StringToChessCoord(to);
+
+    // Validate the move
+    eMoveResult result = match->ValidateChessMove(fromCoords, toCoords, promotion, isTeleport);
+    if (!IsMoveValid(result))
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR,
+            Stringf("Invalid move: %s", GetMoveResultString(result)));
+        return false;
+    }
+
+    // Check if it's the right player's turn
+    bool shouldBeMyTurn = match->IsMyTurn();
+    if (!isRemote && !shouldBeMyTurn && !isTeleport)
+    {
+        g_theDevConsole->AddLine(DevConsole::WARNING, "Not your turn!");
+        return false;
+    }
+
+    // If this is a local move, send it to opponent
+    if (!isRemote)
+    {
+        std::string command = Stringf("ChessMove from=%s to=%s", from.c_str(), to.c_str());
+        if (promotion != "DEFAULT" && !promotion.empty())
+        {
+            command += Stringf(" promoteTo=%s", promotion.c_str());
+        }
+        if (isTeleport)
+        {
+            command += " teleport=true";
+        }
+        match->SendChessCommand(command);
+    }
+
+    // Execute the move
+    match->OnChessMove(fromCoords, toCoords, promotion, isTeleport);
+
+    // Update move counter and game state
+    if (!isTeleport)
+    {
+        match->m_moveNumber++;
+        match->m_gameState = (match->m_gameState == eChessGameState::PLAYER1_MOVING) ?
+                            eChessGameState::PLAYER2_MOVING : eChessGameState::PLAYER1_MOVING;
+    }
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool Match::OnChessResign(EventArgs& args)
+{
+    Match* match = g_theGame->m_match;
+    if (!match) return false;
+
+    bool isRemote = args.GetValue("remote", false);
+
+    if (isRemote)
+    {
+        g_theDevConsole->AddLine(DevConsole::WARNING, "Opponent has resigned! You win!");
+    }
+    else
+    {
+        match->SendChessCommand("ChessResign");
+        g_theDevConsole->AddLine(DevConsole::WARNING, "You have resigned. Game over.");
+    }
+
+    match->m_gameState = eChessGameState::GAME_OVER;
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool Match::OnChessOfferDraw(EventArgs& args)
+{
+    Match* match = g_theGame->m_match;
+    if (!match) return false;
+
+    bool isRemote = args.GetValue("remote", false);
+
+    if (isRemote)
+    {
+        // Received draw offer from opponent
+        match->m_drawOfferFromOpponent = true;
+        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+            "Opponent offers a draw! Type 'ChessAcceptDraw' or 'ChessRejectDraw'");
+    }
+    else
+    {
+        // Local draw offer
+        if (match->m_drawOffered)
+        {
+            g_theDevConsole->AddLine(DevConsole::WARNING,
+                "You have already offered a draw this turn");
+            return false;
+        }
+
+        match->SendChessCommand("ChessOfferDraw");
+        match->m_drawOffered = true;
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "Draw offer sent to opponent");
+    }
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool Match::OnChessAcceptDraw(EventArgs& args)
+{
+    Match* match = g_theGame->m_match;
+    if (!match) return false;
+
+    bool isRemote = args.GetValue("remote", false);
+
+    if (isRemote)
+    {
+        g_theDevConsole->AddLine(DevConsole::WARNING,
+            "Opponent accepted your draw offer! Game ends in a draw.");
+    }
+    else
+    {
+        if (!match->m_drawOfferFromOpponent)
+        {
+            g_theDevConsole->AddLine(DevConsole::ERROR,
+                "No draw offer to accept from opponent");
+            return false;
+        }
+
+        match->SendChessCommand("ChessAcceptDraw");
+        g_theDevConsole->AddLine(DevConsole::WARNING,
+            "You accepted the draw offer! Game ends in a draw.");
+    }
+
+    match->m_gameState = eChessGameState::GAME_OVER;
+    match->m_drawOffered = false;
+    match->m_drawOfferFromOpponent = false;
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool Match::OnChessRejectDraw(EventArgs& args)
+{
+    Match* match = g_theGame->m_match;
+    if (!match) return false;
+
+    bool isRemote = args.GetValue("remote", false);
+
+    if (isRemote)
+    {
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+            "Opponent rejected your draw offer. Game continues.");
+        match->m_drawOffered = false;
+    }
+    else
+    {
+        if (!match->m_drawOfferFromOpponent)
+        {
+            g_theDevConsole->AddLine(DevConsole::ERROR,
+                "No draw offer to reject from opponent");
+            return false;
+        }
+
+        match->SendChessCommand("ChessRejectDraw");
+        match->m_drawOfferFromOpponent = false;
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+            "You rejected the draw offer. Game continues.");
+    }
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool Match::OnRemoteCmd(EventArgs& args)
+{
+    Match* match = g_theGame->m_match;
+    if (!match) return false;
+
+    std::string cmd = args.GetValue("cmd", "");
+    if (cmd.empty())
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR, "RemoteCmd requires cmd= parameter");
+        return false;
+    }
+
+    // Build command string with all other parameters
+    std::string commandToSend = cmd;
+
+    // Add all other arguments except 'cmd'
+    for (std::pair<const std::string, std::string>& pair : args.GetAllKeyValuePairs())
+    {
+        if (pair.first != "cmd")
+        {
+            commandToSend += Stringf(" %s=%s", pair.first.c_str(), pair.second.c_str());
+        }
+    }
+
+    match->SendChessCommand(commandToSend);
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+// HELPER FUNCTIONS
+//----------------------------------------------------------------------------------------------------
+
+void Match::SendChessCommand(const std::string& command)
+{
+    if (!m_isConnected)
+    {
+        g_theDevConsole->AddLine(DevConsole::WARNING, "Not connected to opponent");
+        return;
+    }
+
+    if (!g_theNetworkSubsystem)
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR, "Network subsystem not available");
+        return;
+    }
+
+    g_theNetworkSubsystem->SendRawData(command);
+}
+
+//----------------------------------------------------------------------------------------------------
+std::string Match::GetBoardStateString() const
+{
+    // Convert board to 64-character string representation
+    // This needs to be implemented based on your board representation
+    // Standard notation: RNBKQBNR for back rank, PPPPPPPP for pawns, etc.
+    std::string boardStr = "";
+
+    // Assuming your board has a method to get piece at coordinates
+    for (int row = 8; row >= 1; --row)  // Chess rows 8 to 1
+    {
+        for (int col = 1; col <= 8; ++col)  // Chess columns a-h (1-8)
+        {
+            IntVec2 coords(col, row);
+            Piece const* piece = m_board->GetPieceByCoords(coords);
+
+            if (piece == nullptr)
+            {
+                boardStr += '.';
+            }
+            else
+            {
+                // Convert piece type to standard notation
+                switch (piece->m_definition->m_type)
+                {
+                case ePieceType::PAWN:   boardStr += (piece->m_id == 0 ? 'P' : 'p'); break;
+                case ePieceType::ROOK:   boardStr += (piece->m_id == 0 ? 'R' : 'r'); break;
+                case ePieceType::KNIGHT: boardStr += (piece->m_id == 0 ? 'N' : 'n'); break;
+                case ePieceType::BISHOP: boardStr += (piece->m_id == 0 ? 'B' : 'b'); break;
+                case ePieceType::QUEEN:  boardStr += (piece->m_id == 0 ? 'Q' : 'q'); break;
+                case ePieceType::KING:   boardStr += (piece->m_id == 0 ? 'K' : 'k'); break;
+                default: boardStr += '.'; break;
+                }
+            }
+        }
+    }
+
+    return boardStr;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool Match::ValidateGameState(const std::string& state, const std::string& player1,
+                             const std::string& player2, int move, const std::string& board)
+{
+    bool isValid = true;
+    std::string report = "=== CHESS VALIDATION REPORT ===\n";
+
+    // Validate state
+    std::string myState = m_gameState == eChessGameState::PLAYER1_MOVING ? "Player1Moving" :
+                         m_gameState == eChessGameState::PLAYER2_MOVING ? "Player2Moving" :
+                         "GameOver";
+    if (state != myState)
+    {
+        report += Stringf("STATE MISMATCH: Expected %s, got %s\n", myState.c_str(), state.c_str());
+        isValid = false;
+    }
+
+    // Validate player names
+    if (player1 != m_player1Name)
+    {
+        report += Stringf("PLAYER1 MISMATCH: Expected %s, got %s\n", m_player1Name.c_str(), player1.c_str());
+        isValid = false;
+    }
+    if (player2 != m_player2Name)
+    {
+        report += Stringf("PLAYER2 MISMATCH: Expected %s, got %s\n", m_player2Name.c_str(), player2.c_str());
+        isValid = false;
+    }
+
+    // Validate move number
+    if (move != m_moveNumber)
+    {
+        report += Stringf("MOVE NUMBER MISMATCH: Expected %d, got %d\n", m_moveNumber, move);
+        isValid = false;
+    }
+
+    // Validate board state
+    std::string myBoard = GetBoardStateString();
+    if (board != myBoard)
+    {
+        report += Stringf("BOARD STATE MISMATCH:\nExpected: %s\nReceived: %s\n", myBoard.c_str(), board.c_str());
+        isValid = false;
+    }
+
+    if (!isValid)
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR, report);
+    }
+    else
+    {
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "Game state validation passed");
+    }
+
+    return isValid;
+}
+
+//----------------------------------------------------------------------------------------------------
+void Match::DisconnectWithReason(const std::string& reason)
+{
+    SendChessCommand(Stringf("ChessDisconnect reason=\"%s\"", reason.c_str()));
+
+    if (m_isServer)
+    {
+        g_theNetworkSubsystem->StopServer();
+    }
+    else
+    {
+        g_theNetworkSubsystem->DisconnectFromServer();
+    }
+
+    m_isConnected = false;
+    m_gameState = eChessGameState::WAITING_FOR_CONNECTION;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool Match::IsMyTurn() const
+{
+    if (m_gameState == eChessGameState::PLAYER1_MOVING && m_amIPlayer1) return true;
+    if (m_gameState == eChessGameState::PLAYER2_MOVING && !m_amIPlayer1) return true;
+    return false;
 }

@@ -49,26 +49,6 @@ void App::Startup()
     g_theEventSystem = new EventSystem(eventSystemConfig);
     g_theEventSystem->SubscribeEventCallbackFunction("OnCloseButtonClicked", OnCloseButtonClicked);
     g_theEventSystem->SubscribeEventCallbackFunction("quit", OnCloseButtonClicked);
-    // 基本網路指令
-    g_theEventSystem->SubscribeEventCallbackFunction("net_start_server", Command_NetStartServer);
-    g_theEventSystem->SubscribeEventCallbackFunction("net_stop_server", Command_NetStopServer);
-    g_theEventSystem->SubscribeEventCallbackFunction("net_connect", Command_NetConnect);
-    g_theEventSystem->SubscribeEventCallbackFunction("net_disconnect", Command_NetDisconnect);
-    g_theEventSystem->SubscribeEventCallbackFunction("net_status", Command_NetStatus);
-
-    // 訊息傳送指令
-    g_theEventSystem->SubscribeEventCallbackFunction("net_send_test", Command_NetSendTest);
-    g_theEventSystem->SubscribeEventCallbackFunction("net_send_chat", Command_NetSendChat);
-    g_theEventSystem->SubscribeEventCallbackFunction("net_send_raw", Command_NetSendRaw);
-
-    // 幫助和測試指令
-    g_theEventSystem->SubscribeEventCallbackFunction("net_help", Command_NetHelp);
-    g_theEventSystem->SubscribeEventCallbackFunction("net_quick_test", Command_NetQuickTest);
-    RegisterNetworkSubsystemEventHandlers();
-    if (g_theDevConsole)
-    {
-        g_theDevConsole->AddLine(Rgba8(0, 255, 255), "[Network] Network commands registered. Type 'net_help' for help.");
-    }
 
     //-End-of-EventSystem-----------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
@@ -142,7 +122,6 @@ void App::Startup()
     g_theLightSubsystem = new LightSubsystem(lightConfig);
 
     sNetworkSubsystemConfig config;
-    config.modeString        = "None";  // 預設為 None，透過指令控制
     config.hostAddressString = "127.0.0.1:3100";
     config.maxClients        = 4;
     g_theNetworkSubsystem    = new NetworkSubsystem(config);
@@ -672,13 +651,11 @@ bool OnGameDataReceived(EventArgs& args)
         {
             g_theDevConsole->AddLine(Rgba8(255, 255, 255),
                                      Stringf("[Network] *** RECEIVED GAME DATA *** from client %d: '%s'", fromClientId, data.c_str()));
-            Match::OnChessMove(args);
         }
         else
         {
             g_theDevConsole->AddLine(Rgba8(255, 255, 255),
                                      Stringf("[Network] *** RECEIVED GAME DATA *** from server: '%s'", data.c_str()));
-            Match::OnChessMove(args);
         }
     }
     return true;

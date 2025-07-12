@@ -11,7 +11,7 @@
 class Piece;
 
 //----------------------------------------------------------------------------------------------------
-enum class eMoveResult : int8_t
+enum class eMoveResult : uint8_t
 {
     UNKNOWN,
     VALID_MOVE_NORMAL,
@@ -48,6 +48,16 @@ struct sPieceMove
     Piece const* piece      = nullptr;
     IntVec2      fromCoords = IntVec2::ZERO;
     IntVec2      toCoords   = IntVec2::ZERO;
+};
+
+//----------------------------------------------------------------------------------------------------
+enum class eChessGameState : uint8_t
+{
+    WAITING_FOR_CONNECTION,
+    WAITING_FOR_OPPONENT,
+    PLAYER1_MOVING,
+    PLAYER2_MOVING,
+    GAME_OVER
 };
 
 char const* GetMoveResultString(eMoveResult const& result);
