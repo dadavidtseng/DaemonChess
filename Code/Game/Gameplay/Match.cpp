@@ -30,6 +30,7 @@ Match::Match()
     g_theEventSystem->SubscribeEventCallbackFunction("OnEnterMatchTurn", OnEnterMatchTurn);
     g_theEventSystem->SubscribeEventCallbackFunction("OnExitMatchTurn", OnExitMatchTurn);
     g_theEventSystem->SubscribeEventCallbackFunction("OnMatchInitialized", OnMatchInitialized);
+    // g_theEventSystem->SubscribeEventCallbackFunction("net_send_test", OnGameDataReceived);
 
     m_screenCamera = new Camera();
 
@@ -1289,4 +1290,42 @@ void Match::RenderPlayerBasis() const
     g_theRenderer->SetDepthMode(eDepthMode::DISABLED);
     g_theRenderer->BindTexture(nullptr);
     g_theRenderer->DrawVertexArray(static_cast<int>(verts.size()), verts.data());
+}
+
+STATIC bool Match::OnGameDataReceived(EventArgs& args)
+{
+    std::string data         = args.GetValue("data", "");
+    int         fromClientId = args.GetValue("fromClientId", -1);
+
+    // 清理顯示的資料
+    std::string safeData;
+    for (char c : data)
+    {
+        if ((c >= 32 && c <= 126) || c == ' ')
+        {
+            safeData += c;
+        }
+        else
+        {
+            safeData += '?'; // 替換不安全的字符
+        }
+    }
+
+    if (g_theDevConsole)
+    {
+        if (fromClientId != -1)
+        {
+            g_theDevConsole->AddLine(Rgba8(255, 255, 255),
+                                     Stringf("[MATCH] *** RECEIVED GAME DATA *** from client %d: '%s'", fromClientId, safeData.c_str()));
+        }
+        else
+        {
+            g_theDevConsole->AddLine(Rgba8(255, 255, 255),
+                                     Stringf("[MATCH] *** RECEIVED GAME DATA *** from server: '%s'", safeData.c_str()));
+        }
+
+        // g_theGame->m_match->
+
+    }
+    return true;
 }

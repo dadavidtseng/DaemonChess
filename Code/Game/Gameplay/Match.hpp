@@ -34,12 +34,12 @@ public:
 
     Board*    m_board = nullptr;
     PieceList m_pieceList;
-
+    static bool OnChessMove(EventArgs& args);
 private:
     void UpdateFromInput(float deltaSeconds);
     void CreateBoard();
 
-    static bool OnChessMove(EventArgs& args);
+
     static bool OnEnterMatchState(EventArgs& args);
     static bool OnEnterMatchTurn(EventArgs& args);
     static bool OnExitMatchTurn(EventArgs& args);
@@ -54,6 +54,7 @@ private:
     void ExecuteKingsideCastling(IntVec2 const& fromCoords) const;
     void ExecuteQueensideCastling(IntVec2 const& fromCoords) const;
     void RenderPlayerBasis() const;
+    static bool OnGameDataReceived(EventArgs& args);
     void ExecuteCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo = "");
 
     void RemovePieceFromPieceList(IntVec2 const& toCoords);
@@ -91,3 +92,4 @@ private:
     Piece*        m_ghostSourcePiece   = nullptr;
     bool          m_isCheatMode        = false;
 };
+

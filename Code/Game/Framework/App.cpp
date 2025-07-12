@@ -19,18 +19,19 @@
 #include "Engine/Platform/Window.hpp"
 #include "Game/Gameplay/Game.hpp"
 #include "Game/Framework/GameCommon.hpp"
+#include "Game/Gameplay/Match.hpp"
 #include "Game/Subsystem/Light/LightSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
-App*                   g_theApp            = nullptr;       // Created and owned by Main_Windows.cpp
-AudioSystem*           g_theAudio          = nullptr;       // Created and owned by the App
-BitmapFont*            g_theBitmapFont     = nullptr;       // Created and owned by the App
-Game*                  g_theGame           = nullptr;       // Created and owned by the App
-Renderer*              g_theRenderer       = nullptr;       // Created and owned by the App
-RandomNumberGenerator* g_theRNG            = nullptr;       // Created and owned by the App
-Window*                g_theWindow         = nullptr;       // Created and owned by the App
-LightSubsystem*        g_theLightSubsystem = nullptr;       // Created and owned by the App
-NetworkSubsystem*        g_theNetworkSubsystem = nullptr;       // Created and owned by the App
+App*                   g_theApp              = nullptr;       // Created and owned by Main_Windows.cpp
+AudioSystem*           g_theAudio            = nullptr;       // Created and owned by the App
+BitmapFont*            g_theBitmapFont       = nullptr;       // Created and owned by the App
+Game*                  g_theGame             = nullptr;       // Created and owned by the App
+Renderer*              g_theRenderer         = nullptr;       // Created and owned by the App
+RandomNumberGenerator* g_theRNG              = nullptr;       // Created and owned by the App
+Window*                g_theWindow           = nullptr;       // Created and owned by the App
+LightSubsystem*        g_theLightSubsystem   = nullptr;       // Created and owned by the App
+NetworkSubsystem*      g_theNetworkSubsystem = nullptr;       // Created and owned by the App
 
 //----------------------------------------------------------------------------------------------------
 STATIC bool App::m_isQuitting = false;
@@ -126,7 +127,8 @@ void App::Startup()
     g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(~)     Toggle Dev Console");
     g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(ESC)   Exit Game");
     g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(SPACE) Start Game");
-    g_theDevConsole->AddLine(Rgba8(0, 255, 255), "[Network] Network commands registered. Type 'net_help' for help.");
+    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "[Network] Network commands registered. Type 'net_help' for help.");
+
     //-End-of-DevConsole------------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
     //-Start-of-AudioSystem---------------------------------------------------------------------------
@@ -139,11 +141,11 @@ void App::Startup()
     sLightConfig constexpr lightConfig;
     g_theLightSubsystem = new LightSubsystem(lightConfig);
 
-    NetworkSubsystemConfig config;
-    config.modeString = "None";  // 預設為 None，透過指令控制
+    sNetworkSubsystemConfig config;
+    config.modeString        = "None";  // 預設為 None，透過指令控制
     config.hostAddressString = "127.0.0.1:3100";
-    config.maxClients = 4;
-    g_theNetworkSubsystem = new NetworkSubsystem(config);
+    config.maxClients        = 4;
+    g_theNetworkSubsystem    = new NetworkSubsystem(config);
 
     g_theEventSystem->Startup();
     g_theWindow->Startup();
@@ -238,7 +240,7 @@ void App::BeginFrame() const
     g_theInput->BeginFrame();
     g_theAudio->BeginFrame();
     g_theLightSubsystem->BeginFrame();
-g_theNetworkSubsystem->BeginFrame();
+    g_theNetworkSubsystem->BeginFrame();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -248,7 +250,7 @@ void App::Update()
 
     UpdateCursorMode();
     g_theGame->Update();
-    g_theNetworkSubsystem->Update(Clock::GetSystemClock().GetDeltaSeconds());
+    // g_theNetworkSubsystem->Update(Clock::GetSystemClock().GetDeltaSeconds());
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -326,18 +328,18 @@ bool Command_NetStartServer(EventArgs& args)
         return false;
     }
 
-    int port = args.GetValue("port", 3100);  // 預設 port 7777
+    int const port = args.GetValue("port", 3100);
 
     if (g_theNetworkSubsystem->StartServer(port))
     {
         g_theDevConsole->AddLine(Rgba8(0, 255, 0),
-            Stringf("[Network] Server started on port %d", port));
+                                 Stringf("[Network] Server started on port %d", port));
         return true;
     }
     else
     {
         g_theDevConsole->AddLine(Rgba8(255, 0, 0),
-            Stringf("[Network] Failed to start server on port %d", port));
+                                 Stringf("[Network] Failed to start server on port %d", port));
         return false;
     }
 }
@@ -351,18 +353,18 @@ bool Command_NetConnect(EventArgs& args)
     }
 
     std::string address = args.GetValue("address", "127.0.0.1");  // 預設本機
-    int port = args.GetValue("port", 3100);  // 預設 port 7777
+    int         port    = args.GetValue("port", 3100);
 
     if (g_theNetworkSubsystem->ConnectToServer(address, port))
     {
         g_theDevConsole->AddLine(Rgba8(0, 255, 0),
-            Stringf("[Network] Connecting to %s:%d", address.c_str(), port));
+                                 Stringf("[Network] Connecting to %s:%d", address.c_str(), port));
         return true;
     }
     else
     {
         g_theDevConsole->AddLine(Rgba8(255, 0, 0),
-            Stringf("[Network] Failed to connect to %s:%d", address.c_str(), port));
+                                 Stringf("[Network] Failed to connect to %s:%d", address.c_str(), port));
         return false;
     }
 }
@@ -375,20 +377,20 @@ bool Command_NetSendTest(EventArgs& args)
         return false;
     }
 
-    std::string message = args.GetValue("message", "Hello from console!");
-    int targetClient = args.GetValue("target", -1);  // -1 表示發給所有人
+    std::string message      = args.GetValue("message", "Hello from console!");
+    int         targetClient = args.GetValue("target", -1);  // -1 表示發給所有人
 
     g_theNetworkSubsystem->SendGameData(message, targetClient);
 
     if (targetClient == -1)
     {
         g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-            Stringf("[Network] Sent test message to all: '%s'", message.c_str()));
+                                 Stringf("[Network] Sent test message to all: '%s'", message.c_str()));
     }
     else
     {
         g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-            Stringf("[Network] Sent test message to client %d: '%s'", targetClient, message.c_str()));
+                                 Stringf("[Network] Sent test message to client %d: '%s'", targetClient, message.c_str()));
     }
 
     return true;
@@ -399,7 +401,7 @@ bool Command_NetSendTest(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 bool Command_NetStopServer(EventArgs& args)
 {
-    UNUSED(args);
+    UNUSED(args)
 
     if (!g_theNetworkSubsystem)
     {
@@ -423,7 +425,7 @@ bool Command_NetStopServer(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 bool Command_NetDisconnect(EventArgs& args)
 {
-    UNUSED(args);
+    UNUSED(args)
 
     if (!g_theNetworkSubsystem)
     {
@@ -447,7 +449,7 @@ bool Command_NetDisconnect(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 bool Command_NetStatus(EventArgs& args)
 {
-    UNUSED(args);
+    UNUSED(args)
 
     if (!g_theNetworkSubsystem)
     {
@@ -455,7 +457,7 @@ bool Command_NetStatus(EventArgs& args)
         return false;
     }
 
-    eNetworkMode mode = g_theNetworkSubsystem->GetNetworkMode();
+    eNetworkMode     mode  = g_theNetworkSubsystem->GetNetworkMode();
     eConnectionState state = g_theNetworkSubsystem->GetConnectionState();
 
     std::string modeStr = "NONE";
@@ -465,21 +467,26 @@ bool Command_NetStatus(EventArgs& args)
     std::string stateStr = "DISCONNECTED";
     switch (state)
     {
-    case eConnectionState::CONNECTING: stateStr = "CONNECTING"; break;
-    case eConnectionState::CONNECTED: stateStr = "CONNECTED"; break;
-    case eConnectionState::DISCONNECTING: stateStr = "DISCONNECTING"; break;
-    case eConnectionState::ERROR_STATE: stateStr = "ERROR"; break;
-    case eConnectionState::DISABLED: stateStr = "DISABLED"; break;
+    case eConnectionState::CONNECTING: stateStr = "CONNECTING";
+        break;
+    case eConnectionState::CONNECTED: stateStr = "CONNECTED";
+        break;
+    case eConnectionState::DISCONNECTING: stateStr = "DISCONNECTING";
+        break;
+    case eConnectionState::ERROR_STATE: stateStr = "ERROR";
+        break;
+    case eConnectionState::DISABLED: stateStr = "DISABLED";
+        break;
     }
 
     g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-        Stringf("[Network] Mode: %s, State: %s", modeStr.c_str(), stateStr.c_str()));
+                             Stringf("[Network] Mode: %s, State: %s", modeStr.c_str(), stateStr.c_str()));
 
     if (mode == eNetworkMode::SERVER)
     {
         int clientCount = g_theNetworkSubsystem->GetConnectedClientCount();
         g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-            Stringf("[Network] Connected clients: %d", clientCount));
+                                 Stringf("[Network] Connected clients: %d", clientCount));
 
         std::vector<int> clientIds = g_theNetworkSubsystem->GetConnectedClientIds();
         if (!clientIds.empty())
@@ -491,7 +498,7 @@ bool Command_NetStatus(EventArgs& args)
                 if (i < clientIds.size() - 1) clientList += ", ";
             }
             g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-                Stringf("[Network] %s", clientList.c_str()));
+                                     Stringf("[Network] %s", clientList.c_str()));
         }
     }
 
@@ -509,20 +516,20 @@ bool Command_NetSendChat(EventArgs& args)
         return false;
     }
 
-    std::string message = args.GetValue("message", "Hello from chat!");
-    int targetClient = args.GetValue("target", -1);
+    std::string message      = args.GetValue("message", "Hello from chat!");
+    int         targetClient = args.GetValue("target", -1);
 
     g_theNetworkSubsystem->SendChatMessage(message, targetClient);
 
     if (targetClient == -1)
     {
         g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-            Stringf("[Network] Chat sent to all: '%s'", message.c_str()));
+                                 Stringf("[Network] Chat sent to all: '%s'", message.c_str()));
     }
     else
     {
         g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-            Stringf("[Network] Chat sent to client %d: '%s'", targetClient, message.c_str()));
+                                 Stringf("[Network] Chat sent to client %d: '%s'", targetClient, message.c_str()));
     }
 
     return true;
@@ -543,7 +550,7 @@ bool Command_NetSendRaw(EventArgs& args)
 
     g_theNetworkSubsystem->SendRawData(data);
     g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-        Stringf("[Network] Sent raw data: '%s'", data.c_str()));
+                             Stringf("[Network] Sent raw data: '%s'", data.c_str()));
 
     return true;
 }
@@ -553,7 +560,7 @@ bool Command_NetSendRaw(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 bool Command_NetHelp(EventArgs& args)
 {
-    UNUSED(args);
+    UNUSED(args)
 
     g_theDevConsole->AddLine(Rgba8(0, 255, 255), "[Network] Available network commands:");
     g_theDevConsole->AddLine(Rgba8(255, 255, 255), "=== Server Commands ===");
@@ -584,7 +591,7 @@ bool Command_NetHelp(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 bool Command_NetQuickTest(EventArgs& args)
 {
-    UNUSED(args);
+    UNUSED(args)
 
     if (!g_theNetworkSubsystem)
     {
@@ -618,7 +625,7 @@ bool OnClientConnected(EventArgs& args)
     if (g_theDevConsole)
     {
         g_theDevConsole->AddLine(Rgba8(0, 255, 0),
-            Stringf("[Network] *** CLIENT CONNECTED *** Client ID: %d", clientId));
+                                 Stringf("[Network] *** CLIENT CONNECTED *** Client ID: %d", clientId));
     }
     return true;
 }
@@ -632,7 +639,7 @@ bool OnClientDisconnected(EventArgs& args)
     if (g_theDevConsole)
     {
         g_theDevConsole->AddLine(Rgba8(255, 255, 0),
-            Stringf("[Network] *** CLIENT DISCONNECTED *** Client ID: %d", clientId));
+                                 Stringf("[Network] *** CLIENT DISCONNECTED *** Client ID: %d", clientId));
     }
     return true;
 }
@@ -642,34 +649,36 @@ bool OnClientDisconnected(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 bool OnGameDataReceived(EventArgs& args)
 {
-    std::string data = args.GetValue("data", "");
-    int fromClientId = args.GetValue("fromClientId", -1);
+    std::string data         = args.GetValue("data", "");
+    int         fromClientId = args.GetValue("fromClientId", -1);
 
-    // 清理顯示的資料
-    std::string safeData;
-    for (char c : data)
-    {
-        if ((c >= 32 && c <= 126) || c == ' ')
-        {
-            safeData += c;
-        }
-        else
-        {
-            safeData += '?'; // 替換不安全的字符
-        }
-    }
+    // // 清理顯示的資料
+    // std::string safeData;
+    // for (char c : data)
+    // {
+    //     if ((c >= 32 && c <= 126) || c == ' ')
+    //     {
+    //         safeData += c;
+    //     }
+    //     else
+    //     {
+    //         safeData += '?'; // 替換不安全的字符
+    //     }
+    // }
 
     if (g_theDevConsole)
     {
         if (fromClientId != -1)
         {
             g_theDevConsole->AddLine(Rgba8(255, 255, 255),
-                Stringf("[Network] *** RECEIVED GAME DATA *** from client %d: '%s'", fromClientId, safeData.c_str()));
+                                     Stringf("[Network] *** RECEIVED GAME DATA *** from client %d: '%s'", fromClientId, data.c_str()));
+            Match::OnChessMove(args);
         }
         else
         {
             g_theDevConsole->AddLine(Rgba8(255, 255, 255),
-                Stringf("[Network] *** RECEIVED GAME DATA *** from server: '%s'", safeData.c_str()));
+                                     Stringf("[Network] *** RECEIVED GAME DATA *** from server: '%s'", data.c_str()));
+            Match::OnChessMove(args);
         }
     }
     return true;
@@ -680,20 +689,20 @@ bool OnGameDataReceived(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 bool OnChatMessageReceived(EventArgs& args)
 {
-    std::string message = args.GetValue("data", "");
-    int fromClientId = args.GetValue("fromClientId", -1);
+    std::string message      = args.GetValue("data", "");
+    int         fromClientId = args.GetValue("fromClientId", -1);
 
     if (g_theDevConsole)
     {
         if (fromClientId != -1)
         {
             g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-                Stringf("[Network] *** RECEIVED CHAT *** from client %d: '%s'", fromClientId, message.c_str()));
+                                     Stringf("[Network] *** RECEIVED CHAT *** from client %d: '%s'", fromClientId, message.c_str()));
         }
         else
         {
             g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-                Stringf("[Network] *** RECEIVED CHAT *** from server: '%s'", message.c_str()));
+                                     Stringf("[Network] *** RECEIVED CHAT *** from server: '%s'", message.c_str()));
         }
     }
     return true;
@@ -704,14 +713,14 @@ bool OnChatMessageReceived(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 bool OnNetworkMessageReceived(EventArgs& args)
 {
-    std::string messageType = args.GetValue("messageType", "");
-    std::string data = args.GetValue("data", "");
-    int fromClientId = args.GetValue("fromClientId", -1);
+    std::string messageType  = args.GetValue("messageType", "");
+    std::string data         = args.GetValue("data", "");
+    int         fromClientId = args.GetValue("fromClientId", -1);
 
     if (g_theDevConsole)
     {
         g_theDevConsole->AddLine(Rgba8(200, 200, 200),
-            Stringf("[Network] Message received - Type: %s, From: %d", messageType.c_str(), fromClientId));
+                                 Stringf("[Network] Message received - Type: %s, From: %d", messageType.c_str(), fromClientId));
     }
     return true;
 }
