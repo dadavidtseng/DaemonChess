@@ -329,6 +329,14 @@ void Game::UpdateFromInput()
     UNUSED(localPlayer)
     if (m_gameState == eGameState::ATTRACT)
     {
+        if (g_theInput->WasKeyJustPressed(NUMCODE_0))
+        {
+            Window::s_mainWindow->SetWindowType(eWindowType::FULLSCREEN_CROP);
+        }
+        if (g_theInput->WasKeyJustPressed(NUMCODE_1))
+        {
+            Window::s_mainWindow->SetWindowType(eWindowType::WINDOWED);
+        }
         if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
         {
             App::RequestQuit();
@@ -421,11 +429,10 @@ void Game::UpdateCurrentControllerId(int const newID)
 //----------------------------------------------------------------------------------------------------
 void Game::RenderAttractMode() const
 {
-    // DebugDrawRing(Vec2(800.f, 400.f), 300.f, 10.f, Rgba8::YELLOW);
-    Vec2 clientDimensions = Window::s_mainWindow->GetClientDimensions();
+    Vec2 clientDimensions = Window::s_mainWindow->GetViewportDimensions();
 
-    VertexList_PCU verts2;
-    AddVertsForDisc2D(verts2, Vec2((float)clientDimensions.x * 0.5f, (float)clientDimensions.y * 0.5f), 300.f, 10.f, Rgba8::YELLOW);
+    VertexList_PCU verts;
+    AddVertsForDisc2D(verts, Vec2((float)clientDimensions.x * 0.5f, (float)clientDimensions.y * 0.5f), 300.f, 10.f, Rgba8::YELLOW);
     g_theRenderer->SetModelConstants();
     g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
     g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
@@ -433,7 +440,7 @@ void Game::RenderAttractMode() const
     g_theRenderer->SetDepthMode(eDepthMode::DISABLED);
     g_theRenderer->BindTexture(nullptr);
     g_theRenderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
-    g_theRenderer->DrawVertexArray(verts2);
+    g_theRenderer->DrawVertexArray(verts);
 
     std::vector<std::string> asciiArt = {
         "         ,....,",

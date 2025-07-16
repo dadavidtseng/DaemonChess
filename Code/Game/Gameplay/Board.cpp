@@ -46,7 +46,7 @@ Board::Board(Match* owner)
 
     //1. 初始化資源系統
     auto& resourceSystem = ResourceSubsystem::GetInstance();
-    resourceSystem.Initialize(4); // 4 個工作執行緒
+    resourceSystem.Initialize(4); // 4 個thread
 
     // 2. 方法一：使用新的資源系統載入模型
 
