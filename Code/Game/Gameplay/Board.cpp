@@ -45,12 +45,12 @@ Board::Board(Match* owner)
     // }
 
     //1. 初始化資源系統
-    auto& resourceSystem = ResourceSubsystem::GetInstance();
-    resourceSystem.Initialize(4); // 4 個thread
+    // auto& resourceSystem = ResourceSubsystem::GetInstance();
+    // resourceSystem.Initialize(4); // 4 個thread
 
     // 2. 方法一：使用新的資源系統載入模型
 
-    m_resourceHandle = resourceSystem.LoadResource<ModelResource>("Data/Models/TutorialBox_Phong/Tutorial_Box.obj");
+    m_resourceHandle = g_theResourceSubsystem->LoadResource<ModelResource>("Data/Models/TutorialBox_Phong/Tutorial_Box.obj");
 
     ModelResource const* modelResource = m_resourceHandle.Get();
 

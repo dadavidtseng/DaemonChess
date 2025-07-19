@@ -17,21 +17,23 @@
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Platform/Window.hpp"
+#include "Engine/Resource/ResourceSubsystem.hpp"
 #include "Game/Gameplay/Game.hpp"
 #include "Game/Framework/GameCommon.hpp"
 #include "Game/Gameplay/Match.hpp"
 #include "Game/Subsystem/Light/LightSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
-App*                   g_theApp              = nullptr;       // Created and owned by Main_Windows.cpp
-AudioSystem*           g_theAudio            = nullptr;       // Created and owned by the App
-BitmapFont*            g_theBitmapFont       = nullptr;       // Created and owned by the App
-Game*                  g_theGame             = nullptr;       // Created and owned by the App
-Renderer*              g_theRenderer         = nullptr;       // Created and owned by the App
-RandomNumberGenerator* g_theRNG              = nullptr;       // Created and owned by the App
-Window*                g_theWindow           = nullptr;       // Created and owned by the App
-LightSubsystem*        g_theLightSubsystem   = nullptr;       // Created and owned by the App
-NetworkSubsystem*      g_theNetworkSubsystem = nullptr;       // Created and owned by the App
+App*                   g_theApp               = nullptr;       // Created and owned by Main_Windows.cpp
+AudioSystem*           g_theAudio             = nullptr;       // Created and owned by the App
+BitmapFont*            g_theBitmapFont        = nullptr;       // Created and owned by the App
+Game*                  g_theGame              = nullptr;       // Created and owned by the App
+Renderer*              g_theRenderer          = nullptr;       // Created and owned by the App
+RandomNumberGenerator* g_theRNG               = nullptr;       // Created and owned by the App
+Window*                g_theWindow            = nullptr;       // Created and owned by the App
+LightSubsystem*        g_theLightSubsystem    = nullptr;       // Created and owned by the App
+NetworkSubsystem*      g_theNetworkSubsystem  = nullptr;       // Created and owned by the App
+ResourceSubsystem*     g_theResourceSubsystem = nullptr;       // Created and owned by the App
 
 //----------------------------------------------------------------------------------------------------
 STATIC bool App::m_isQuitting = false;
@@ -113,18 +115,35 @@ void App::Startup()
     //------------------------------------------------------------------------------------------------
     //-Start-of-AudioSystem---------------------------------------------------------------------------
 
-    sAudioSystemConfig constexpr audioConfig;
-    g_theAudio = new AudioSystem(audioConfig);
+    sAudioSystemConfig constexpr audioSystemConfig;
+    g_theAudio = new AudioSystem(audioSystemConfig);
 
     //-End-of-AudioSystem-----------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
+    //-Start-of-LightSubsystem------------------------------------------------------------------------
 
     sLightConfig constexpr lightConfig;
     g_theLightSubsystem = new LightSubsystem(lightConfig);
 
-    sNetworkSubsystemConfig config;
-    config.hostAddressString = "127.0.0.1:3100";
-    config.maxClients        = 4;
-    g_theNetworkSubsystem    = new NetworkSubsystem(config);
+    //-End-of-LightSubsystem--------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
+    //-Start-of-NetworkSubsystem----------------------------------------------------------------------
+
+    sNetworkSubsystemConfig networkSubsystemConfig;
+    networkSubsystemConfig.hostAddressString = "127.0.0.1:3100";
+    networkSubsystemConfig.maxClients        = 4;
+    g_theNetworkSubsystem                    = new NetworkSubsystem(networkSubsystemConfig);
+
+    //-End-of-NetworkSubsystem------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------
+    //-Start-of-ResourceSubsystem---------------------------------------------------------------------
+
+    sResourceSubsystemConfig resourceSubsystemConfig;
+    resourceSubsystemConfig.m_threadCount = 4;
+
+    g_theResourceSubsystem = new ResourceSubsystem(resourceSubsystemConfig);
+
+    //-End-of-ResourceSubsystem-----------------------------------------------------------------------
 
     g_theEventSystem->Startup();
     g_theWindow->Startup();
@@ -135,6 +154,7 @@ void App::Startup()
     g_theAudio->Startup();
     g_theLightSubsystem->StartUp();
     g_theNetworkSubsystem->StartUp();
+    g_theResourceSubsystem->Startup();
 
     g_theBitmapFont = g_theRenderer->CreateOrGetBitmapFontFromFile("Data/Fonts/SquirrelFixedFont"); // DO NOT SPECIFY FILE .EXTENSION!!  (Important later on.)
     g_theRNG        = new RandomNumberGenerator();
