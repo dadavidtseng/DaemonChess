@@ -10,7 +10,7 @@
 struct Light;
 
 //----------------------------------------------------------------------------------------------------
-struct sLightConfig
+struct sLightSubsystemConfig
 {
 };
 
@@ -19,7 +19,7 @@ class LightSubsystem
 {
 public:
     LightSubsystem();
-    explicit LightSubsystem(sLightConfig config);
+    explicit LightSubsystem(sLightSubsystemConfig config);
     ~LightSubsystem() = default;
 
     void StartUp();
@@ -42,8 +42,8 @@ public:
     void BindLightConstants();
 
 private:
-    sLightConfig        m_config;
-    std::vector<Light*> m_lights;
+    sLightSubsystemConfig m_config;
+    std::vector<Light*>   m_lights;
 
     // LightConstants* m_lightConstants = nullptr;
     // ConstantBuffer* m_lightCBO = nullptr;

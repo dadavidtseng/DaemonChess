@@ -16,7 +16,7 @@ LightSubsystem::LightSubsystem()
     // Initialize CBO - you'll need to adapt this to your engine's CBO creation method
 }
 
-LightSubsystem::LightSubsystem(sLightConfig const config)
+LightSubsystem::LightSubsystem(sLightSubsystemConfig const config)
     : m_config(config)
 {
 }

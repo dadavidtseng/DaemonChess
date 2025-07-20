@@ -122,7 +122,7 @@ void App::Startup()
     //------------------------------------------------------------------------------------------------
     //-Start-of-LightSubsystem------------------------------------------------------------------------
 
-    sLightConfig constexpr lightConfig;
+    sLightSubsystemConfig constexpr lightConfig;
     g_theLightSubsystem = new LightSubsystem(lightConfig);
 
     //-End-of-LightSubsystem--------------------------------------------------------------------------
@@ -261,8 +261,6 @@ void App::Update()
 //
 void App::Render() const
 {
-
-
     Rgba8 const clearColor = Rgba8::BLACK;
 
     g_theRenderer->ClearScreen(clearColor);
