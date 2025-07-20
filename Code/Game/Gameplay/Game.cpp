@@ -109,6 +109,7 @@ void Game::Render() const
         m_gameState == eGameState::FINISHED)
     {
         RenderEntities();
+        g_theRenderer->RenderEmissive();
     }
 
     g_theRenderer->EndCamera(*localPlayer->GetCamera());
@@ -129,6 +130,11 @@ void Game::Render() const
     {
         RenderAttractMode();
     }
+    else if (m_gameState == eGameState::MATCH)
+    {
+        // g_theRenderer->RenderEmissive();
+    }
+
 
     g_theRenderer->EndCamera(*m_screenCamera);
 

@@ -75,17 +75,17 @@ void App::Startup()
     //------------------------------------------------------------------------------------------------
     //-Start-of-Renderer------------------------------------------------------------------------------
 
-    sRendererConfig renderConfig;
-    renderConfig.m_window = g_theWindow;
-    g_theRenderer         = new Renderer(renderConfig);
+    sRendererConfig rendererConfig;
+    rendererConfig.m_window = g_theWindow;
+    g_theRenderer         = new Renderer(rendererConfig);
 
     //-End-of-Renderer--------------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
     //-Start-of-DebugRender---------------------------------------------------------------------------
 
-    sDebugRenderConfig debugConfig;
-    debugConfig.m_renderer = g_theRenderer;
-    debugConfig.m_fontName = "SquirrelFixedFont";
+    sDebugRenderConfig debugRenderConfig;
+    debugRenderConfig.m_renderer = g_theRenderer;
+    debugRenderConfig.m_fontName = "SquirrelFixedFont";
 
     //-End-of-DebugRender-----------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
@@ -122,8 +122,8 @@ void App::Startup()
     //------------------------------------------------------------------------------------------------
     //-Start-of-LightSubsystem------------------------------------------------------------------------
 
-    sLightSubsystemConfig constexpr lightConfig;
-    g_theLightSubsystem = new LightSubsystem(lightConfig);
+    sLightSubsystemConfig constexpr lightSubsystemConfig;
+    g_theLightSubsystem = new LightSubsystem(lightSubsystemConfig);
 
     //-End-of-LightSubsystem--------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
@@ -148,7 +148,7 @@ void App::Startup()
     g_theEventSystem->Startup();
     g_theWindow->Startup();
     g_theRenderer->Startup();
-    DebugRenderSystemStartup(debugConfig);
+    DebugRenderSystemStartup(debugRenderConfig);
     g_theDevConsole->StartUp();
     g_theInput->Startup();
     g_theAudio->Startup();
@@ -261,9 +261,9 @@ void App::Update()
 //
 void App::Render() const
 {
-    Rgba8 const clearColor = Rgba8::BLACK;
+    Rgba8 const clearColor = Rgba8::GREY;
 
-    g_theRenderer->ClearScreen(clearColor);
+    g_theRenderer->ClearScreen(clearColor, Rgba8::BLACK);
     g_theGame->Render();
 
     AABB2 const box = AABB2(Vec2::ZERO, Vec2(1600.f, 30.f));

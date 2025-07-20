@@ -26,7 +26,7 @@ Board::Board(Match* owner)
     : Actor(owner)
 
 {
-    m_shader                   = g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/BlinnPhong", eVertexType::VERTEX_PCUTBN);
+    m_shader                   = g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Bloom", eVertexType::VERTEX_PCU);
     m_diffuseTexture           = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures/FunkyBricks_d.png");
     m_normalTexture            = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures/FunkyBricks_n.png");
     m_specularGlossEmitTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures/FunkyBricks_sge.png");
@@ -50,7 +50,7 @@ Board::Board(Match* owner)
 
     // 2. 方法一：使用新的資源系統載入模型
 
-    m_resourceHandle = g_theResourceSubsystem->LoadResource<ModelResource>("Data/Models/TutorialBox_Phong/Tutorial_Box.obj");
+    m_resourceHandle = g_theResourceSubsystem->LoadResource<ModelResource>("Data/Models/Woman/Woman.obj");
 
     ModelResource const* modelResource = m_resourceHandle.Get();
 
@@ -156,8 +156,8 @@ void Board::Render() const
         g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
         g_theRenderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
         g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
-        g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Models/TutorialBox_Phong/Tutorial_Box_Diffuse.tga"), 0);
-        g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Models/TutorialBox_Phong/Tutorial_Box_Normal.tga"), 1);
+        g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Models/Woman/Woman_Diffuse.png"), 0);
+        g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Models/Woman/Woman_Normal.png"), 1);
         g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Models/TutorialBox_Phong/Tutorial_Box_SpecGlossEmit.tga"), 2);
         g_theRenderer->BindShader(m_shader);
         g_theRenderer->DrawVertexArray(m_vertexWoman, m_indexWoman);
