@@ -49,6 +49,8 @@ Game::~Game()
 //----------------------------------------------------------------------------------------------------
 void Game::Update()
 {
+    Window::s_mainWindow->UpdateDimension();
+    Window::s_mainWindow->UpdatePosition();
     float const gameDeltaSeconds   = static_cast<float>(m_gameClock->GetDeltaSeconds());
     float const systemDeltaSeconds = static_cast<float>(Clock::GetSystemClock().GetDeltaSeconds());
 
@@ -327,16 +329,17 @@ void Game::UpdateFromInput()
 {
     PlayerController const* localPlayer = GetLocalPlayer(m_currentPlayerControllerId);
     UNUSED(localPlayer)
+    if (g_theInput->WasKeyJustPressed(NUMCODE_0))
+    {
+        Window::s_mainWindow->SetWindowType(eWindowType::FULLSCREEN_CROP);
+    }
+    if (g_theInput->WasKeyJustPressed(NUMCODE_1))
+    {
+        Window::s_mainWindow->SetWindowType(eWindowType::WINDOWED);
+    }
     if (m_gameState == eGameState::ATTRACT)
     {
-        if (g_theInput->WasKeyJustPressed(NUMCODE_0))
-        {
-            Window::s_mainWindow->SetWindowType(eWindowType::FULLSCREEN_CROP);
-        }
-        if (g_theInput->WasKeyJustPressed(NUMCODE_1))
-        {
-            Window::s_mainWindow->SetWindowType(eWindowType::WINDOWED);
-        }
+
         if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
         {
             App::RequestQuit();
@@ -429,7 +432,7 @@ void Game::UpdateCurrentControllerId(int const newID)
 //----------------------------------------------------------------------------------------------------
 void Game::RenderAttractMode() const
 {
-    Vec2 clientDimensions = Window::s_mainWindow->GetViewportDimensions();
+    Vec2 clientDimensions = Window::s_mainWindow->GetClientDimensions();
 
     VertexList_PCU verts;
     AddVertsForDisc2D(verts, Vec2((float)clientDimensions.x * 0.5f, (float)clientDimensions.y * 0.5f), 300.f, 10.f, Rgba8::YELLOW);
@@ -471,6 +474,12 @@ void Game::RenderAttractMode() const
         DebugAddScreenText(Stringf(asciiArt[i].c_str()), position, lineHeight, Vec2(0.5f, 0.5f), 0.f);
     }
     DebugAddScreenText(Stringf("Chess Simulator"), Vec2(600.f, 60.f), lineHeight, Vec2(0.5f, 0.5f), 0.f);
+    DebugAddScreenText(Stringf("NormalizedMouseUV(%.2f, %.2f)", Window::s_mainWindow->GetNormalizedMouseUV().x, Window::s_mainWindow->GetNormalizedMouseUV().y), m_screenCamera->GetOrthographicBottomLeft(), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
+    DebugAddScreenText(Stringf("CursorPositionOnScreen(%.1f, %.1f)", Window::s_mainWindow->GetCursorPositionOnScreen().x, Window::s_mainWindow->GetCursorPositionOnScreen().y), m_screenCamera->GetOrthographicBottomLeft() + Vec2(0, 20), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
+    DebugAddScreenText(Stringf("Window Dimensions(%.1f, %.1f)", Window::s_mainWindow->GetWindowDimensions().x, Window::s_mainWindow->GetWindowDimensions().y), m_screenCamera->GetOrthographicBottomLeft() + Vec2(0, 40), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
+    DebugAddScreenText(Stringf("Client Dimensions(%.1f, %.1f)", Window::s_mainWindow->GetClientDimensions().x, Window::s_mainWindow->GetClientDimensions().y), m_screenCamera->GetOrthographicBottomLeft() + Vec2(0, 60), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
+    DebugAddScreenText(Stringf("Viewport Dimensions(%.1f, %.1f)", Window::s_mainWindow->GetViewportDimensions().x, Window::s_mainWindow->GetViewportDimensions().y), m_screenCamera->GetOrthographicBottomLeft() + Vec2(0, 80), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
+    DebugAddScreenText(Stringf("Screen Dimensions(%.1f, %.1f)", Window::s_mainWindow->GetScreenDimensions().x, Window::s_mainWindow->GetScreenDimensions().y), m_screenCamera->GetOrthographicBottomLeft() + Vec2(0, 100), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
 }
 
 //----------------------------------------------------------------------------------------------------

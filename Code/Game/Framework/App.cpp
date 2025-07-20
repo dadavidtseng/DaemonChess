@@ -75,7 +75,7 @@ void App::Startup()
     //------------------------------------------------------------------------------------------------
     //-Start-of-Renderer------------------------------------------------------------------------------
 
-    sRenderConfig renderConfig;
+    sRendererConfig renderConfig;
     renderConfig.m_window = g_theWindow;
     g_theRenderer         = new Renderer(renderConfig);
 
@@ -261,6 +261,8 @@ void App::Update()
 //
 void App::Render() const
 {
+
+
     Rgba8 const clearColor = Rgba8::BLACK;
 
     g_theRenderer->ClearScreen(clearColor);
