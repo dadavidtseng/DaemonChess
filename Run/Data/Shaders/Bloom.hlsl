@@ -113,35 +113,7 @@ PixelOutput PixelMain( VertexOutPixelIn input )
 
 	// 發光顏色輸出 (SV_Target1)
 	// 方案1: 基於亮度的自動發光檢測
-	float luminance = dot(finalColor.rgb, float3(0.299, 0.587, 0.114));
-	if (luminance > 0.8)  // 只有很亮的像素才會發光
-	{
-		// 發光強度基於超過閾值的亮度
-		float emissiveIntensity = (luminance - 0.8) / 0.2;  // 0.8-1.0 映射到 0.0-1.0
-		output.emissive = float4(finalColor.rgb * emissiveIntensity * 2.0, 1.0);
-	}
-	else
-	{
-		output.emissive = float4(0, 0, 0, 1);  // 不發光
-	}
-
-	// 方案2: 基於顏色通道的發光檢測 (可選用)
-	// 如果您想要特定顏色發光，可以替換上面的方案1：
-
-	// 紅色物件發光
-	if (finalColor.r > 0.7 && finalColor.g < 0.3 && finalColor.b < 0.3)
-	{
-		output.emissive = float4(finalColor.rgb * 1.5, 1.0);
-	}
-	// 藍色物件發光
-	else if (finalColor.b > 0.7 && finalColor.r < 0.3 && finalColor.g < 0.3)
-	{
-		output.emissive = float4(finalColor.rgb * 1.5, 1.0);
-	}
-	else
-	{
-		output.emissive = float4(0, 0, 0, 1);
-	}
+	
 
 
 	// 方案3: 基於 vertex color 的發光檢測 (可選用)

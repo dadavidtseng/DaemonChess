@@ -118,7 +118,6 @@ void Game::Render() const
     //------------------------------------------------------------------------------------------------
     if (m_gameState == eGameState::MATCH)
     {
-        // DebugAddWorldWireSphere(Vec3(2.f,2.f,2.f),0.01f, 0.f);
         DebugRenderWorld(*localPlayer->GetCamera());
     }
     //------------------------------------------------------------------------------------------------

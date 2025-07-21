@@ -32,25 +32,8 @@ Board::Board(Match* owner)
     m_specularGlossEmitTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures/FunkyBricks_sge.png");
     CreateLocalVertsForAABB3s();
     CreateLocalVertsForBoardFrame();
-    bool hasNormals = false;
-    bool hasUVs     = false;
-    // bool success    = ObjModelLoader::Load("Data/Models/Woman/Woman.obj",
-    //                                     m_vertexWoman,
-    //                                     m_indexWoman,
-    //                                     hasNormals,
-    //                                     hasUVs);
-    // if (!success)
-    // {
-    //     DebuggerPrintf("Failed to load OBJ file\n");
-    // }
 
-    //1. 初始化資源系統
-    // auto& resourceSystem = ResourceSubsystem::GetInstance();
-    // resourceSystem.Initialize(4); // 4 個thread
-
-    // 2. 方法一：使用新的資源系統載入模型
-
-    m_resourceHandle = g_theResourceSubsystem->LoadResource<ModelResource>("Data/Models/Woman/Woman.obj");
+    m_resourceHandle = g_theResourceSubsystem->LoadResource<ModelResource>("Data/Models/TutorialBox_Phong/Tutorial_Box.obj");
 
     ModelResource const* modelResource = m_resourceHandle.Get();
 
@@ -156,8 +139,8 @@ void Board::Render() const
         g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
         g_theRenderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
         g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
-        g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Models/Woman/Woman_Diffuse.png"), 0);
-        g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Models/Woman/Woman_Normal.png"), 1);
+        g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Models/TutorialBox_Phong/Tutorial_Box_Diffuse.tga"), 0);
+        g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Models/TutorialBox_Phong/Tutorial_Box_Normal.tga"), 1);
         g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Models/TutorialBox_Phong/Tutorial_Box_SpecGlossEmit.tga"), 2);
         g_theRenderer->BindShader(m_shader);
         g_theRenderer->DrawVertexArray(m_vertexWoman, m_indexWoman);

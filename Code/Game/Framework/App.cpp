@@ -171,6 +171,7 @@ void App::Shutdown()
     GAME_SAFE_RELEASE(g_theRNG);
     GAME_SAFE_RELEASE(g_theBitmapFont);
 
+    // g_theResourceSubsystem->Shutdown();
     g_theNetworkSubsystem->ShutDown();
     g_theLightSubsystem->ShutDown();
     g_theAudio->Shutdown();
@@ -184,6 +185,7 @@ void App::Shutdown()
     g_theWindow->Shutdown();
     g_theEventSystem->Shutdown();
 
+    // GAME_SAFE_RELEASE(g_theResourceSubsystem);
     GAME_SAFE_RELEASE(g_theAudio);
     GAME_SAFE_RELEASE(g_theRenderer);
     GAME_SAFE_RELEASE(g_theWindow);
