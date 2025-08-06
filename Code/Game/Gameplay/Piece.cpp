@@ -5,7 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Piece.hpp"
 
-#include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Renderer/VertexUtils.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/Curve2D.hpp"
 #include "Engine/Math/MathUtils.hpp"

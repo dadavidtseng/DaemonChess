@@ -8,7 +8,7 @@
 
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/StringUtils.hpp"
-#include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Renderer/VertexUtils.hpp"
 #include "Engine/Core/XmlUtils.hpp"
 #include "Engine/Math/EulerAngles.hpp"
 #include "Engine/Math/Vec3.hpp"
