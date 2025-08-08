@@ -35,15 +35,10 @@ public:
     Board*    m_board = nullptr;
     PieceList m_pieceList;
 
-    void SendChessCommand(const std::string& command);
-
-    bool ValidateGameState(const std::string& state, const std::string& player1, const std::string& player2, int move, const std::string& board);
-    void DisconnectWithReason(const std::string& reason);
 
 private:
     void UpdateFromInput(float deltaSeconds);
     void CreateBoard();
-
 
     static bool OnEnterMatchState(EventArgs& args);
     static bool OnEnterMatchTurn(EventArgs& args);
@@ -59,7 +54,6 @@ private:
     void        ExecuteKingsideCastling(IntVec2 const& fromCoords) const;
     void        ExecuteQueensideCastling(IntVec2 const& fromCoords) const;
     void        RenderPlayerBasis() const;
-    static bool OnGameDataReceived(EventArgs& args);
 
     void ExecuteCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo = "");
 
@@ -83,31 +77,7 @@ private:
 
     sPieceMove GetLastPieceMove() const;
 
-    void        RegisterNetworkCommands();
-    void        UnregisterNetworkCommands();
-    static bool OnChessServerInfo(EventArgs& args);
-    static bool OnChessListen(EventArgs& args);
-    static bool OnChessConnect(EventArgs& args);
-    static bool OnChessDisconnect(EventArgs& args);
-    static bool OnChessPlayerInfo(EventArgs& args);
-    static bool OnChessBegin(EventArgs& args);
-    static bool OnChessValidate(EventArgs& args);
     static bool OnChessMove(EventArgs& args);
-    static bool OnChessResign(EventArgs& args);
-    static bool OnChessOfferDraw(EventArgs& args);
-    static bool OnChessAcceptDraw(EventArgs& args);
-    static bool OnChessRejectDraw(EventArgs& args);
-    static bool OnRemoteCmd(EventArgs& args);
-
-    // Network state getters
-    std::string     GetPlayer1Name() const { return m_player1Name; }
-    std::string     GetPlayer2Name() const { return m_player2Name; }
-    std::string     GetMyPlayerName() const { return m_myPlayerName; }
-    eChessGameState GetGameState() const { return m_gameState; }
-    int             GetMoveNumber() const { return m_moveNumber; }
-    bool            IsConnected() const { return m_isConnected; }
-    std::string     GetBoardStateString() const;
-    bool            IsMyTurn() const;
 
     Camera* m_screenCamera = nullptr;
     Clock*  m_gameClock    = nullptr;
@@ -123,18 +93,4 @@ private:
     Vec3          m_ghostPiecePosition = Vec3::ZERO;
     Piece*        m_ghostSourcePiece   = nullptr;
     bool          m_isCheatMode        = false;
-
-    // 網路狀態
-    std::string     m_myPlayerName          = "Player";
-    std::string     m_player1Name           = "";    // 執白棋的玩家
-    std::string     m_player2Name           = "";    // 執黑棋的玩家
-    std::string     m_serverIP              = "127.0.0.1";
-    int             m_serverPort            = 3100;
-    bool            m_isConnected           = false;
-    bool            m_isServer              = false;
-    bool            m_amIPlayer1            = false;         // 我是否執白棋？
-    eChessGameState m_gameState             = eChessGameState::WAITING_FOR_CONNECTION;
-    int             m_moveNumber            = 0;              // 從 0 開始計算
-    bool            m_drawOffered           = false;
-    bool            m_drawOfferFromOpponent = false;
 };

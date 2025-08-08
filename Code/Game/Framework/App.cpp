@@ -13,13 +13,13 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Network/NetworkSubsystem.hpp"
+#include "Engine/Platform/Window.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
-#include "Engine/Platform/Window.hpp"
 #include "Engine/Resource/ResourceSubsystem.hpp"
-#include "Game/Gameplay/Game.hpp"
 #include "Game/Framework/GameCommon.hpp"
+#include "Game/Gameplay/Game.hpp"
 #include "Game/Gameplay/Match.hpp"
 #include "Game/Subsystem/Light/LightSubsystem.hpp"
 
@@ -32,7 +32,7 @@ Renderer*              g_theRenderer          = nullptr;       // Created and ow
 RandomNumberGenerator* g_theRNG               = nullptr;       // Created and owned by the App
 Window*                g_theWindow            = nullptr;       // Created and owned by the App
 LightSubsystem*        g_theLightSubsystem    = nullptr;       // Created and owned by the App
-NetworkSubsystem*      g_theNetworkSubsystem  = nullptr;       // Created and owned by the App
+// NetworkSubsystem*      g_theNetworkSubsystem  = nullptr;       // Created and owned by the App
 ResourceSubsystem*     g_theResourceSubsystem = nullptr;       // Created and owned by the App
 
 //----------------------------------------------------------------------------------------------------
@@ -129,10 +129,10 @@ void App::Startup()
     //------------------------------------------------------------------------------------------------
     //-Start-of-NetworkSubsystem----------------------------------------------------------------------
 
-    sNetworkSubsystemConfig networkSubsystemConfig;
-    networkSubsystemConfig.hostAddressString = "127.0.0.1:3100";
-    networkSubsystemConfig.maxClients        = 4;
-    g_theNetworkSubsystem                    = new NetworkSubsystem(networkSubsystemConfig);
+    // sNetworkSubsystemConfig networkSubsystemConfig;
+    // networkSubsystemConfig.hostAddressString = "127.0.0.1:3100";
+    // networkSubsystemConfig.maxClients        = 4;
+    // g_theNetworkSubsystem                    = new NetworkSubsystem(networkSubsystemConfig);
 
     //-End-of-NetworkSubsystem------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
@@ -153,7 +153,7 @@ void App::Startup()
     g_theInput->Startup();
     g_theAudio->Startup();
     g_theLightSubsystem->StartUp();
-    g_theNetworkSubsystem->StartUp();
+    // g_theNetworkSubsystem->StartUp();
     g_theResourceSubsystem->Startup();
 
     g_theBitmapFont = g_theRenderer->CreateOrGetBitmapFontFromFile("Data/Fonts/SquirrelFixedFont"); // DO NOT SPECIFY FILE .EXTENSION!!  (Important later on.)
@@ -172,7 +172,7 @@ void App::Shutdown()
     GAME_SAFE_RELEASE(g_theBitmapFont);
 
     // g_theResourceSubsystem->Shutdown();
-    g_theNetworkSubsystem->ShutDown();
+    // g_theNetworkSubsystem->ShutDown();
     g_theLightSubsystem->ShutDown();
     g_theAudio->Shutdown();
     g_theInput->Shutdown();
@@ -241,7 +241,7 @@ void App::BeginFrame() const
     g_theInput->BeginFrame();
     g_theAudio->BeginFrame();
     g_theLightSubsystem->BeginFrame();
-    g_theNetworkSubsystem->BeginFrame();
+    // g_theNetworkSubsystem->BeginFrame();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -284,7 +284,7 @@ void App::EndFrame() const
     g_theInput->EndFrame();
     g_theAudio->EndFrame();
     g_theLightSubsystem->EndFrame();
-    g_theNetworkSubsystem->EndFrame();
+    // g_theNetworkSubsystem->EndFrame();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -318,442 +318,5 @@ void App::LoadGameConfig(char const* gameConfigXmlFilePath) const
     else
     {
         DebuggerPrintf("WARNING: failed to load game config from file \"%s\"\n", gameConfigXmlFilePath);
-    }
-}
-
-bool Command_NetStartServer(EventArgs& args)
-{
-    if (!g_theNetworkSubsystem)
-    {
-        g_theDevConsole->AddLine(Rgba8(255, 0, 0), "[Network] NetworkSubsystem not initialized");
-        return false;
-    }
-
-    int const port = args.GetValue("port", 3100);
-
-    if (g_theNetworkSubsystem->StartServer(port))
-    {
-        g_theDevConsole->AddLine(Rgba8(0, 255, 0),
-                                 Stringf("[Network] Server started on port %d", port));
-        return true;
-    }
-    else
-    {
-        g_theDevConsole->AddLine(Rgba8(255, 0, 0),
-                                 Stringf("[Network] Failed to start server on port %d", port));
-        return false;
-    }
-}
-
-bool Command_NetConnect(EventArgs& args)
-{
-    if (!g_theNetworkSubsystem)
-    {
-        g_theDevConsole->AddLine(Rgba8(255, 0, 0), "[Network] NetworkSubsystem not initialized");
-        return false;
-    }
-
-    std::string address = args.GetValue("address", "127.0.0.1");  // 預設本機
-    int         port    = args.GetValue("port", 3100);
-
-    if (g_theNetworkSubsystem->ConnectToServer(address, port))
-    {
-        g_theDevConsole->AddLine(Rgba8(0, 255, 0),
-                                 Stringf("[Network] Connecting to %s:%d", address.c_str(), port));
-        return true;
-    }
-    else
-    {
-        g_theDevConsole->AddLine(Rgba8(255, 0, 0),
-                                 Stringf("[Network] Failed to connect to %s:%d", address.c_str(), port));
-        return false;
-    }
-}
-
-bool Command_NetSendTest(EventArgs& args)
-{
-    if (!g_theNetworkSubsystem)
-    {
-        g_theDevConsole->AddLine(Rgba8(255, 0, 0), "[Network] NetworkSubsystem not initialized");
-        return false;
-    }
-
-    std::string message      = args.GetValue("message", "Hello from console!");
-    int         targetClient = args.GetValue("target", -1);  // -1 表示發給所有人
-
-    g_theNetworkSubsystem->SendGameData(message, targetClient);
-
-    if (targetClient == -1)
-    {
-        g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-                                 Stringf("[Network] Sent test message to all: '%s'", message.c_str()));
-    }
-    else
-    {
-        g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-                                 Stringf("[Network] Sent test message to client %d: '%s'", targetClient, message.c_str()));
-    }
-
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-// Command_NetStopServer
-//----------------------------------------------------------------------------------------------------
-bool Command_NetStopServer(EventArgs& args)
-{
-    UNUSED(args)
-
-    if (!g_theNetworkSubsystem)
-    {
-        g_theDevConsole->AddLine(Rgba8(255, 0, 0), "[Network] NetworkSubsystem not initialized");
-        return false;
-    }
-
-    if (!g_theNetworkSubsystem->IsServer())
-    {
-        g_theDevConsole->AddLine(Rgba8(255, 255, 0), "[Network] Server is not running");
-        return false;
-    }
-
-    g_theNetworkSubsystem->StopServer();
-    g_theDevConsole->AddLine(Rgba8(0, 255, 0), "[Network] Server stopped");
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-// Command_NetDisconnect
-//----------------------------------------------------------------------------------------------------
-bool Command_NetDisconnect(EventArgs& args)
-{
-    UNUSED(args)
-
-    if (!g_theNetworkSubsystem)
-    {
-        g_theDevConsole->AddLine(Rgba8(255, 0, 0), "[Network] NetworkSubsystem not initialized");
-        return false;
-    }
-
-    if (!g_theNetworkSubsystem->IsClient())
-    {
-        g_theDevConsole->AddLine(Rgba8(255, 255, 0), "[Network] Not connected as client");
-        return false;
-    }
-
-    g_theNetworkSubsystem->DisconnectFromServer();
-    g_theDevConsole->AddLine(Rgba8(0, 255, 0), "[Network] Disconnected from server");
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-// Command_NetStatus
-//----------------------------------------------------------------------------------------------------
-bool Command_NetStatus(EventArgs& args)
-{
-    UNUSED(args)
-
-    if (!g_theNetworkSubsystem)
-    {
-        g_theDevConsole->AddLine(Rgba8(255, 0, 0), "[Network] NetworkSubsystem not initialized");
-        return false;
-    }
-
-    eNetworkMode     mode  = g_theNetworkSubsystem->GetNetworkMode();
-    eConnectionState state = g_theNetworkSubsystem->GetConnectionState();
-
-    std::string modeStr = "NONE";
-    if (mode == eNetworkMode::SERVER) modeStr = "SERVER";
-    else if (mode == eNetworkMode::CLIENT) modeStr = "CLIENT";
-
-    std::string stateStr = "DISCONNECTED";
-    switch (state)
-    {
-    case eConnectionState::CONNECTING: stateStr = "CONNECTING";
-        break;
-    case eConnectionState::CONNECTED: stateStr = "CONNECTED";
-        break;
-    case eConnectionState::DISCONNECTING: stateStr = "DISCONNECTING";
-        break;
-    case eConnectionState::ERROR_STATE: stateStr = "ERROR";
-        break;
-    case eConnectionState::DISABLED: stateStr = "DISABLED";
-        break;
-    }
-
-    g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-                             Stringf("[Network] Mode: %s, State: %s", modeStr.c_str(), stateStr.c_str()));
-
-    if (mode == eNetworkMode::SERVER)
-    {
-        int clientCount = g_theNetworkSubsystem->GetConnectedClientCount();
-        g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-                                 Stringf("[Network] Connected clients: %d", clientCount));
-
-        std::vector<int> clientIds = g_theNetworkSubsystem->GetConnectedClientIds();
-        if (!clientIds.empty())
-        {
-            std::string clientList = "Client IDs: ";
-            for (size_t i = 0; i < clientIds.size(); ++i)
-            {
-                clientList += std::to_string(clientIds[i]);
-                if (i < clientIds.size() - 1) clientList += ", ";
-            }
-            g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-                                     Stringf("[Network] %s", clientList.c_str()));
-        }
-    }
-
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-// Command_NetSendChat
-//----------------------------------------------------------------------------------------------------
-bool Command_NetSendChat(EventArgs& args)
-{
-    if (!g_theNetworkSubsystem)
-    {
-        g_theDevConsole->AddLine(Rgba8(255, 0, 0), "[Network] NetworkSubsystem not initialized");
-        return false;
-    }
-
-    std::string message      = args.GetValue("message", "Hello from chat!");
-    int         targetClient = args.GetValue("target", -1);
-
-    g_theNetworkSubsystem->SendChatMessage(message, targetClient);
-
-    if (targetClient == -1)
-    {
-        g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-                                 Stringf("[Network] Chat sent to all: '%s'", message.c_str()));
-    }
-    else
-    {
-        g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-                                 Stringf("[Network] Chat sent to client %d: '%s'", targetClient, message.c_str()));
-    }
-
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-// Command_NetSendRaw
-//----------------------------------------------------------------------------------------------------
-bool Command_NetSendRaw(EventArgs& args)
-{
-    if (!g_theNetworkSubsystem)
-    {
-        g_theDevConsole->AddLine(Rgba8(255, 0, 0), "[Network] NetworkSubsystem not initialized");
-        return false;
-    }
-
-    std::string data = args.GetValue("data", "test command");
-
-    g_theNetworkSubsystem->SendRawData(data);
-    g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-                             Stringf("[Network] Sent raw data: '%s'", data.c_str()));
-
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-// Command_NetHelp
-//----------------------------------------------------------------------------------------------------
-bool Command_NetHelp(EventArgs& args)
-{
-    UNUSED(args)
-
-    g_theDevConsole->AddLine(Rgba8(0, 255, 255), "[Network] Available network commands:");
-    g_theDevConsole->AddLine(Rgba8(255, 255, 255), "=== Server Commands ===");
-    g_theDevConsole->AddLine(Rgba8(255, 255, 255), "  net_start_server [port=3100] - Start server on specified port");
-    g_theDevConsole->AddLine(Rgba8(255, 255, 255), "  net_stop_server - Stop running server");
-
-    g_theDevConsole->AddLine(Rgba8(255, 255, 255), "=== Client Commands ===");
-    g_theDevConsole->AddLine(Rgba8(255, 255, 255), "  net_connect address=[127.0.0.1] port=[3100] - Connect to server");
-    g_theDevConsole->AddLine(Rgba8(255, 255, 255), "  net_disconnect - Disconnect from server");
-
-    g_theDevConsole->AddLine(Rgba8(255, 255, 255), "=== Messaging Commands ===");
-    g_theDevConsole->AddLine(Rgba8(255, 255, 255), "  net_send_test message=[Hello] target=[-1] - Send test message");
-    g_theDevConsole->AddLine(Rgba8(255, 255, 255), "  net_send_chat message=[Hello] target=[-1] - Send chat message");
-    g_theDevConsole->AddLine(Rgba8(255, 255, 255), "  net_send_raw data=[command] - Send raw command data");
-
-    g_theDevConsole->AddLine(Rgba8(255, 255, 255), "=== Utility Commands ===");
-    g_theDevConsole->AddLine(Rgba8(255, 255, 255), "  net_status - Show current network status");
-    g_theDevConsole->AddLine(Rgba8(255, 255, 255), "  net_help - Show this help");
-
-    g_theDevConsole->AddLine(Rgba8(255, 255, 0), "[Network] TIP: Use target=-1 to send to all clients (server only)");
-    g_theDevConsole->AddLine(Rgba8(255, 255, 0), "[Network] Example: net_connect address=192.168.1.100 port=8888");
-
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-// Command_NetQuickTest
-//----------------------------------------------------------------------------------------------------
-bool Command_NetQuickTest(EventArgs& args)
-{
-    UNUSED(args)
-
-    if (!g_theNetworkSubsystem)
-    {
-        g_theDevConsole->AddLine(Rgba8(255, 0, 0), "[Network] NetworkSubsystem not initialized");
-        return false;
-    }
-
-    g_theDevConsole->AddLine(Rgba8(0, 255, 0), "[Network] Starting quick local test...");
-
-    // Start server
-    if (g_theNetworkSubsystem->StartServer(3100))
-    {
-        g_theDevConsole->AddLine(Rgba8(0, 255, 0), "[Network] ✓ Server started on port 3100");
-        g_theDevConsole->AddLine(Rgba8(255, 255, 0), "[Network] Now open another instance and run: net_connect");
-        g_theDevConsole->AddLine(Rgba8(255, 255, 0), "[Network] Or use net_send_test to simulate messages");
-    }
-    else
-    {
-        g_theDevConsole->AddLine(Rgba8(255, 0, 0), "[Network] ✗ Failed to start server");
-    }
-
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-// 當有客戶端連線時觸發
-//----------------------------------------------------------------------------------------------------
-bool OnClientConnected(EventArgs& args)
-{
-    int clientId = args.GetValue("clientId", -1);
-    if (g_theDevConsole)
-    {
-        g_theDevConsole->AddLine(Rgba8(0, 255, 0),
-                                 Stringf("[Network] *** CLIENT CONNECTED *** Client ID: %d", clientId));
-    }
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-// 當有客戶端斷線時觸發
-//----------------------------------------------------------------------------------------------------
-bool OnClientDisconnected(EventArgs& args)
-{
-    int clientId = args.GetValue("clientId", -1);
-    if (g_theDevConsole)
-    {
-        g_theDevConsole->AddLine(Rgba8(255, 255, 0),
-                                 Stringf("[Network] *** CLIENT DISCONNECTED *** Client ID: %d", clientId));
-    }
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-// 當接收到遊戲資料時觸發（這個很重要！）
-//----------------------------------------------------------------------------------------------------
-bool OnGameDataReceived(EventArgs& args)
-{
-    std::string data         = args.GetValue("data", "");
-    int         fromClientId = args.GetValue("fromClientId", -1);
-
-    // // 清理顯示的資料
-    // std::string safeData;
-    // for (char c : data)
-    // {
-    //     if ((c >= 32 && c <= 126) || c == ' ')
-    //     {
-    //         safeData += c;
-    //     }
-    //     else
-    //     {
-    //         safeData += '?'; // 替換不安全的字符
-    //     }
-    // }
-
-    if (g_theDevConsole)
-    {
-        if (fromClientId != -1)
-        {
-            g_theDevConsole->AddLine(Rgba8(255, 255, 255),
-                                     Stringf("[Network] *** RECEIVED GAME DATA *** from client %d: '%s'", fromClientId, data.c_str()));
-        }
-        else
-        {
-            g_theDevConsole->AddLine(Rgba8(255, 255, 255),
-                                     Stringf("[Network] *** RECEIVED GAME DATA *** from server: '%s'", data.c_str()));
-        }
-    }
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-// 當接收到聊天訊息時觸發
-//----------------------------------------------------------------------------------------------------
-bool OnChatMessageReceived(EventArgs& args)
-{
-    std::string message      = args.GetValue("data", "");
-    int         fromClientId = args.GetValue("fromClientId", -1);
-
-    if (g_theDevConsole)
-    {
-        if (fromClientId != -1)
-        {
-            g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-                                     Stringf("[Network] *** RECEIVED CHAT *** from client %d: '%s'", fromClientId, message.c_str()));
-        }
-        else
-        {
-            g_theDevConsole->AddLine(Rgba8(0, 255, 255),
-                                     Stringf("[Network] *** RECEIVED CHAT *** from server: '%s'", message.c_str()));
-        }
-    }
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-// 當接收到任何網路訊息時觸發（通用處理器）
-//----------------------------------------------------------------------------------------------------
-bool OnNetworkMessageReceived(EventArgs& args)
-{
-    std::string messageType  = args.GetValue("messageType", "");
-    std::string data         = args.GetValue("data", "");
-    int         fromClientId = args.GetValue("fromClientId", -1);
-
-    if (g_theDevConsole)
-    {
-        g_theDevConsole->AddLine(Rgba8(200, 200, 200),
-                                 Stringf("[Network] Message received - Type: %s, From: %d", messageType.c_str(), fromClientId));
-    }
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-// 註冊所有網路事件處理器 - 這是關鍵函數！
-//----------------------------------------------------------------------------------------------------
-void RegisterNetworkSubsystemEventHandlers()
-{
-    if (!g_theEventSystem)
-    {
-        if (g_theDevConsole)
-        {
-            g_theDevConsole->AddLine(Rgba8(255, 0, 0), "[Network] ERROR: EventSystem not available, cannot register network event handlers!");
-        }
-        return;
-    }
-
-    // 註冊連線事件
-    g_theEventSystem->SubscribeEventCallbackFunction("ClientConnected", OnClientConnected);
-    g_theEventSystem->SubscribeEventCallbackFunction("ClientDisconnected", OnClientDisconnected);
-
-    // 註冊訊息接收事件（這些是最重要的！）
-    g_theEventSystem->SubscribeEventCallbackFunction("GameDataReceived", OnGameDataReceived);
-    g_theEventSystem->SubscribeEventCallbackFunction("ChatMessageReceived", OnChatMessageReceived);
-    g_theEventSystem->SubscribeEventCallbackFunction("NetworkMessageReceived", OnNetworkMessageReceived);
-
-    if (g_theDevConsole)
-    {
-        g_theDevConsole->AddLine(Rgba8(0, 255, 255), "[Network] *** EVENT HANDLERS REGISTERED ***");
-        g_theDevConsole->AddLine(Rgba8(255, 255, 255), "[Network] - ClientConnected");
-        g_theDevConsole->AddLine(Rgba8(255, 255, 255), "[Network] - ClientDisconnected");
-        g_theDevConsole->AddLine(Rgba8(255, 255, 255), "[Network] - GameDataReceived");
-        g_theDevConsole->AddLine(Rgba8(255, 255, 255), "[Network] - ChatMessageReceived");
-        g_theDevConsole->AddLine(Rgba8(255, 255, 255), "[Network] - NetworkMessageReceived");
     }
 }

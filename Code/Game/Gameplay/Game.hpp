@@ -37,9 +37,6 @@ public:
     void Render() const;
 
     static bool OnGameStateChanged(EventArgs& args);
-    static bool Event_ChessConnect(EventArgs& args);
-    static bool Event_ChessListen(EventArgs& args);
-    static bool Event_ChessPlayerInfo(EventArgs& args);
 
     eGameState        GetCurrentGameState() const;
     int               GetCurrentPlayerControllerId() const;

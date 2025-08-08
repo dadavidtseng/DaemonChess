@@ -26,9 +26,7 @@
 Game::Game()
 {
     g_theEventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
-    g_theEventSystem->SubscribeEventCallbackFunction("ChessConnect", Event_ChessConnect);
-    g_theEventSystem->SubscribeEventCallbackFunction("ChessListen", Event_ChessListen);
-    g_theEventSystem->SubscribeEventCallbackFunction("ChessPlayerInfo", Event_ChessPlayerInfo);
+
     m_gameClock                 = new Clock(Clock::GetSystemClock());
     m_screenCamera              = new Camera();
     Vec2 const bottomLeft       = Vec2::ZERO;
@@ -58,42 +56,6 @@ void Game::Update()
     UpdateEntities(gameDeltaSeconds, systemDeltaSeconds);
 
     UpdateFromInput();
-
-    // 網路連線狀態檢查
-    static bool s_hasSentPlayerInfo = false;
-    static bool s_wasConnected = false;
-
-    if (g_theNetworkSubsystem)
-    {
-        bool isConnected = g_theNetworkSubsystem->IsConnected();
-
-        // Client 端：剛連上時自動發送玩家資訊
-        if (g_theNetworkSubsystem->IsClient() && isConnected && !s_hasSentPlayerInfo)
-        {
-            // 從設定或介面取得玩家名稱，這裡先用固定值
-            std::string myName = m_playerName;  // 或使用 g_theGame->m_playerName
-            std::string command = Stringf("ChessPlayerInfo name=%s", myName.c_str());
-
-            g_theNetworkSubsystem->SendRawData(command);
-            s_hasSentPlayerInfo = true;
-
-            g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
-                Stringf("Sent player info: %s", myName.c_str()));
-        }
-
-        // 如果斷線了，重置標記
-        if (s_wasConnected && !isConnected)
-        {
-            s_hasSentPlayerInfo = false;
-            g_theGame->m_isOpponentConnected = false;
-            g_theGame->m_opponentName = "";
-
-            g_theDevConsole->AddLine(DevConsole::WARNING,
-                "Disconnected from opponent");
-        }
-
-        s_wasConnected = isConnected;
-    }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -172,115 +134,6 @@ bool Game::OnGameStateChanged(EventArgs& args)
         PlayerController* player = g_theGame->GetLocalPlayer(id);
         player->m_position       = Vec3(9.5f, 4.f, 4.f);
         player->m_orientation    = EulerAngles(180, 45, 0);
-    }
-
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-bool Game::Event_ChessConnect(EventArgs& args)
-{
-    if (!g_theNetworkSubsystem || !g_theGame)
-        return false;
-
-    std::string address = args.GetValue("address", "127.0.0.1");
-    int port = args.GetValue("port", 3100);
-
-    bool success = g_theNetworkSubsystem->ConnectToServer(address, port);
-
-    if (success)
-    {
-        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
-            Stringf("Connecting to chess server at %s:%d", address.c_str(), port));
-    }
-    else
-    {
-        g_theDevConsole->AddLine(DevConsole::ERROR,
-            "Failed to connect to server");
-    }
-
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-bool Game::Event_ChessListen(EventArgs& args)
-{
-    if (!g_theNetworkSubsystem || !g_theGame)
-        return false;
-
-    int port = args.GetValue("port", 3100);
-
-    bool success = g_theNetworkSubsystem->StartServer(port);
-
-    if (success)
-    {
-        // 設定 Server 的玩家名稱
-        std::string serverName = args.GetValue("name", "Host");
-        g_theGame->m_playerName = serverName;
-
-        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
-            Stringf("Server started on port %d", port));
-        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
-            Stringf("Waiting for opponent..."));
-    }
-    else
-    {
-        g_theDevConsole->AddLine(DevConsole::ERROR,
-            "Failed to start server");
-    }
-
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-bool Game::Event_ChessPlayerInfo(EventArgs& args)
-{
-    if (!g_theNetworkSubsystem || !g_theGame)
-        return false;
-
-    std::string playerName = args.GetValue("name", "Unknown");
-
-    // Server 收到 Client 的玩家資訊
-    if (g_theNetworkSubsystem->IsServer())
-    {
-        // 儲存對手資訊
-        g_theGame->m_opponentName = playerName;
-        g_theGame->m_isOpponentConnected = true;
-
-        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
-            Stringf("Player '%s' connected!", playerName.c_str()));
-
-        // 重要：Server 必須回傳自己的玩家資訊給 Client
-        std::string replyCommand = Stringf("ChessPlayerInfo name=%s",
-            g_theGame->m_playerName.c_str());
-        g_theNetworkSubsystem->SendRawData(replyCommand);
-
-        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
-            Stringf("Sent player info: %s", g_theGame->m_playerName.c_str()));
-
-        // 如果有 Match 物件，更新它
-        if (g_theGame->m_match)
-        {
-            // 這裡可能需要呼叫 Match 的某個函數來設定對手資訊
-            // 例如：g_theGame->m_match->SetOpponent(playerName);
-        }
-    }
-    // Client 收到 Server 的玩家資訊
-    else if (g_theNetworkSubsystem->IsClient())
-    {
-        // 儲存對手資訊
-        g_theGame->m_opponentName = playerName;
-        g_theGame->m_isOpponentConnected = true;
-
-        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
-            Stringf("Connected to host '%s'!", playerName.c_str()));
-
-        // 如果有 Match 物件，更新它
-        if (g_theGame->m_match)
-        {
-            // 這裡可能需要呼叫 Match 的某個函數來設定對手資訊
-            // 例如：g_theGame->m_match->SetOpponent(playerName);
-        }
     }
 
     return true;
