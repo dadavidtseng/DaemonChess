@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Piece.hpp"
 
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/VertexUtils.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/Curve2D.hpp"
@@ -75,7 +76,30 @@ void Piece::Update(float const deltaSeconds)
     m_orientation.m_pitchDegrees += m_angularVelocity.m_pitchDegrees * deltaSeconds;
     m_orientation.m_rollDegrees += m_angularVelocity.m_rollDegrees * deltaSeconds;
 
+    // 被捕獲的棋子不需要更新動畫
+    if (m_isCaptured) return;
+    
+    // 更新被捕獲動畫
+    if (m_isBeingCaptured)
+    {
+        m_captureAnimTimer += deltaSeconds;
+        
+        // 播放一個簡單的下沉動畫
+        float captureProgress = m_captureAnimTimer / 2.f; // 2秒動畫
+        if (captureProgress >= 1.f)
+        {
+            captureProgress = 1.f;
+        }
+        
+        // 使用平滑函數讓棋子慢慢下沉
+        float sinkOffset = SmoothStep3(captureProgress) * -0.5f; // 向下移動0.5單位
+        m_position.z = m_match->m_board->GetWorldPositionByCoords(m_coords).z + sinkOffset;
+        
+        return; // 被捕獲動畫期間不要處理其他動畫
+    }
+    
     if (!m_isMoving) return;
+    if (!m_definition) return;
 
     m_moveTimer += deltaSeconds;
 
@@ -107,6 +131,9 @@ void Piece::Update(float const deltaSeconds)
 //----------------------------------------------------------------------------------------------------
 void Piece::Render() const
 {
+    if (m_definition == nullptr) return;
+    if (m_isCaptured) return; // 被捕獲的棋子不渲染
+
     g_theRenderer->SetModelConstants(GetModelToWorldTransform(), m_color);
     g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
     g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
@@ -119,8 +146,8 @@ void Piece::Render() const
     g_theRenderer->BindShader(m_shader);
     unsigned int const indexCount = m_definition->GetIndexCountByID(m_id);
     g_theRenderer->DrawIndexedVertexBuffer(m_definition->m_vertexBuffer[m_id], m_definition->m_indexBuffer[m_id], indexCount);
-
-    if (m_isHighlighted||m_isSelected)
+    
+    if (m_isHighlighted || m_isSelected)
     {
         RenderSelectedPiece();
     }
@@ -132,10 +159,10 @@ void Piece::RenderSelectedPiece() const
 {
     VertexList_PCU verts;
 
-    AddVertsForWireframeCylinder3D(verts, m_position, m_position+Vec3::Z_BASIS, 0.25f,0.005f);
+    AddVertsForWireframeCylinder3D(verts, m_position, m_position + Vec3::Z_BASIS, 0.25f, 0.005f);
 
 
-g_theRenderer->SetModelConstants();
+    g_theRenderer->SetModelConstants();
     g_theRenderer->BindTexture(nullptr);
     g_theRenderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
     g_theRenderer->DrawVertexArray(verts);
@@ -143,7 +170,7 @@ g_theRenderer->SetModelConstants();
 
 void Piece::RenderTargetPiece() const
 {
-    g_theRenderer->SetModelConstants(GetModelToWorldTransform(), Rgba8(m_color.r, m_color.g, m_color.b,100));
+    g_theRenderer->SetModelConstants(GetModelToWorldTransform(), Rgba8(m_color.r, m_color.g, m_color.b, 100));
     g_theRenderer->SetBlendMode(eBlendMode::ALPHA);
     g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
     g_theRenderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
@@ -155,7 +182,6 @@ void Piece::RenderTargetPiece() const
     g_theRenderer->BindShader(m_shader);
     unsigned int const indexCount = m_definition->GetIndexCountByID(m_id);
     g_theRenderer->DrawIndexedVertexBuffer(m_definition->m_vertexBuffer[m_id], m_definition->m_indexBuffer[m_id], indexCount);
-
 }
 
 void Piece::UpdatePositionByCoords(IntVec2 const& newCoords)
@@ -183,4 +209,13 @@ void Piece::UpdatePositionByCoords(IntVec2 const& newCoords,
     m_moveDuration = moveTime;
     m_moveTimer    = 0.0f;
     m_isMoving     = true;
+}
+
+void Piece::StartCaptureAnimation(float duration)
+{
+    m_isBeingCaptured = true;
+    m_captureAnimTimer = 0.f;
+    // duration 參數在這裡不使用，因為我們硬編碼為 2 秒
+    // 但為了接口一致性保留這個參數
+    UNUSED(duration);
 }

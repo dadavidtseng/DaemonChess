@@ -35,15 +35,17 @@ public:
     Board*    m_board = nullptr;
     PieceList m_pieceList;
 
-
 private:
     void UpdateFromInput(float deltaSeconds);
+    void CreateScreenCamera();
+    void CreateGameClock();
     void CreateBoard();
 
     static bool OnEnterMatchState(EventArgs& args);
     static bool OnEnterMatchTurn(EventArgs& args);
     static bool OnExitMatchTurn(EventArgs& args);
     static bool OnMatchInitialized(EventArgs& args);
+    static bool OnChessMove(EventArgs& args);
 
     void OnChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo, bool isTeleport);
     bool ExecuteMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo, bool isTeleport);
@@ -58,6 +60,8 @@ private:
     void ExecuteCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo = "");
 
     void RemovePieceFromPieceList(IntVec2 const& toCoords);
+    void SchedulePieceForRemoval(Piece* piece, float delay, ePieceType capturedType);
+    void UpdatePendingRemovals(float deltaSeconds);
 
     eMoveResult ValidateChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promotionType, bool isTeleport) const;
     eMoveResult ValidatePieceMovement(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promotionType) const;
@@ -77,7 +81,7 @@ private:
 
     sPieceMove GetLastPieceMove() const;
 
-    static bool OnChessMove(EventArgs& args);
+
 
     Camera* m_screenCamera = nullptr;
     Clock*  m_gameClock    = nullptr;
@@ -93,4 +97,13 @@ private:
     Vec3          m_ghostPiecePosition = Vec3::ZERO;
     Piece*        m_ghostSourcePiece   = nullptr;
     bool          m_isCheatMode        = false;
+
+    // 延遲移除系統
+    struct PendingRemoval
+    {
+        Piece*        piece              = nullptr;
+        float         remainingTime      = 0.f;
+        ePieceType    capturedPieceType  = ePieceType::NONE;
+    };
+    std::vector<PendingRemoval> m_pendingRemovals;
 };

@@ -50,15 +50,5 @@ struct sPieceMove
     IntVec2      toCoords   = IntVec2::ZERO;
 };
 
-//----------------------------------------------------------------------------------------------------
-enum class eChessGameState : uint8_t
-{
-    WAITING_FOR_CONNECTION,
-    WAITING_FOR_OPPONENT,
-    PLAYER1_MOVING,
-    PLAYER2_MOVING,
-    GAME_OVER
-};
-
 char const* GetMoveResultString(eMoveResult const& result);
 bool        IsMoveValid(eMoveResult const& result);

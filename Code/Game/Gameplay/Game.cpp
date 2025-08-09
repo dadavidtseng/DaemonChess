@@ -304,16 +304,7 @@ void Game::RenderAttractMode() const
     g_theRenderer->DrawVertexArray(verts);
 
     std::vector<std::string> asciiArt = {
-        "         ,....,",
-        "      ,::::::<",
-        "     ,::/^\"",
-        "    ,::/, `   e`",
-        "   ,::; |        '",
-        "   ,::|  \\___,-.  c",
-        "   ;::|     \\   ",
-        "   ;::|      \\",
-        "   ;::|   _.=`\\",
-        "   `;:|.=` _.=`\\",
+
         "     '|_.=`   __\\",
         "     `\\_..==`` ",
         "      .'.___.-'.",
@@ -324,7 +315,7 @@ void Game::RenderAttractMode() const
     };
 
     Vec2  basePosition(480.f, 630.f);
-    float lineHeight = 30.f;
+    float lineHeight = 40.f;
 
     for (size_t i = 0; i < asciiArt.size(); ++i)
     {

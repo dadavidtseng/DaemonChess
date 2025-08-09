@@ -7,7 +7,6 @@
 
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/MathUtils.hpp"
@@ -33,15 +32,8 @@ Match::Match()
     g_theEventSystem->SubscribeEventCallbackFunction("OnExitMatchTurn", OnExitMatchTurn);
     g_theEventSystem->SubscribeEventCallbackFunction("OnMatchInitialized", OnMatchInitialized);
 
-    m_screenCamera = new Camera();
-
-    Vec2 const bottomLeft     = Vec2::ZERO;
-    Vec2 const screenTopRight = Vec2(Window::s_mainWindow->GetViewportDimensions().x, Window::s_mainWindow->GetViewportDimensions().y);
-
-    m_screenCamera->SetOrthoGraphicView(bottomLeft, screenTopRight);
-    m_screenCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
-    m_gameClock = new Clock(Clock::GetSystemClock());
-
+    CreateScreenCamera();
+    CreateGameClock();
     CreateBoard();
 
     for (PieceDefinition* pieceDef : PieceDefinition::s_pieceDefinitions)
@@ -50,17 +42,17 @@ Match::Match()
         pieceDef->CreateMeshByID(1);
     }
 
-    for (BoardDefinition const* boardDefs : BoardDefinition::s_boardDefinitions)
+    for (BoardDefinition const* boardDef : BoardDefinition::s_boardDefinitions)
     {
-        for (sSquareInfo const& squareInfo : boardDefs->m_squareInfos)
+        for (sSquareInfo const& squareInfo : boardDef->m_squareInfos)
         {
             m_board->m_squareInfoList.push_back(squareInfo);
 
             if (squareInfo.m_name == "DEFAULT") continue;
 
             Piece* piece         = new Piece(this, squareInfo);
-            piece->m_orientation = boardDefs->m_pieceOrientation;
-            piece->m_color       = boardDefs->m_pieceColor;
+            piece->m_orientation = boardDef->m_pieceOrientation;
+            piece->m_color       = boardDef->m_pieceColor;
             m_pieceList.push_back(piece);
         }
     }
@@ -87,6 +79,14 @@ Match::~Match()
     GAME_SAFE_RELEASE(m_screenCamera);
     GAME_SAFE_RELEASE(m_board);
 
+    // 清理待處理的移除
+    for (auto& removal : m_pendingRemovals)
+    {
+        // 這些棋子也在 m_pieceList 中，會在下面被刪除
+        // 所以這裡不需要 delete
+    }
+    m_pendingRemovals.clear();
+
     for (int i = 0; i < static_cast<int>(m_pieceList.size()); ++i)
     {
         GAME_SAFE_RELEASE(m_pieceList[i]);
@@ -100,6 +100,9 @@ void Match::Update()
     float const deltaSeconds = static_cast<float>(m_gameClock->GetDeltaSeconds());
 
     DebugAddScreenText(Stringf("Time: %.2f\nFPS: %.2f\nScale: %.1f", m_gameClock->GetTotalSeconds(), 1.f / m_gameClock->GetDeltaSeconds(), m_gameClock->GetTimeScale()), m_screenCamera->GetOrthographicTopRight() - Vec2(250.f, 60.f), 20.f, Vec2::ZERO, 0.f, Rgba8::WHITE, Rgba8::WHITE);
+
+    // 更新延遲移除系統
+    UpdatePendingRemovals(deltaSeconds);
 
     UpdateFromInput(deltaSeconds);
 
@@ -120,7 +123,7 @@ void Match::Update()
     // 檢查是否有 piece 被選中
     for (Piece* piece : m_pieceList)
     {
-        if (piece != nullptr && piece->m_isSelected)
+        if (piece != nullptr && piece->m_isSelected && !piece->m_isCaptured && !piece->m_isBeingCaptured)
         {
             hasAnySelection = true;
             m_selectedPiece = piece;
@@ -165,7 +168,7 @@ void Match::Update()
 
         for (Piece* piece : m_pieceList)
         {
-            if (piece != nullptr)
+            if (piece != nullptr && !piece->m_isCaptured && !piece->m_isBeingCaptured)
             {
                 piece->m_isHighlighted = false;
             }
@@ -278,6 +281,9 @@ void Match::Update()
         // Check pieces
         for (Piece* piece : m_pieceList)
         {
+            // 跳過被捕獲的棋子和正在被捕獲的棋子
+            if (piece->m_isCaptured || piece->m_isBeingCaptured) continue;
+
             RaycastResult3D result = RaycastVsCylinderZ3D(
                 currentPlayer->m_position,
                 currentPlayerForwardNormal,
@@ -314,7 +320,10 @@ void Match::Update()
             // Set piece selection
             for (Piece* piece : m_pieceList)
             {
-                piece->m_isHighlighted = (piece == closestPiece);
+                if (!piece->m_isCaptured && !piece->m_isBeingCaptured)
+                {
+                    piece->m_isHighlighted = (piece == closestPiece);
+                }
             }
         }
         else
@@ -327,7 +336,10 @@ void Match::Update()
 
             for (Piece* piece : m_pieceList)
             {
-                piece->m_isHighlighted = false;
+                if (!piece->m_isCaptured && !piece->m_isBeingCaptured)
+                {
+                    piece->m_isHighlighted = false;
+                }
             }
         }
     }
@@ -540,8 +552,6 @@ void Match::UpdateFromInput(float const deltaSeconds)
 //----------------------------------------------------------------------------------------------------
 void Match::Render() const
 {
-    // g_theRenderer->SetLightConstants(Rgba8::WHITE, m_sunDirection, m_ambientIntensity, 8);
-
     m_board->Render();
 
     for (Piece const* piece : m_pieceList)
@@ -586,6 +596,22 @@ void Match::RenderGhostPiece() const
 }
 
 //----------------------------------------------------------------------------------------------------
+void Match::CreateScreenCamera()
+{
+    m_screenCamera            = new Camera();
+    Vec2 const bottomLeft     = Vec2::ZERO;
+    Vec2 const screenTopRight = Vec2(Window::s_mainWindow->GetViewportDimensions().x, Window::s_mainWindow->GetViewportDimensions().y);
+    m_screenCamera->SetOrthoGraphicView(bottomLeft, screenTopRight);
+    m_screenCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
+}
+
+//----------------------------------------------------------------------------------------------------
+void Match::CreateGameClock()
+{
+    m_gameClock = new Clock(Clock::GetSystemClock());
+}
+
+//----------------------------------------------------------------------------------------------------
 void Match::CreateBoard()
 {
     m_board = new Board(this);
@@ -600,24 +626,25 @@ void Match::ExecuteCapture(IntVec2 const& fromCoords,
 
     if (toPiece == nullptr) return;
 
-    // If captured piece is a king, end the match
-    if (toPiece->m_definition->m_type == ePieceType::KING)
-    {
-        fromPiece->UpdatePositionByCoords(toCoords);
-        IsValidPromotionType(promoteTo) ? m_board->UpdateSquareInfoList(fromCoords, toCoords, promoteTo) : m_board->UpdateSquareInfoList(fromCoords, toCoords);
-        RemovePieceFromPieceList(toPiece->m_coords);
+    // 儲存被捕獲棋子的類型
+    ePieceType capturedPieceType = toPiece->m_definition->m_type;
 
-        g_theDevConsole->AddLine(DevConsole::WARNING, "##################################################");
-        g_theDevConsole->AddLine(DevConsole::WARNING, Stringf("[SYSTEM] Player #%d has won the match!", g_theGame->GetCurrentPlayerControllerId()));
-        g_theDevConsole->AddLine(DevConsole::WARNING, "##################################################");
-        g_theGame->ChangeGameState(eGameState::FINISHED);
+    // 1. 立即更新棋盤狀態（將被捕獲棋子從棋盤上移除）
+    if (IsValidPromotionType(promoteTo))
+    {
+        m_board->UpdateSquareInfoList(fromCoords, toCoords, promoteTo);
     }
     else
     {
-        fromPiece->UpdatePositionByCoords(toCoords);
-        IsValidPromotionType(promoteTo) ? m_board->UpdateSquareInfoList(fromCoords, toCoords, promoteTo) : m_board->UpdateSquareInfoList(fromCoords, toCoords);
-        RemovePieceFromPieceList(toPiece->m_coords);
+        m_board->UpdateSquareInfoList(fromCoords, toCoords);
     }
+
+    // 2. 排程在動畫完成後移除被捕獲的棋子
+    SchedulePieceForRemoval(const_cast<Piece*>(toPiece), 2.f, capturedPieceType);
+
+    // 3. 開始攻擊棋子的移動動畫
+    fromPiece->UpdatePositionByCoords(toCoords, 2.f);
+    fromPiece->m_hasMoved = true;
 }
 
 void Match::RemovePieceFromPieceList(IntVec2 const& toCoords)
@@ -635,6 +662,63 @@ void Match::RemovePieceFromPieceList(IntVec2 const& toCoords)
         }
 
         ++it;
+    }
+}
+
+void Match::SchedulePieceForRemoval(Piece* piece, float delay, ePieceType capturedType)
+{
+    // 開始被捕獲動畫（下沉效果）
+    piece->StartCaptureAnimation(delay);
+
+    PendingRemoval removal;
+    removal.piece             = piece;
+    removal.remainingTime     = delay;
+    removal.capturedPieceType = capturedType;
+    m_pendingRemovals.push_back(removal);
+}
+
+void Match::UpdatePendingRemovals(float deltaSeconds)
+{
+    for (auto it = m_pendingRemovals.begin(); it != m_pendingRemovals.end();)
+    {
+        it->remainingTime -= deltaSeconds;
+
+        if (it->remainingTime <= 0.f)
+        {
+            // 時間到了，移除棋子
+            Piece*     pieceToRemove = it->piece;
+            ePieceType capturedType  = it->capturedPieceType;
+
+            // 現在才標記為被捕獲（這樣它就不會渲染了）
+            pieceToRemove->m_isCaptured = true;
+
+            // 從棋子列表中移除
+            for (auto pieceIt = m_pieceList.begin(); pieceIt != m_pieceList.end(); ++pieceIt)
+            {
+                if (*pieceIt == pieceToRemove)
+                {
+                    delete pieceToRemove;
+                    m_pieceList.erase(pieceIt);
+                    break;
+                }
+            }
+
+            // 檢查是否捕獲了國王
+            if (capturedType == ePieceType::KING)
+            {
+                g_theDevConsole->AddLine(DevConsole::WARNING, "##################################################");
+                g_theDevConsole->AddLine(DevConsole::WARNING, Stringf("[SYSTEM] Player #%d has won the match!", g_theGame->GetCurrentPlayerControllerId()));
+                g_theDevConsole->AddLine(DevConsole::WARNING, "##################################################");
+                g_theGame->ChangeGameState(eGameState::FINISHED);
+            }
+
+            // 從待處理列表中移除
+            it = m_pendingRemovals.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
     }
 }
 
@@ -751,7 +835,7 @@ eMoveResult Match::ValidateChessMove(IntVec2 const& fromCoords,
     {
         if (isTeleport)
         {
-            return eMoveResult::VALID_MOVE_PROMOTION;
+            return eMoveResult::VALID_CAPTURE_NORMAL; // 修正：teleport capture 應該回傳 VALID_CAPTURE_NORMAL
         }
         if (toOwner == g_theGame->GetCurrentPlayerControllerId()) return eMoveResult::INVALID_MOVE_DESTINATION_BLOCKED;
     }
@@ -1201,7 +1285,7 @@ void Match::ExecuteEnPassantCapture(IntVec2 const& fromCoords, IntVec2 const& to
     // Remove the captured pawn
     IntVec2 capturedPawnPos = IntVec2(toCoords.x, fromCoords.y);
     Piece*  fromPiece       = m_board->GetPieceByCoords(fromCoords);
-    fromPiece->UpdatePositionByCoords(toCoords);
+    fromPiece->UpdatePositionByCoords(toCoords, 2.f);
     m_board->UpdateSquareInfoList(fromCoords, toCoords);
     m_board->UpdateSquareInfoList(capturedPawnPos);
     RemovePieceFromPieceList(capturedPawnPos);
@@ -1218,7 +1302,7 @@ void Match::ExecutePawnPromotion(IntVec2 const& fromCoords,
     Piece* fromPiece        = m_board->GetPieceByCoords(fromCoords);
     fromPiece->m_definition = PieceDefinition::GetDefByName(promoteTo);
     // fromPiece->UpdatePositionByCoords(toCoords);
-    ExecuteCapture(fromCoords, toCoords);
+    ExecuteCapture(fromCoords, toCoords, promoteTo);
 
     // m_board->UpdateSquareInfoList(fromCoords, toCoords, promoteTo);
 }
@@ -1295,7 +1379,7 @@ void Match::RenderPlayerBasis() const
 }
 
 //----------------------------------------------------------------------------------------------------
-bool Match::OnChessMove(EventArgs& args)
+STATIC bool Match::OnChessMove(EventArgs& args)
 {
     Match* match = g_theGame->m_match;
     if (!match) return false;
