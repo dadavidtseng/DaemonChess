@@ -617,12 +617,62 @@ void Match::CreateBoard()
     m_board = new Board(this);
 }
 
+STATIC bool Match::OnEnterMatchState(EventArgs& args)
+{
+    OnEnterMatchTurn(args);
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+STATIC bool Match::OnEnterMatchTurn(EventArgs& args)
+{
+    UNUSED(args)
+
+    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("=================================================="));
+    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("Player #%d -- it's your turn!", g_theGame->GetCurrentPlayerControllerId()));
+
+    int const currentTurnPlayerIndex = g_theGame->GetCurrentPlayerControllerId();
+
+    if (currentTurnPlayerIndex == 0 || currentTurnPlayerIndex == -1) g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Game state is: First Player's Turn"));
+    else if (currentTurnPlayerIndex == 1) g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Game state is: Second Player's Turn"));
+
+    g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf("  ABCDEFGH"));
+    g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf(" +--------+"));
+
+    for (int row = 8; row >= 1; --row)
+    {
+        g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf("%d|%s|%d", row, g_theGame->m_match->m_board->GetBoardContents(row).c_str(), row));
+    }
+
+    g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf(" +--------+"));
+    g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf("  ABCDEFGH"));
+
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+STATIC bool Match::OnExitMatchTurn(EventArgs& args)
+{
+    UNUSED(args)
+    g_theGame->TogglePlayerControllerId();
+    g_theEventSystem->FireEvent("OnEnterMatchTurn");
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+STATIC bool Match::OnMatchInitialized(EventArgs& args)
+{
+    UNUSED(args)
+    g_theEventSystem->FireEvent("OnEnterMatchTurn");
+    return true;
+}
+
 void Match::ExecuteCapture(IntVec2 const& fromCoords,
                            IntVec2 const& toCoords,
                            String const&  promoteTo)
 {
     Piece*       fromPiece = m_board->GetPieceByCoords(fromCoords);
-    Piece const* toPiece   = m_board->GetPieceByCoords(toCoords);
+    Piece * toPiece   = m_board->GetPieceByCoords(toCoords);
 
     if (toPiece == nullptr) return;
 
@@ -640,7 +690,7 @@ void Match::ExecuteCapture(IntVec2 const& fromCoords,
     }
 
     // 2. 排程在動畫完成後移除被捕獲的棋子
-    SchedulePieceForRemoval(const_cast<Piece*>(toPiece), 2.f, capturedPieceType);
+    SchedulePieceForRemoval(toPiece, 2.f, capturedPieceType);
 
     // 3. 開始攻擊棋子的移動動畫
     fromPiece->UpdatePositionByCoords(toCoords, 2.f);
@@ -722,70 +772,7 @@ void Match::UpdatePendingRemovals(float deltaSeconds)
     }
 }
 
-// bool Match::OnChessMove(EventArgs& args)
-// {
-//     String const from       = args.GetValue("from", "DEFAULT");
-//     String const to         = args.GetValue("to", "DEFAULT");
-//     String const promotion  = args.GetValue("promoteTo", "DEFAULT");
-//     bool const   isTeleport = args.GetValue("teleport", false);
-//
-//     IntVec2 const fromCoords = g_theGame->m_match->m_board->StringToChessCoord(from);
-//     IntVec2 const toCoords   = g_theGame->m_match->m_board->StringToChessCoord(to);
-//
-//     g_theGame->m_match->OnChessMove(fromCoords, toCoords, promotion, isTeleport);
-//     return true;
-// }
 
-bool Match::OnEnterMatchState(EventArgs& args)
-{
-    OnEnterMatchTurn(args);
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-bool Match::OnEnterMatchTurn(EventArgs& args)
-{
-    UNUSED(args)
-
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("=================================================="));
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("Player #%d -- it's your turn!", g_theGame->GetCurrentPlayerControllerId()));
-
-    int const currentTurnPlayerIndex = g_theGame->GetCurrentPlayerControllerId();
-
-    if (currentTurnPlayerIndex == 0 || currentTurnPlayerIndex == -1) g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Game state is: First Player's Turn"));
-    else if (currentTurnPlayerIndex == 1) g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Game state is: Second Player's Turn"));
-
-    g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf("  ABCDEFGH"));
-    g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf(" +--------+"));
-
-    for (int row = 8; row >= 1; --row)
-    {
-        g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf("%d|%s|%d", row, g_theGame->m_match->m_board->GetBoardContents(row).c_str(), row));
-    }
-
-    g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf(" +--------+"));
-    g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf("  ABCDEFGH"));
-
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-bool Match::OnExitMatchTurn(EventArgs& args)
-{
-    UNUSED(args)
-
-    g_theGame->TogglePlayerControllerId();
-    g_theEventSystem->FireEvent("OnEnterMatchTurn");
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------
-bool Match::OnMatchInitialized(EventArgs& args)
-{
-    UNUSED(args)
-    g_theEventSystem->FireEvent("OnEnterMatchTurn");
-    return true;
-}
 
 //----------------------------------------------------------------------------------------------------
 void Match::OnChessMove(IntVec2 const& fromCoords,
@@ -815,13 +802,13 @@ eMoveResult Match::ValidateChessMove(IntVec2 const& fromCoords,
         return eMoveResult::INVALID_MOVE_NO_PIECE;
     }
 
-    // 3. Check if piece belongs to current player
+    // 3. Check if the piece belongs to the current player
     if (m_board->GetSquareInfoByCoords(fromCoords).m_playerControllerId != g_theGame->GetCurrentPlayerControllerId())
     {
         return eMoveResult::INVALID_MOVE_NOT_YOUR_PIECE;
     }
 
-    // 4. Check if trying to move to same square
+    // 4. Check if trying to move to the same square
     if (fromCoords == toCoords)
     {
         return eMoveResult::INVALID_MOVE_ZERO_DISTANCE;
@@ -833,10 +820,7 @@ eMoveResult Match::ValidateChessMove(IntVec2 const& fromCoords,
 
     if (toPiece != nullptr)
     {
-        if (isTeleport)
-        {
-            return eMoveResult::VALID_CAPTURE_NORMAL; // 修正：teleport capture 應該回傳 VALID_CAPTURE_NORMAL
-        }
+        if (isTeleport) return eMoveResult::VALID_CAPTURE_NORMAL;
         if (toOwner == g_theGame->GetCurrentPlayerControllerId()) return eMoveResult::INVALID_MOVE_DESTINATION_BLOCKED;
     }
     else
@@ -912,7 +896,8 @@ eMoveResult Match::ValidatePawnMove(IntVec2 const& fromCoords,
     {
         if (promotionType.empty())
         {
-            return eMoveResult::VALID_MOVE_PROMOTION; // Need promotion parameter
+            // return eMoveResult::VALID_MOVE_PROMOTION; // Need promotion parameter
+            // return eMoveResult::INVALID_MOVE
         }
 
         if (!IsValidPromotionType(promotionType))

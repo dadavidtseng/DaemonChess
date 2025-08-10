@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <iostream>
 #include <windows.h>			// #include this (massive, platform-specific) header in VERY few places (and .CPPs only)
+
 #include "Engine/Core/EngineCommon.hpp"
 #include "Game/Framework/App.hpp"
 #include "Game/Framework/GameCommon.hpp"
@@ -25,8 +26,7 @@ int WINAPI WinMain(HINSTANCE const applicationInstanceHandle,
     g_theApp->RunMainLoop();
     g_theApp->Shutdown();
 
-    delete g_theApp;
-    g_theApp = nullptr;
+    GAME_SAFE_RELEASE(g_theApp);
 
     return 0;
 }

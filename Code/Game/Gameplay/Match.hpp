@@ -19,7 +19,6 @@ class PlayerController;
 typedef std::vector<Piece*>     PieceList;
 typedef std::vector<sPieceMove> PieceMoveList;
 
-//----------------------------------------------------------------------------------------------------
 /// @brief
 /// Owned by Game, piece, and board
 class Match
@@ -37,6 +36,7 @@ public:
 
 private:
     void UpdateFromInput(float deltaSeconds);
+    void RenderPlayerBasis() const;
     void CreateScreenCamera();
     void CreateGameClock();
     void CreateBoard();
@@ -50,14 +50,15 @@ private:
     void OnChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo, bool isTeleport);
     bool ExecuteMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo, bool isTeleport);
 
-    void        ExecuteEnPassantCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords);
-    void        ExecutePawnPromotion(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo);
-    void        ExecuteCastling(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
-    void        ExecuteKingsideCastling(IntVec2 const& fromCoords) const;
-    void        ExecuteQueensideCastling(IntVec2 const& fromCoords) const;
-    void        RenderPlayerBasis() const;
-
+    void ExecuteEnPassantCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords);
+    void ExecutePawnPromotion(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo);
+    void ExecuteCastling(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
+    void ExecuteKingsideCastling(IntVec2 const& fromCoords) const;
+    void ExecuteQueensideCastling(IntVec2 const& fromCoords) const;
     void ExecuteCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo = "");
+
+
+
 
     void RemovePieceFromPieceList(IntVec2 const& toCoords);
     void SchedulePieceForRemoval(Piece* piece, float delay, ePieceType capturedType);
@@ -74,14 +75,13 @@ private:
     eMoveResult ValidateCastling(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
     eMoveResult DetermineValidMoveType(IntVec2 const& fromCoords, IntVec2 const& toCoords, Piece const* fromPiece) const;
 
+    /// Helper functions
     bool IsKingDistanceValid(IntVec2 const& toCoords) const;
     bool IsPathClear(IntVec2 const& fromCoords, IntVec2 const& toCoords, ePieceType const& pieceType) const;
     bool IsValidEnPassant(IntVec2 const& fromCoords, IntVec2 const& toCoords) const;
     bool IsValidPromotionType(String const& promoteTo) const;
 
     sPieceMove GetLastPieceMove() const;
-
-
 
     Camera* m_screenCamera = nullptr;
     Clock*  m_gameClock    = nullptr;
@@ -101,9 +101,11 @@ private:
     // 延遲移除系統
     struct PendingRemoval
     {
-        Piece*        piece              = nullptr;
-        float         remainingTime      = 0.f;
-        ePieceType    capturedPieceType  = ePieceType::NONE;
+        Piece*     piece             = nullptr;
+        float      remainingTime     = 0.f;
+        ePieceType capturedPieceType = ePieceType::NONE;
     };
     std::vector<PendingRemoval> m_pendingRemovals;
 };
+
+//----------------------------------------------------------------------------------------------------
