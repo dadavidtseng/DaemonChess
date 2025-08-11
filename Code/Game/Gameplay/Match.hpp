@@ -32,7 +32,7 @@ public:
     void RenderGhostPiece() const;
 
     Board* m_board = nullptr;
-
+    static bool OnChessMove(EventArgs& args);
 private:
     void UpdateFromInput(float deltaSeconds);
     void RenderPlayerBasis() const;
@@ -44,7 +44,7 @@ private:
     static bool OnEnterMatchTurn(EventArgs& args);
     static bool OnExitMatchTurn(EventArgs& args);
     static bool OnMatchInitialized(EventArgs& args);
-    static bool OnChessMove(EventArgs& args);
+
 
     void OnChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo, bool isTeleport);
     bool ExecuteMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo, bool isTeleport);

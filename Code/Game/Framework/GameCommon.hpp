@@ -38,7 +38,7 @@ extern Game*                  g_theGame;
 extern Renderer*              g_theRenderer;
 extern RandomNumberGenerator* g_theRNG;
 extern LightSubsystem*        g_theLightSubsystem;
-// extern NetworkSubsystem*      g_theNetworkSubsystem;
+extern NetworkSubsystem*      g_theNetworkSubsystem;
 extern ResourceSubsystem*     g_theResourceSubsystem;
 
 //-----------------------------------------------------------------------------------------------

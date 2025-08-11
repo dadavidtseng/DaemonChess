@@ -32,7 +32,7 @@ Renderer*              g_theRenderer          = nullptr;       // Created and ow
 RandomNumberGenerator* g_theRNG               = nullptr;       // Created and owned by the App
 Window*                g_theWindow            = nullptr;       // Created and owned by the App
 LightSubsystem*        g_theLightSubsystem    = nullptr;       // Created and owned by the App
-// NetworkSubsystem*      g_theNetworkSubsystem  = nullptr;       // Created and owned by the App
+NetworkSubsystem*      g_theNetworkSubsystem  = nullptr;       // Created and owned by the App
 ResourceSubsystem*     g_theResourceSubsystem = nullptr;       // Created and owned by the App
 
 //----------------------------------------------------------------------------------------------------
@@ -50,6 +50,11 @@ void App::Startup()
     sEventSystemConfig constexpr eventSystemConfig;
     g_theEventSystem = new EventSystem(eventSystemConfig);
     g_theEventSystem->SubscribeEventCallbackFunction("OnCloseButtonClicked", OnCloseButtonClicked);
+    g_theEventSystem->SubscribeEventCallbackFunction("ChessConnect", OnChessConnect);
+    g_theEventSystem->SubscribeEventCallbackFunction("ChessListen", OnChessListen);
+    g_theEventSystem->SubscribeEventCallbackFunction("RemoteCmd", OnRemoteCmd);
+    g_theEventSystem->SubscribeEventCallbackFunction("ChessMove", OnChessMove);
+    g_theEventSystem->SubscribeEventCallbackFunction("Echo", OnEcho);
     g_theEventSystem->SubscribeEventCallbackFunction("quit", OnCloseButtonClicked);
 
     //-End-of-EventSystem-----------------------------------------------------------------------------
@@ -77,7 +82,7 @@ void App::Startup()
 
     sRendererConfig rendererConfig;
     rendererConfig.m_window = g_theWindow;
-    g_theRenderer         = new Renderer(rendererConfig);
+    g_theRenderer           = new Renderer(rendererConfig);
 
     //-End-of-Renderer--------------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
@@ -129,10 +134,10 @@ void App::Startup()
     //------------------------------------------------------------------------------------------------
     //-Start-of-NetworkSubsystem----------------------------------------------------------------------
 
-    // sNetworkSubsystemConfig networkSubsystemConfig;
-    // networkSubsystemConfig.hostAddressString = "127.0.0.1:3100";
-    // networkSubsystemConfig.maxClients        = 4;
-    // g_theNetworkSubsystem                    = new NetworkSubsystem(networkSubsystemConfig);
+    sNetworkSubsystemConfig networkSubsystemConfig;
+    networkSubsystemConfig.hostAddressString = "127.0.0.1:3100";
+    networkSubsystemConfig.maxClients        = 4;
+    g_theNetworkSubsystem                    = new NetworkSubsystem(networkSubsystemConfig);
 
     //-End-of-NetworkSubsystem------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
@@ -153,7 +158,7 @@ void App::Startup()
     g_theInput->Startup();
     g_theAudio->Startup();
     g_theLightSubsystem->StartUp();
-    // g_theNetworkSubsystem->StartUp();
+    g_theNetworkSubsystem->StartUp();
     g_theResourceSubsystem->Startup();
 
     g_theBitmapFont = g_theRenderer->CreateOrGetBitmapFontFromFile("Data/Fonts/SquirrelFixedFont"); // DO NOT SPECIFY FILE .EXTENSION!!  (Important later on.)
@@ -172,7 +177,7 @@ void App::Shutdown()
     GAME_SAFE_RELEASE(g_theBitmapFont);
 
     // g_theResourceSubsystem->Shutdown();
-    // g_theNetworkSubsystem->ShutDown();
+    g_theNetworkSubsystem->ShutDown();
     g_theLightSubsystem->ShutDown();
     g_theAudio->Shutdown();
     g_theInput->Shutdown();
@@ -224,6 +229,203 @@ STATIC bool App::OnCloseButtonClicked(EventArgs& args)
     return true;
 }
 
+bool App::OnChessConnect(EventArgs& args)
+{
+    // 檢查網路子系統是否已初始化
+    if (!g_theNetworkSubsystem)
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR,
+                                 "[Network] NetworkSubsystem not initialized");
+        return false;
+    }
+
+    // 從參數取得連接資訊，如果沒有提供則使用預設值
+    std::string address    = args.GetValue("ip", "127.0.0.1");     // 預設本機位址
+    int         port       = args.GetValue("port", 3100);                     // 預設連接埠
+    std::string clientName = args.GetValue("name", "Client");   // 客戶端名稱
+
+    // 嘗試連接到伺服器
+    bool success = g_theNetworkSubsystem->ConnectToServer(address, port);
+
+    if (success)
+    {
+        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+                                 Stringf("Connecting to chess server at %s:%d", address.c_str(), port));
+
+        sNetworkMessage connectMsg("ChatMessage",
+                                   Stringf("Client '%s' has connected!", clientName.c_str()));
+        g_theNetworkSubsystem->SendMessageToServer(connectMsg);
+    }
+    else
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR,
+                                 Stringf("Failed to connect to chess server at %s:%d", address.c_str(), port));
+    }
+
+    return success;
+}
+
+bool App::OnChessListen(EventArgs& args)
+{
+    if (!g_theNetworkSubsystem)
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnChessListen) NetworkSubsystem is not initialized"));
+        return false;
+    }
+
+    int const port = args.GetValue("port", 3100);
+
+    // 嘗試啟動伺服器
+    bool success = g_theNetworkSubsystem->StartServer(port);
+
+    if (success)
+    {
+        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+                                 Stringf("Chess server listening on port %d", port));
+    }
+    else
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR,
+                                 Stringf("Failed to start chess server on port %d", port));
+    }
+
+    return success;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool App::OnRemoteCmd(EventArgs& args)
+{
+    // 檢查網路系統
+    if (!g_theNetworkSubsystem)
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR, "Network system not initialized");
+        return false;
+    }
+
+    // 取得 cmd 參數（實際要執行的命令名稱）
+    std::string commandName = args.GetValue("cmd", "");
+    if (commandName.empty())
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR, "RemoteCmd requires cmd=<commandName>");
+        return false;
+    }
+
+    // 建立要傳送的命令字串
+    std::string remoteCommandString = commandName;
+
+    // 將所有其他參數（除了 cmd）加入命令字串
+    std::map<String, String> allArgs = args.GetAllKeyValuePairs();
+    for (const auto& [key, value] : allArgs)
+    {
+        // 跳過 "cmd" 參數，因為已經處理過了
+        if (key != "cmd" && !value.empty())
+        {
+            remoteCommandString += " " + key + "=" + value;
+        }
+    }
+
+    // 透過網路傳送命令字串
+    if (g_theNetworkSubsystem->IsClient())
+    {
+        // Client 傳送到 Server
+        sNetworkMessage message;
+        message.m_messageType = "RemoteCommand";
+        message.m_data        = remoteCommandString;
+
+        if (g_theNetworkSubsystem->SendMessageToServer(message))
+        {
+            g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+                                     Stringf("Sent to server: %s", remoteCommandString.c_str()));
+            return true;
+        }
+    }
+    else if (g_theNetworkSubsystem->IsServer())
+    {
+        // Server 傳送到所有 Clients
+        sNetworkMessage message;
+        message.m_messageType = "RemoteCommand";
+        message.m_data        = remoteCommandString;
+
+        if (g_theNetworkSubsystem->SendMessageToAllClients(message))
+        {
+            g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+                                     Stringf("Sent to all clients: %s", remoteCommandString.c_str()));
+            return true;
+        }
+    }
+
+    g_theDevConsole->AddLine(DevConsole::ERROR, "Failed to send remote command");
+    return false;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool App::OnChessMove(EventArgs& args)
+{
+    String from     = args.GetValue("from", "");
+    String to       = args.GetValue("to", "");
+    bool   isRemote = args.GetValue("remote", false);
+
+    if (from.empty() || to.empty())
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR,
+                                 "ChessMove requires from=<position> to=<position>");
+        return false;
+    }
+
+    // 執行棋步（如果有 Match 的話）
+    bool success = false;
+    if (g_theGame && g_theGame->m_match)
+    {
+        // 使用 Match 的靜態 OnChessMove 函數
+        EventArgs chessMoveArgs;
+        chessMoveArgs.SetValue("from", from);
+        chessMoveArgs.SetValue("to", to);
+        chessMoveArgs.SetValue("promoteTo", "");
+        chessMoveArgs.SetValue("teleport", "false");
+
+        // 呼叫 Match 的靜態 OnChessMove 函數
+        success = g_theGame->m_match->OnChessMove(chessMoveArgs);
+    }
+
+    if (success)
+    {
+        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+                                 Stringf("Move executed: %s to %s %s",
+                                         from.c_str(), to.c_str(),
+                                         isRemote ? "(from remote)" : "(local)"));
+
+        // 如果是本地移動，且網路已連接，自動傳送給遠端
+        if (!isRemote && g_theNetworkSubsystem && g_theNetworkSubsystem->IsConnected())
+        {
+            // 建立 RemoteCmd 來傳送這個移動
+            EventArgs remoteCmdArgs;
+            remoteCmdArgs.SetValue("cmd", "ChessMove");
+            remoteCmdArgs.SetValue("from", from);
+            remoteCmdArgs.SetValue("to", to);
+            OnRemoteCmd(remoteCmdArgs);
+        }
+    }
+    else
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR,
+                                 Stringf("Invalid move: %s to %s", from.c_str(), to.c_str()));
+    }
+
+    return success;
+}
+
+//----------------------------------------------------------------------------------------------------
+bool App::OnEcho(EventArgs& args)
+{
+    String text     = args.GetValue("text", "");
+    bool   isRemote = args.GetValue("remote", false);
+
+    g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+                             Stringf("Echo%s: %s", isRemote ? " (remote)" : "", text.c_str()));
+
+    return true;
+}
+
 //----------------------------------------------------------------------------------------------------
 STATIC void App::RequestQuit()
 {
@@ -241,7 +443,7 @@ void App::BeginFrame() const
     g_theInput->BeginFrame();
     g_theAudio->BeginFrame();
     g_theLightSubsystem->BeginFrame();
-    // g_theNetworkSubsystem->BeginFrame();
+    g_theNetworkSubsystem->BeginFrame();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -251,7 +453,7 @@ void App::Update()
 
     UpdateCursorMode();
     g_theGame->Update();
-    // g_theNetworkSubsystem->Update(Clock::GetSystemClock().GetDeltaSeconds());
+    g_theNetworkSubsystem->Update();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -284,7 +486,7 @@ void App::EndFrame() const
     g_theInput->EndFrame();
     g_theAudio->EndFrame();
     g_theLightSubsystem->EndFrame();
-    // g_theNetworkSubsystem->EndFrame();
+    g_theNetworkSubsystem->EndFrame();
 }
 
 //----------------------------------------------------------------------------------------------------
