@@ -11,6 +11,7 @@
 #include "Engine/Math/EulerAngles.hpp"
 #include "Engine/Math/IntVec2.hpp"
 
+//----------------------------------------------------------------------------------------------------
 struct sSquareInfo
 {
     String  m_name               = "DEFAULT";
@@ -21,7 +22,6 @@ struct sSquareInfo
     bool    m_isHighlighted      = false;
     bool    m_isSelected         = false;
 };
-
 
 //----------------------------------------------------------------------------------------------------
 struct BoardDefinition

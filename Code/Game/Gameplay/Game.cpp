@@ -30,7 +30,7 @@ Game::Game()
     m_gameClock                 = new Clock(Clock::GetSystemClock());
     m_screenCamera              = new Camera();
     Vec2 const bottomLeft       = Vec2::ZERO;
-    Vec2    clientDimensions = Window::s_mainWindow->GetClientDimensions();
+    Vec2       clientDimensions = Window::s_mainWindow->GetClientDimensions();
     Vec2 const screenTopRight   = Vec2(clientDimensions.x, clientDimensions.y);
     m_screenCamera->SetOrthoGraphicView(bottomLeft, screenTopRight);
     m_screenCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
@@ -110,7 +110,7 @@ void Game::TogglePlayerControllerId()
     else if (m_currentPlayerControllerId == 1) m_currentPlayerControllerId = 0;
 }
 
-bool Game::OnGameStateChanged(EventArgs& args)
+STATIC bool Game::OnGameStateChanged(EventArgs& args)
 {
     String const newGameState = args.GetValue("OnGameStateChanged", "DEFAULT");
 
@@ -119,6 +119,7 @@ bool Game::OnGameStateChanged(EventArgs& args)
         PieceDefinition::ClearAllDefs();
         BoardDefinition::ClearAllDefs();
         GAME_SAFE_RELEASE(g_theGame->m_match);
+        g_theGame->m_currentPlayerControllerId = 0;
     }
 
     if (newGameState == "MATCH")
@@ -169,7 +170,7 @@ bool Game::IsFixedCameraMode() const
     return m_isFixedCameraMode;
 }
 
-PlayerController* Game::GetCurrentPlayer()
+PlayerController* Game::GetCurrentPlayer() const
 {
     for (PlayerController* m_localPlayerController : m_localPlayerControllerList)
     {
@@ -197,7 +198,6 @@ void Game::UpdateFromInput()
     }
     if (m_gameState == eGameState::ATTRACT)
     {
-
         if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
         {
             App::RequestQuit();

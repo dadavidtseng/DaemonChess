@@ -43,7 +43,7 @@ public:
     void              TogglePlayerControllerId();
     void              ChangeGameState(eGameState newGameState);
     bool              IsFixedCameraMode() const;
-    PlayerController* GetCurrentPlayer();
+    PlayerController* GetCurrentPlayer() const;
     Match*            m_match = nullptr;
 
 private:

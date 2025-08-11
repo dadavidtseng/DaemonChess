@@ -7,6 +7,7 @@
 
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Game/Framework/GameCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
 STATIC std::vector<BoardDefinition*> BoardDefinition::s_boardDefinitions;
@@ -17,6 +18,7 @@ BoardDefinition::~BoardDefinition()
 {
 }
 
+//----------------------------------------------------------------------------------------------------
 bool BoardDefinition::LoadFromXmlElement(XmlElement const* element)
 {
     m_pieceOrientation = ParseXmlAttribute(*element, "orientation", EulerAngles::ZERO);
@@ -80,11 +82,12 @@ void BoardDefinition::InitializeDefs(char const* path)
     }
 }
 
-void BoardDefinition::ClearAllDefs()
+//----------------------------------------------------------------------------------------------------
+STATIC void BoardDefinition::ClearAllDefs()
 {
     for (BoardDefinition const* boardDef : s_boardDefinitions)
     {
-        delete boardDef;
+        GAME_SAFE_RELEASE(boardDef);
     }
 
     s_boardDefinitions.clear();

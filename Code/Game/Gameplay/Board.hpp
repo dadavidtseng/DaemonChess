@@ -33,7 +33,6 @@ public:
 
     /// Query
     Vec3        GetWorldPositionByCoords(IntVec2 const& coords);
-    Piece*      GetPieceByCoords(IntVec2 const& coords) const;
     sSquareInfo GetSquareInfoByCoords(IntVec2 const& coords);
     IntVec2     StringToChessCoord(String const& chessPos);
     String      ChessCoordToString(IntVec2 const& coords);

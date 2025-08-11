@@ -31,8 +31,7 @@ public:
     void Render() const;
     void RenderGhostPiece() const;
 
-    Board*    m_board = nullptr;
-    PieceList m_pieceList;
+    Board* m_board = nullptr;
 
 private:
     void UpdateFromInput(float deltaSeconds);
@@ -58,14 +57,12 @@ private:
     void ExecuteCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo = "");
 
 
-
-
     void RemovePieceFromPieceList(IntVec2 const& toCoords);
     void SchedulePieceForRemoval(Piece* piece, float delay, ePieceType capturedType);
     void UpdatePendingRemovals(float deltaSeconds);
 
     eMoveResult ValidateChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promotionType, bool isTeleport) const;
-    eMoveResult ValidatePieceMovement(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promotionType) const;
+    eMoveResult ValidatePieceMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promotionType) const;
     eMoveResult ValidatePawnMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promotionType) const;
     eMoveResult ValidateRookMove(int deltaX, int deltaY) const;
     eMoveResult ValidateBishopMove(int absDeltaX, int absDeltaY) const;
@@ -82,9 +79,11 @@ private:
     bool IsValidPromotionType(String const& promoteTo) const;
 
     sPieceMove GetLastPieceMove() const;
+    Piece*     GetPieceByCoords(IntVec2 const& coords) const;
 
-    Camera* m_screenCamera = nullptr;
-    Clock*  m_gameClock    = nullptr;
+    Camera*   m_screenCamera = nullptr;
+    Clock*    m_gameClock    = nullptr;
+    PieceList m_pieceList;
 
     // DEBUG LIGHT
     Vec3  m_sunDirection     = Vec3(2.f, 1.f, -1.f).GetNormalized();
@@ -105,7 +104,6 @@ private:
         float      remainingTime     = 0.f;
         ePieceType capturedPieceType = ePieceType::NONE;
     };
+
     std::vector<PendingRemoval> m_pendingRemovals;
 };
-
-//----------------------------------------------------------------------------------------------------

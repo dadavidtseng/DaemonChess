@@ -154,22 +154,22 @@ Vec3 Board::GetWorldPositionByCoords(IntVec2 const& coords)
 }
 
 //----------------------------------------------------------------------------------------------------
-Piece* Board::GetPieceByCoords(IntVec2 const& coords) const
-{
-    for (Piece* piece : m_match->m_pieceList)
-    {
-        if (piece == nullptr)
-        {
-            continue;
-        }
-        if (piece->m_coords == coords)
-        {
-            return piece;
-        }
-    }
-
-    return nullptr;
-}
+// Piece* Board::GetPieceByCoords(IntVec2 const& coords) const
+// {
+//     for (Piece* piece : m_match->m_pieceList)
+//     {
+//         if (piece == nullptr)
+//         {
+//             continue;
+//         }
+//         if (piece->m_coords == coords)
+//         {
+//             return piece;
+//         }
+//     }
+//
+//     return nullptr;
+// }
 
 sSquareInfo Board::GetSquareInfoByCoords(IntVec2 const& coords)
 {
