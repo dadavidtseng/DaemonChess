@@ -22,13 +22,12 @@ public:
     void RunMainLoop();
 
     static bool OnCloseButtonClicked(EventArgs& args);
-    static bool OnChessConnect(EventArgs& args);
+    static bool OnChessServerInfo(EventArgs& args);
     static bool OnChessListen(EventArgs& args);
+    static bool OnChessConnect(EventArgs& args);
     static bool OnRemoteCmd(EventArgs& args);
-    static bool OnChessMove(EventArgs& args);
     static bool OnEcho(EventArgs& args);
     static void RequestQuit();
-    static bool m_isQuitting;
 
 private:
     void BeginFrame() const;
@@ -40,4 +39,5 @@ private:
     void LoadGameConfig(char const* gameConfigXmlFilePath) const;
 
     Camera* m_devConsoleCamera = nullptr;
+    bool    m_isQuitting       = false;
 };

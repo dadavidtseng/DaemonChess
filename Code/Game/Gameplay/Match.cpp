@@ -110,17 +110,17 @@ void Match::Update()
 
     // 檢查是否有任何 piece 或 board square 被選中
     bool hasAnySelection = false;
-    // Piece*  selectedPiece        = nullptr;
+    Piece*  selectedPiece        = nullptr;
     IntVec2 selectedSquareCoords = IntVec2::ZERO;
     bool    hasSelectedSquare    = false;
 
     // 檢查是否有 piece 被選中
     for (Piece* piece : m_pieceList)
     {
-        if (piece != nullptr && piece->m_isSelected && !piece->m_isCaptured && !piece->m_isBeingCaptured)
+        if (piece != nullptr && piece->m_isSelected  && !piece->m_isBeingCaptured)
         {
             hasAnySelection = true;
-            m_selectedPiece = piece;
+            selectedPiece = piece;
             break;
         }
     }
@@ -135,7 +135,7 @@ void Match::Update()
                 hasAnySelection      = true;
                 hasSelectedSquare    = true;
                 selectedSquareCoords = m_board->m_squareInfoList[i].m_coords;
-                m_selectedPiece      = GetPieceByCoords(selectedSquareCoords);
+                selectedPiece      = GetPieceByCoords(selectedSquareCoords);
                 break;
             }
         }
@@ -162,7 +162,7 @@ void Match::Update()
 
         for (Piece* piece : m_pieceList)
         {
-            if (piece != nullptr && !piece->m_isCaptured && !piece->m_isBeingCaptured)
+            if (piece != nullptr && !piece->m_isBeingCaptured)
             {
                 piece->m_isHighlighted = false;
             }
@@ -195,11 +195,11 @@ void Match::Update()
             bool    canHighlight = false;
             Piece*  sourcePiece  = nullptr;
 
-            if (m_selectedPiece != nullptr)
+            if (selectedPiece != nullptr)
             {
                 // 有選中的棋子，檢查是否可以移動到目標位置
-                fromCoords             = m_selectedPiece->m_coords;
-                sourcePiece            = m_selectedPiece;
+                fromCoords             = selectedPiece->m_coords;
+                sourcePiece            = selectedPiece;
                 eMoveResult moveResult = ValidateChessMove(fromCoords, targetCoords, "", m_isCheatMode);
                 canHighlight           = (moveResult == eMoveResult::VALID_MOVE_NORMAL ||
                     moveResult == eMoveResult::VALID_CAPTURE_NORMAL ||
@@ -276,7 +276,7 @@ void Match::Update()
         for (Piece* piece : m_pieceList)
         {
             // 跳過被捕獲的棋子和正在被捕獲的棋子
-            if (piece->m_isCaptured || piece->m_isBeingCaptured) continue;
+            if ( piece->m_isBeingCaptured) continue;
 
             RaycastResult3D result = RaycastVsCylinderZ3D(
                 currentPlayer->m_position,
@@ -314,7 +314,7 @@ void Match::Update()
             // Set piece selection
             for (Piece* piece : m_pieceList)
             {
-                if (!piece->m_isCaptured && !piece->m_isBeingCaptured)
+                if ( !piece->m_isBeingCaptured)
                 {
                     piece->m_isHighlighted = (piece == closestPiece);
                 }
@@ -330,7 +330,7 @@ void Match::Update()
 
             for (Piece* piece : m_pieceList)
             {
-                if (!piece->m_isCaptured && !piece->m_isBeingCaptured)
+                if (!piece->m_isBeingCaptured)
                 {
                     piece->m_isHighlighted = false;
                 }
@@ -734,7 +734,7 @@ void Match::UpdatePendingRemovals(float deltaSeconds)
             ePieceType capturedType  = it->capturedPieceType;
 
             // 現在才標記為被捕獲（這樣它就不會渲染了）
-            pieceToRemove->m_isCaptured = true;
+
 
             // 從棋子列表中移除
             for (auto pieceIt = m_pieceList.begin(); pieceIt != m_pieceList.end(); ++pieceIt)
@@ -771,9 +771,10 @@ void Match::UpdatePendingRemovals(float deltaSeconds)
 void Match::OnChessMove(IntVec2 const& fromCoords,
                         IntVec2 const& toCoords,
                         String const&  promoteTo,
-                        bool const     isTeleport)
+                        bool const     isTeleport,
+                        bool const     isRemote)
 {
-    if (ExecuteMove(fromCoords, toCoords, promoteTo, isTeleport)) g_theEventSystem->FireEvent("OnExitMatchTurn");
+    if (ExecuteMove(fromCoords, toCoords, promoteTo, isTeleport, isRemote)) g_theEventSystem->FireEvent("OnExitMatchTurn");
 }
 
 eMoveResult Match::ValidateChessMove(IntVec2 const& fromCoords,
@@ -1234,7 +1235,8 @@ Piece* Match::GetPieceByCoords(IntVec2 const& coords) const
 bool Match::ExecuteMove(IntVec2 const& fromCoords,
                         IntVec2 const& toCoords,
                         String const&  promoteTo,
-                        bool const     isTeleport)
+                        bool const     isTeleport,
+                        bool const     isRemote)
 {
     eMoveResult const result = ValidateChessMove(fromCoords, toCoords, promoteTo, isTeleport);
 
@@ -1245,8 +1247,21 @@ bool Match::ExecuteMove(IntVec2 const& fromCoords,
     }
 
     Piece* fromPiece = GetPieceByCoords(fromCoords);
-    g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Move Player #%d's %s from %s to %s", g_theGame->GetCurrentPlayerControllerId(), GetPieceByCoords(fromCoords)->m_definition->m_name.c_str(), m_board->ChessCoordToString(fromCoords).c_str(),
-                                                             m_board->ChessCoordToString(toCoords).c_str()));
+    g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Move Player #%d's %s from %s to %s(%s)", g_theGame->GetCurrentPlayerControllerId(), GetPieceByCoords(fromCoords)->m_definition->m_name.c_str(), m_board->ChessCoordToString(fromCoords).c_str(),
+                                                             m_board->ChessCoordToString(toCoords).c_str(), isRemote ? "remote" : "local"));
+
+    if (!isRemote && g_theNetworkSubsystem && g_theNetworkSubsystem->IsConnected())
+    {
+        String from = m_board->ChessCoordToString(fromCoords);
+        String to = m_board->ChessCoordToString(toCoords);
+
+        // 建立 RemoteCmd 來傳送這個移動
+        EventArgs remoteCmdArgs;
+        remoteCmdArgs.SetValue("cmd", "ChessMove");
+        remoteCmdArgs.SetValue("from", from);
+        remoteCmdArgs.SetValue("to", to);
+        g_theEventSystem->FireEvent("OnRemoteCmd", remoteCmdArgs);
+    }
     switch (result)
     {
     case eMoveResult::VALID_CAPTURE_ENPASSANT: ExecuteEnPassantCapture(fromCoords, toCoords);
@@ -1383,10 +1398,11 @@ STATIC bool Match::OnChessMove(EventArgs& args)
     String const to         = args.GetValue("to", "DEFAULT");
     String const promotion  = args.GetValue("promoteTo", "DEFAULT");
     bool const   isTeleport = args.GetValue("teleport", false);
+    bool const   isRemote   = args.GetValue("remote", false);
 
     if (from == "DEFAULT" || to == "DEFAULT")
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR, "ChessMove requires from= and to= parameters");
+        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("(Match::ChessMove)from=<position> to=<position> is required."));
         return false;
     }
 
@@ -1397,13 +1413,12 @@ STATIC bool Match::OnChessMove(EventArgs& args)
     eMoveResult result = match->ValidateChessMove(fromCoords, toCoords, promotion, isTeleport);
     if (!IsMoveValid(result))
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR,
-                                 Stringf("Invalid move: %s", GetMoveResultString(result)));
+        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("(Match::ChessMove)Invalid move: %s", GetMoveResultString(result)));
         return false;
     }
 
     // Execute the move
-    match->OnChessMove(fromCoords, toCoords, promotion, isTeleport);
+    match->OnChessMove(fromCoords, toCoords, promotion, isTeleport, isRemote);
 
     return true;
 }

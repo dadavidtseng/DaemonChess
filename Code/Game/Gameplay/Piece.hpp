@@ -46,13 +46,12 @@ protected:
     PieceDefinition* m_definition               = nullptr;
     int              m_id                       = -1;
 
-    bool  m_hasMoved     = false;
-    bool  m_isMoving     = false;
-    bool  m_isCaptured   = false; // 新增：標記棋子是否被捕獲
-    bool  m_isBeingCaptured = false; // 新增：標記棋子正在被捕獲（播放被擊中動畫）
+    bool  m_hasMoved         = false;
+    bool  m_isMoving         = false;
+    bool  m_isBeingCaptured  = false; // 新增：標記棋子正在被捕獲（播放被擊中動畫）
     float m_captureAnimTimer = 0.f;  // 被捕獲動畫計時器
-    float m_moveTimer    = 0.f;
-    float m_moveDuration = 0.f;
+    float m_moveTimer        = 0.f;
+    float m_moveDuration     = 0.f;
     // Vec3    m_targetPosition = Vec3::ZERO;
     IntVec2 m_startCoords   = IntVec2::ZERO;
     IntVec2 m_targetCoords  = IntVec2::ZERO;

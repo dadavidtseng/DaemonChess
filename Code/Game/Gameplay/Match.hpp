@@ -46,8 +46,8 @@ private:
     static bool OnMatchInitialized(EventArgs& args);
 
 
-    void OnChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo, bool isTeleport);
-    bool ExecuteMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo, bool isTeleport);
+    void OnChessMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo, bool isTeleport,bool isRemote);
+    bool ExecuteMove(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo, bool isTeleport, bool isRemote);
 
     void ExecuteEnPassantCapture(IntVec2 const& fromCoords, IntVec2 const& toCoords);
     void ExecutePawnPromotion(IntVec2 const& fromCoords, IntVec2 const& toCoords, String const& promoteTo);
@@ -91,7 +91,7 @@ private:
     float m_ambientIntensity = 0.35f;
 
     PieceMoveList m_pieceMoveList;
-    Piece*        m_selectedPiece      = nullptr;
+    // Piece*        m_selectedPiece      = nullptr;
     bool          m_showGhostPiece     = false;
     Vec3          m_ghostPiecePosition = Vec3::ZERO;
     Piece*        m_ghostSourcePiece   = nullptr;

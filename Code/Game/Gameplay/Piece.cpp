@@ -32,7 +32,6 @@ Piece::Piece(Match* owner, sSquareInfo const& squareInfo)
     m_id                       = squareInfo.m_playerControllerId;
 
     UpdatePositionByCoords(squareInfo.m_coords);
-    // m_orientation = EulerAngles(45,0,0);
 }
 
 Vec3 Piece::CalculateKnightHopPosition(float t)
@@ -76,28 +75,25 @@ void Piece::Update(float const deltaSeconds)
     m_orientation.m_pitchDegrees += m_angularVelocity.m_pitchDegrees * deltaSeconds;
     m_orientation.m_rollDegrees += m_angularVelocity.m_rollDegrees * deltaSeconds;
 
-    // 被捕獲的棋子不需要更新動畫
-    if (m_isCaptured) return;
-    
     // 更新被捕獲動畫
     if (m_isBeingCaptured)
     {
         m_captureAnimTimer += deltaSeconds;
-        
+
         // 播放一個簡單的下沉動畫
         float captureProgress = m_captureAnimTimer / 2.f; // 2秒動畫
         if (captureProgress >= 1.f)
         {
             captureProgress = 1.f;
         }
-        
+
         // 使用平滑函數讓棋子慢慢下沉
         float sinkOffset = SmoothStep3(captureProgress) * -0.5f; // 向下移動0.5單位
-        m_position.z = m_match->m_board->GetWorldPositionByCoords(m_coords).z + sinkOffset;
-        
+        m_position.z     = m_match->m_board->GetWorldPositionByCoords(m_coords).z + sinkOffset;
+
         return; // 被捕獲動畫期間不要處理其他動畫
     }
-    
+
     if (!m_isMoving) return;
     if (!m_definition) return;
 
@@ -132,7 +128,7 @@ void Piece::Update(float const deltaSeconds)
 void Piece::Render() const
 {
     if (m_definition == nullptr) return;
-    if (m_isCaptured) return; // 被捕獲的棋子不渲染
+    // if (m_isCaptured) return; // 被捕獲的棋子不渲染
 
     g_theRenderer->SetModelConstants(GetModelToWorldTransform(), m_color);
     g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
@@ -146,7 +142,7 @@ void Piece::Render() const
     g_theRenderer->BindShader(m_shader);
     unsigned int const indexCount = m_definition->GetIndexCountByID(m_id);
     g_theRenderer->DrawIndexedVertexBuffer(m_definition->m_vertexBuffer[m_id], m_definition->m_indexBuffer[m_id], indexCount);
-    
+
     if (m_isHighlighted || m_isSelected)
     {
         RenderSelectedPiece();
@@ -213,7 +209,7 @@ void Piece::UpdatePositionByCoords(IntVec2 const& newCoords,
 
 void Piece::StartCaptureAnimation(float duration)
 {
-    m_isBeingCaptured = true;
+    m_isBeingCaptured  = true;
     m_captureAnimTimer = 0.f;
     // duration 參數在這裡不使用，因為我們硬編碼為 2 秒
     // 但為了接口一致性保留這個參數

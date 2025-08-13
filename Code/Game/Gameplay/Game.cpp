@@ -26,6 +26,7 @@
 Game::Game()
 {
     g_theEventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
+    g_theEventSystem->SubscribeEventCallbackFunction("ChessBegin", OnChessBegin);
 
     m_gameClock                 = new Clock(Clock::GetSystemClock());
     m_screenCamera              = new Camera();
@@ -42,6 +43,8 @@ Game::Game()
 //----------------------------------------------------------------------------------------------------
 Game::~Game()
 {
+    g_theEventSystem->UnsubscribeEventCallbackFunction("ChessBegin", OnChessBegin);
+    g_theEventSystem->UnsubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -137,6 +140,18 @@ STATIC bool Game::OnGameStateChanged(EventArgs& args)
         player->m_orientation    = EulerAngles(180, 45, 0);
     }
 
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+STATIC bool Game::OnChessBegin(EventArgs& args)
+{
+    if (g_theNetworkSubsystem->GetConnectionState()==eConnectionState::DISCONNECTED)
+    {
+        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+                                     Stringf("eConnectionState::DISCONNECTED"));
+        return false;
+    }
     return true;
 }
 

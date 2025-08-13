@@ -36,9 +36,6 @@ NetworkSubsystem*      g_theNetworkSubsystem  = nullptr;       // Created and ow
 ResourceSubsystem*     g_theResourceSubsystem = nullptr;       // Created and owned by the App
 
 //----------------------------------------------------------------------------------------------------
-STATIC bool App::m_isQuitting = false;
-
-//----------------------------------------------------------------------------------------------------
 /// @brief
 /// Create all engine subsystems in a specific order.
 void App::Startup()
@@ -50,10 +47,10 @@ void App::Startup()
     sEventSystemConfig constexpr eventSystemConfig;
     g_theEventSystem = new EventSystem(eventSystemConfig);
     g_theEventSystem->SubscribeEventCallbackFunction("OnCloseButtonClicked", OnCloseButtonClicked);
+    g_theEventSystem->SubscribeEventCallbackFunction("ChessServerInfo", OnChessServerInfo);
     g_theEventSystem->SubscribeEventCallbackFunction("ChessConnect", OnChessConnect);
     g_theEventSystem->SubscribeEventCallbackFunction("ChessListen", OnChessListen);
     g_theEventSystem->SubscribeEventCallbackFunction("RemoteCmd", OnRemoteCmd);
-    g_theEventSystem->SubscribeEventCallbackFunction("ChessMove", OnChessMove);
     g_theEventSystem->SubscribeEventCallbackFunction("Echo", OnEcho);
     g_theEventSystem->SubscribeEventCallbackFunction("quit", OnCloseButtonClicked);
 
@@ -229,93 +226,202 @@ STATIC bool App::OnCloseButtonClicked(EventArgs& args)
     return true;
 }
 
-bool App::OnChessConnect(EventArgs& args)
+//----------------------------------------------------------------------------------------------------
+STATIC bool App::OnChessServerInfo(EventArgs& args)
 {
-    // 檢查網路子系統是否已初始化
-    if (!g_theNetworkSubsystem)
+    if (g_theNetworkSubsystem == nullptr)
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR,
-                                 "[Network] NetworkSubsystem not initialized");
+        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnChessServerInfo)NetworkSubsystem is not initialized"));
         return false;
     }
 
-    // 從參數取得連接資訊，如果沒有提供則使用預設值
-    std::string address    = args.GetValue("ip", "127.0.0.1");     // 預設本機位址
-    int         port       = args.GetValue("port", 3100);                     // 預設連接埠
-    std::string clientName = args.GetValue("name", "Client");   // 客戶端名稱
+    String const newIP   = args.GetValue("ip", "");
+    int const    newPort = args.GetValue("port", -1);
 
-    // 嘗試連接到伺服器
-    bool success = g_theNetworkSubsystem->ConnectToServer(address, port);
+    // 取得目前的網路狀態
+    eNetworkMode     networkMode     = g_theNetworkSubsystem->GetNetworkMode();
+    eConnectionState connectionState = g_theNetworkSubsystem->GetConnectionState();
+    bool             isConnected     = g_theNetworkSubsystem->IsConnected();
 
-    if (success)
+    // 如果目前已連線，拒絕任何變更
+    if (isConnected && (!newIP.empty() || newPort != -1))
     {
-        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
-                                 Stringf("Connecting to chess server at %s:%d", address.c_str(), port));
-
-        sNetworkMessage connectMsg("ChatMessage",
-                                   Stringf("Client '%s' has connected!", clientName.c_str()));
-        g_theNetworkSubsystem->SendMessageToServer(connectMsg);
+        g_theDevConsole->AddLine(DevConsole::WARNING, "(App::OnChessServerInfo)Cannot change server info while connected. Disconnect first.");
     }
     else
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR,
-                                 Stringf("Failed to connect to chess server at %s:%d", address.c_str(), port));
+        // 如果未連線且有提供新的 IP，則更新
+        if (!isConnected && !newIP.empty())
+        {
+            // 這裡需要根據您的系統設計來更新 IP
+            // 可能需要存儲在 NetworkSubsystem 或 Game 中
+            g_theNetworkSubsystem->SetCurrentIP(newIP);
+            g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+                                     Stringf("Server IP updated to: %s", newIP.c_str()));
+        }
+
+        // 如果未連線且有提供新的連接埠，則更新
+        if (!isConnected && newPort != -1)
+        {
+            // 這裡需要根據您的系統設計來更新連接埠
+            g_theNetworkSubsystem->SetCurrentPort(newPort);
+            g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+                                     Stringf("Server port updated to: %d", newPort));
+        }
     }
 
-    return success;
+    String         currentIP = g_theNetworkSubsystem->GetCurrentIP();
+    unsigned short currentPort=g_theNetworkSubsystem->GetCurrentPort();
+
+    // 如果是伺服器模式
+    if (networkMode == eNetworkMode::SERVER)
+    {
+        int connectedClients = g_theNetworkSubsystem->GetConnectedClientCount();
+
+        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+                                 Stringf("=== Chess Server Info ==="));
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+                                 Stringf("IP: %s", currentIP.c_str()));
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+                                 Stringf("Port: %d", currentPort));
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+                                 Stringf("Mode: SERVER"));
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+                                 Stringf("Status: %s", isConnected ? "LISTENING" : "STOPPED"));
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+                                 Stringf("Connected Clients: %d", connectedClients));
+    }
+    // 如果是客戶端模式
+    else if (networkMode == eNetworkMode::CLIENT)
+    {
+        std::string connectionStatus = "DISCONNECTED";
+        switch (connectionState)
+        {
+        case eConnectionState::CONNECTING:
+            connectionStatus = "CONNECTING";
+            break;
+        case eConnectionState::CONNECTED:
+            connectionStatus = "CONNECTED";
+            break;
+        case eConnectionState::ERROR_STATE:
+            connectionStatus = "ERROR";
+            break;
+        default:
+            connectionStatus = "DISCONNECTED";
+            break;
+        }
+
+        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+                                 Stringf("=== Chess Client Info ==="));
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+                                 Stringf("Server IP: %s", currentIP.c_str()));
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+                                 Stringf("Server Port: %d", currentPort));
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+                                 Stringf("Mode: CLIENT"));
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+                                 Stringf("Connection Status: %s", connectionStatus.c_str()));
+    }
+    // 如果是空閒模式
+    else
+    {
+
+        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+                                 Stringf("=== Chess Network Info ==="));
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+                                 Stringf("IP: %s", currentIP.c_str()));
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+                                 Stringf("Port: %d", currentPort));
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+                                 Stringf("Mode: IDLE"));
+        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+                                 Stringf("Status: Not connected"));
+    }
+
+    return true;
 }
 
-bool App::OnChessListen(EventArgs& args)
+//----------------------------------------------------------------------------------------------------
+/// @brief Starts a chess server to listen for incoming client connections.
+/// @param args EventArgs containing optional "port" parameter (default: 3100)
+/// @return true if server started successfully, false otherwise
+STATIC bool App::OnChessListen(EventArgs& args)
 {
-    if (!g_theNetworkSubsystem)
+    if (g_theNetworkSubsystem == nullptr)
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnChessListen) NetworkSubsystem is not initialized"));
+        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnChessListen)NetworkSubsystem is not initialized"));
         return false;
     }
 
-    int const port = args.GetValue("port", 3100);
-
-    // 嘗試啟動伺服器
-    bool success = g_theNetworkSubsystem->StartServer(port);
+    int const  port    = args.GetValue("port", 3100);
+    bool const success = g_theNetworkSubsystem->StartServer(port);
 
     if (success)
     {
-        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
-                                 Stringf("Chess server listening on port %d", port));
+        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("(App::OnChessListen)Chess server listening on port %d", port));
     }
     else
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR,
-                                 Stringf("Failed to start chess server on port %d", port));
+        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnChessListen)Failed to start chess server on port %d", port));
     }
 
     return success;
 }
 
 //----------------------------------------------------------------------------------------------------
-bool App::OnRemoteCmd(EventArgs& args)
+/// @brief Connects to a chess server as a client.
+/// @param args EventArgs containing optional "ip" (default: "127.0.0.1"), "port" (default: 3100), and "name" (default: "Client") parameters
+/// @return true if this event is consumed, false otherwise.
+STATIC bool App::OnChessConnect(EventArgs& args)
 {
-    // 檢查網路系統
-    if (!g_theNetworkSubsystem)
+    if (g_theNetworkSubsystem == nullptr)
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR, "Network system not initialized");
+        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnChessConnect)NetworkSubsystem is not initialized"));
+        return false;
+    }
+
+    String const ip      = args.GetValue("ip", "127.0.0.1");
+    int const    port    = args.GetValue("port", 3100);
+    bool const   success = g_theNetworkSubsystem->ConnectToServer(ip, port);
+
+    if (success)
+    {
+        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("(App::OnChessConnect)Connecting to chess server at %s:%d", ip.c_str(), port));
+    }
+    else
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnChessConnect)Failed to connect to chess server at %s:%d", ip.c_str(), port));
+    }
+
+    return success;
+}
+
+//----------------------------------------------------------------------------------------------------
+/// @brief Sends a DevConsole command to the remote computer for execution.
+/// @param args EventArgs containing "cmd" parameter with the command name, and optional key-value pairs for command parameters
+/// @return true if command sent successfully, false otherwise
+STATIC bool App::OnRemoteCmd(EventArgs& args)
+{
+    if (g_theNetworkSubsystem == nullptr)
+    {
+        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnRemoteCmd)NetworkSubsystem is not initialized"));
         return false;
     }
 
     // 取得 cmd 參數（實際要執行的命令名稱）
-    std::string commandName = args.GetValue("cmd", "");
-    if (commandName.empty())
+    String const cmd = args.GetValue("cmd", "");
+    if (cmd.empty())
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR, "RemoteCmd requires cmd=<commandName>");
+        g_theDevConsole->AddLine(DevConsole::ERROR, "(App::OnRemoteCmd)RemoteCmd requires cmd=<commandName>");
         return false;
     }
 
     // 建立要傳送的命令字串
-    std::string remoteCommandString = commandName;
+    std::string remoteCommandString = cmd;
 
     // 將所有其他參數（除了 cmd）加入命令字串
     std::map<String, String> allArgs = args.GetAllKeyValuePairs();
-    for (const auto& [key, value] : allArgs)
+    for (auto const& [key, value] : allArgs)
     {
         // 跳過 "cmd" 參數，因為已經處理過了
         if (key != "cmd" && !value.empty())
@@ -359,69 +465,15 @@ bool App::OnRemoteCmd(EventArgs& args)
 }
 
 //----------------------------------------------------------------------------------------------------
-bool App::OnChessMove(EventArgs& args)
+/// @brief Echo command for testing network communication.
+/// @param args EventArgs containing "text" parameter to echo, optional "remote" flag
+/// @return Always returns true
+STATIC bool App::OnEcho(EventArgs& args)
 {
-    String from     = args.GetValue("from", "");
-    String to       = args.GetValue("to", "");
-    bool   isRemote = args.GetValue("remote", false);
+    String const text     = args.GetValue("text", "DEFAULT");
+    bool const   isRemote = args.GetValue("remote", false);
 
-    if (from.empty() || to.empty())
-    {
-        g_theDevConsole->AddLine(DevConsole::ERROR,
-                                 "ChessMove requires from=<position> to=<position>");
-        return false;
-    }
-
-    // 執行棋步（如果有 Match 的話）
-    bool success = false;
-    if (g_theGame && g_theGame->m_match)
-    {
-        // 使用 Match 的靜態 OnChessMove 函數
-        EventArgs chessMoveArgs;
-        chessMoveArgs.SetValue("from", from);
-        chessMoveArgs.SetValue("to", to);
-        chessMoveArgs.SetValue("promoteTo", "");
-        chessMoveArgs.SetValue("teleport", "false");
-
-        // 呼叫 Match 的靜態 OnChessMove 函數
-        success = g_theGame->m_match->OnChessMove(chessMoveArgs);
-    }
-
-    if (success)
-    {
-        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
-                                 Stringf("Move executed: %s to %s %s",
-                                         from.c_str(), to.c_str(),
-                                         isRemote ? "(from remote)" : "(local)"));
-
-        // 如果是本地移動，且網路已連接，自動傳送給遠端
-        if (!isRemote && g_theNetworkSubsystem && g_theNetworkSubsystem->IsConnected())
-        {
-            // 建立 RemoteCmd 來傳送這個移動
-            EventArgs remoteCmdArgs;
-            remoteCmdArgs.SetValue("cmd", "ChessMove");
-            remoteCmdArgs.SetValue("from", from);
-            remoteCmdArgs.SetValue("to", to);
-            OnRemoteCmd(remoteCmdArgs);
-        }
-    }
-    else
-    {
-        g_theDevConsole->AddLine(DevConsole::ERROR,
-                                 Stringf("Invalid move: %s to %s", from.c_str(), to.c_str()));
-    }
-
-    return success;
-}
-
-//----------------------------------------------------------------------------------------------------
-bool App::OnEcho(EventArgs& args)
-{
-    String text     = args.GetValue("text", "");
-    bool   isRemote = args.GetValue("remote", false);
-
-    g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
-                             Stringf("Echo%s: %s", isRemote ? " (remote)" : "", text.c_str()));
+    g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Echo(%s): %s", isRemote ? "remote" : "local", text.c_str()));
 
     return true;
 }
@@ -429,7 +481,7 @@ bool App::OnEcho(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 STATIC void App::RequestQuit()
 {
-    m_isQuitting = true;
+    g_theApp->m_isQuitting = true;
 }
 
 //----------------------------------------------------------------------------------------------------
