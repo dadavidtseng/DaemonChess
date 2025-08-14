@@ -65,6 +65,7 @@ private:
     bool                           m_isFixedCameraMode         = false;
     int                            m_currentDebugInt           = 0;
     FloatRange                     m_currentDebugIntRange      = FloatRange(0.f, 26.f);
+
     std::string m_playerName = "Player";  // 預設玩家名稱
     std::string m_opponentName = "";
     bool m_isOpponentConnected = false;

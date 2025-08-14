@@ -25,6 +25,7 @@ public:
     static bool OnChessServerInfo(EventArgs& args);
     static bool OnChessListen(EventArgs& args);
     static bool OnChessConnect(EventArgs& args);
+    static bool OnChessDisconnect(EventArgs& args);
     static bool OnRemoteCmd(EventArgs& args);
     static bool OnEcho(EventArgs& args);
     static void RequestQuit();
