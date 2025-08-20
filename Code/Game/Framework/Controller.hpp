@@ -4,6 +4,7 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+#include "Engine/Core/StringUtils.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/EulerAngles.hpp"
 
@@ -31,7 +32,7 @@ public:
     int   m_index = -1;
     Game* m_owner = nullptr;
 
-    Camera*     m_viewCamera = nullptr; // Handle screen message and hud
+    Camera*     m_viewCamera  = nullptr; // Handle screen message and hud
     AABB2       m_screenViewport;
     AABB2       m_viewport; // viewport size
     Camera*     m_worldCamera = nullptr; // Our camera. Used as the world camera when rendering.

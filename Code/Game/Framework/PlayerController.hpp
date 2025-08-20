@@ -11,6 +11,15 @@
 class Camera;
 
 //----------------------------------------------------------------------------------------------------
+enum class ePlayerType : uint8_t
+{
+    INVALID,
+    PLAYER,
+    OPPONENT,
+    SPECTATOR
+};
+
+//----------------------------------------------------------------------------------------------------
 class PlayerController final : public Controller
 {
 public:
@@ -19,13 +28,21 @@ public:
 
     void Update(float deltaSeconds) override;
     void Render() const;
-    void UpdateFromKeyBoard();
-    void UpdateFromController();
+    void UpdateFromInput();
 
-    Camera* GetCamera() const;
-    Mat44   GetModelToWorldTransform() const;
+    Camera*     GetCamera() const;
+    Mat44       GetModelToWorldTransform() const;
+    String      GetName() const;
+    ePlayerType GetType() const;
+
+    void SetName(String const& name);
+    void SetType(ePlayerType const& type);
 
 private:
+    String      m_name        = "DEFAULT";
+    ePlayerType m_type        = ePlayerType::INVALID;
+    bool        m_isConnected = false;
+
     Vec3        m_velocity        = Vec3::ZERO;
     EulerAngles m_angularVelocity = EulerAngles::ZERO;
 };

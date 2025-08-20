@@ -10,6 +10,7 @@
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/FloatRange.hpp"
 
+enum class ePlayerType : uint8_t;
 //-Forward-Declaration--------------------------------------------------------------------------------
 class Camera;
 class Clock;
@@ -38,6 +39,7 @@ public:
 
     static bool OnGameStateChanged(EventArgs& args);
     static bool OnChessBegin(EventArgs& args);
+    static bool OnChessPlayerInfo(EventArgs& args);
 
     eGameState        GetCurrentGameState() const;
     int               GetCurrentPlayerControllerId() const;
@@ -54,6 +56,7 @@ private:
     void              RenderAttractMode() const;
     void              RenderEntities() const;
     PlayerController* CreateLocalPlayer(int id);
+    PlayerController* CreateLocalPlayer(int id,ePlayerType const& type, String const& name);
     PlayerController* GetLocalPlayer(int id) const;
 
     Camera*                        m_screenCamera = nullptr;
@@ -65,8 +68,4 @@ private:
     bool                           m_isFixedCameraMode         = false;
     int                            m_currentDebugInt           = 0;
     FloatRange                     m_currentDebugIntRange      = FloatRange(0.f, 26.f);
-
-    std::string m_playerName = "Player";  // 預設玩家名稱
-    std::string m_opponentName = "";
-    bool m_isOpponentConnected = false;
 };

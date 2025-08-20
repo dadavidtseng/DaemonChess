@@ -27,14 +27,17 @@ Game::Game()
 {
     g_theEventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
     g_theEventSystem->SubscribeEventCallbackFunction("ChessBegin", OnChessBegin);
+    g_theEventSystem->SubscribeEventCallbackFunction("ChessPlayerInfo", OnChessPlayerInfo);
 
-    m_gameClock                 = new Clock(Clock::GetSystemClock());
-    m_screenCamera              = new Camera();
+    m_gameClock    = new Clock(Clock::GetSystemClock());
+    m_screenCamera = new Camera();
+
     Vec2 const bottomLeft       = Vec2::ZERO;
     Vec2       clientDimensions = Window::s_mainWindow->GetClientDimensions();
     Vec2 const screenTopRight   = Vec2(clientDimensions.x, clientDimensions.y);
     m_screenCamera->SetOrthoGraphicView(bottomLeft, screenTopRight);
     m_screenCamera->SetNormalizedViewport(AABB2::ZERO_TO_ONE);
+
     CreateLocalPlayer(0);
     CreateLocalPlayer(1);
     UpdateCurrentControllerId(0);
@@ -43,6 +46,7 @@ Game::Game()
 //----------------------------------------------------------------------------------------------------
 Game::~Game()
 {
+    g_theEventSystem->UnsubscribeEventCallbackFunction("ChessPlayerInfo", OnChessPlayerInfo);
     g_theEventSystem->UnsubscribeEventCallbackFunction("ChessBegin", OnChessBegin);
     g_theEventSystem->UnsubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
 }
@@ -50,12 +54,11 @@ Game::~Game()
 //----------------------------------------------------------------------------------------------------
 void Game::Update()
 {
-    Window::s_mainWindow->UpdateDimension();
-    Window::s_mainWindow->UpdatePosition();
+    // Window::s_mainWindow->UpdateDimension();
+    // Window::s_mainWindow->UpdatePosition();
     float const gameDeltaSeconds   = static_cast<float>(m_gameClock->GetDeltaSeconds());
     float const systemDeltaSeconds = static_cast<float>(Clock::GetSystemClock().GetDeltaSeconds());
 
-    // #TODO: Select keyboard or controller
     UpdateEntities(gameDeltaSeconds, systemDeltaSeconds);
 
     UpdateFromInput();
@@ -146,12 +149,129 @@ STATIC bool Game::OnGameStateChanged(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 STATIC bool Game::OnChessBegin(EventArgs& args)
 {
-    if (g_theNetworkSubsystem->GetConnectionState()==eConnectionState::DISCONNECTED)
+    if (g_theNetworkSubsystem->GetConnectionState() == eConnectionState::DISCONNECTED)
     {
         g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
-                                     Stringf("eConnectionState::DISCONNECTED"));
+                                 Stringf("eConnectionState::DISCONNECTED"));
         return false;
     }
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------
+STATIC bool Game::OnChessPlayerInfo(EventArgs& args)
+{
+    if (g_theNetworkSubsystem == nullptr)
+    {
+        if (g_theDevConsole != nullptr)
+        {
+            g_theDevConsole->AddLine(DevConsole::ERROR,
+                "OnChessPlayerInfo: NetworkSubsystem is not initialized");
+        }
+        return false;
+    }
+
+    if (g_theDevConsole == nullptr)
+    {
+        return false;
+    }
+
+    String const name = args.GetValue("name", "DEFAULT");
+    String const remoteStr = args.GetValue("remote", "false");
+
+    // Explicitly parse remote parameter
+    bool isRemote = false;
+    if (remoteStr == "true" || remoteStr == "1")
+    {
+        isRemote = true;
+    }
+    else if (remoteStr == "false" || remoteStr == "0")
+    {
+        isRemote = false;
+    }
+    else
+    {
+        g_theDevConsole->AddLine(DevConsole::WARNING,
+            Stringf("OnChessPlayerInfo: Invalid remote value '%s', defaulting to false",
+                remoteStr.c_str()));
+        isRemote = false;
+    }
+
+    // Add debug message
+    g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+        Stringf("OnChessPlayerInfo: name=%s, remote=%s (parsed as %s)",
+            name.c_str(), remoteStr.c_str(), isRemote ? "true" : "false"));
+
+    if (isRemote)
+    {
+        // Remote player info - set opponent
+        PlayerController* opponent = g_theGame->GetLocalPlayer(1);
+        if (opponent == nullptr)
+        {
+            // If player 1 doesn't exist, create it first
+            opponent = g_theGame->CreateLocalPlayer(1);
+            if (opponent == nullptr)
+            {
+                g_theDevConsole->AddLine(DevConsole::ERROR,
+                    "OnChessPlayerInfo: Failed to create opponent player");
+                return false;
+            }
+        }
+
+        // Update opponent info
+        opponent->SetType(ePlayerType::OPPONENT);
+        opponent->SetName(name);
+
+        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+            Stringf("Opponent joined: %s", name.c_str()));
+    }
+    else
+    {
+        // Local player info - set self and send to remote
+        PlayerController* localPlayer = g_theGame->GetLocalPlayer(0);
+        if (localPlayer == nullptr)
+        {
+            // If player 0 doesn't exist, create it first
+            localPlayer = g_theGame->CreateLocalPlayer(0);
+            if (localPlayer == nullptr)
+            {
+                g_theDevConsole->AddLine(DevConsole::ERROR,
+                    "OnChessPlayerInfo: Failed to create local player");
+                return false;
+            }
+        }
+
+        // Update local player info
+        localPlayer->SetType(ePlayerType::PLAYER);
+        localPlayer->SetName(name);
+
+        // Check network connection status
+        if (g_theNetworkSubsystem->IsConnected())
+        {
+            // Send local player name to remote
+            sNetworkMessage message;
+            message.m_messageType = "RemoteCommand";
+            message.m_data = Stringf("RemoteCmd cmd=ChessPlayerInfo name=%s remote=true", name.c_str());
+
+            bool success = g_theNetworkSubsystem->SendMessageToServer(message);
+            if (success)
+            {
+                g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+                    Stringf("Local player set: %s (sent to remote)", name.c_str()));
+            }
+            else
+            {
+                g_theDevConsole->AddLine(DevConsole::WARNING,
+                    Stringf("Local player set: %s (failed to send to remote)", name.c_str()));
+            }
+        }
+        else
+        {
+            g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+                Stringf("Local player set: %s (not connected, unable to send to remote)", name.c_str()));
+        }
+    }
+
     return true;
 }
 
@@ -379,14 +499,36 @@ PlayerController* Game::CreateLocalPlayer(int const id)
 }
 
 //----------------------------------------------------------------------------------------------------
+PlayerController* Game::CreateLocalPlayer(int const          id,
+                                          ePlayerType const& type,
+                                          String const&      name)
+{
+    // if (GetLocalPlayer(id) != nullptr)
+    // {
+    //     return nullptr;
+    // }
+
+    PlayerController* player = m_localPlayerControllerList[id];
+    player->SetControllerIndex(id);
+    player->SetName(name);
+    player->SetType(type);
+    player->SetControllerPosition(g_gameConfigBlackboard.GetValue(Stringf("playerControllerPosition%d", id), Vec3::ZERO));
+    player->SetControllerOrientation(g_gameConfigBlackboard.GetValue(Stringf("playerControllerOrientation%d", id), EulerAngles::ZERO));
+    player->m_worldCamera->SetPositionAndOrientation(player->m_position, player->m_orientation);
+    // m_localPlayerControllerList.push_back(player);
+
+    return player;
+}
+
+//----------------------------------------------------------------------------------------------------
 PlayerController* Game::GetLocalPlayer(int const id) const
 {
-    for (PlayerController* m_localPlayerController : m_localPlayerControllerList)
+    for (PlayerController* localPlayerController : m_localPlayerControllerList)
     {
-        if (m_localPlayerController &&
-            m_localPlayerController->GetControllerIndex() == id)
+        if (localPlayerController == nullptr) continue;
+        if (localPlayerController->GetControllerIndex() != id) continue;
 
-            return m_localPlayerController;
+        return localPlayerController;
     }
 
     return nullptr;

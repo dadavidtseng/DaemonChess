@@ -38,7 +38,7 @@ PlayerController::~PlayerController()
 //----------------------------------------------------------------------------------------------------
 void PlayerController::Update(float deltaSeconds)
 {
-    if (g_theGame->IsFixedCameraMode()) return;
+    if (m_owner->IsFixedCameraMode()) return;
 
     Vec3 forward;
     Vec3 left;
@@ -80,12 +80,7 @@ void PlayerController::Render() const
 }
 
 //----------------------------------------------------------------------------------------------------
-void PlayerController::UpdateFromKeyBoard()
-{
-}
-
-//----------------------------------------------------------------------------------------------------
-void PlayerController::UpdateFromController()
+void PlayerController::UpdateFromInput()
 {
 }
 
@@ -104,4 +99,26 @@ Mat44 PlayerController::GetModelToWorldTransform() const
     m2w.Append(m_orientation.GetAsMatrix_IFwd_JLeft_KUp());
 
     return m2w;
+}
+
+String PlayerController::GetName() const
+{
+    return m_name;
+}
+
+ePlayerType PlayerController::GetType() const
+{
+    return m_type;
+}
+
+//----------------------------------------------------------------------------------------------------
+void PlayerController::SetName(String const& name)
+{
+    m_name = name;
+}
+
+//----------------------------------------------------------------------------------------------------
+void PlayerController::SetType(ePlayerType const& type)
+{
+    m_type = type;
 }
