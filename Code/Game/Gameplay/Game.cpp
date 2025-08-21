@@ -161,48 +161,31 @@ STATIC bool Game::OnChessBegin(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 STATIC bool Game::OnChessPlayerInfo(EventArgs& args)
 {
+    if (g_theDevConsole == nullptr) return false;
     if (g_theNetworkSubsystem == nullptr)
     {
-        if (g_theDevConsole != nullptr)
-        {
-            g_theDevConsole->AddLine(DevConsole::ERROR,
-                "OnChessPlayerInfo: NetworkSubsystem is not initialized");
-        }
+        g_theDevConsole->AddLine(DevConsole::ERROR, "(OnChessPlayerInfo)NetworkSubsystem is not initialized");
+
         return false;
     }
 
-    if (g_theDevConsole == nullptr)
-    {
-        return false;
-    }
+    String const name       = args.GetValue("name", "DEFAULT");
+    String const type       = args.GetValue("type", "DEFAULT");
+    ePlayerType  playerType = ePlayerType::INVALID;
+    if (type == "PLAYER") playerType = ePlayerType::PLAYER;
+    else if (type == "OPPONENT") playerType = ePlayerType::OPPONENT;
+    else if (type == "SPECTATOR") playerType = ePlayerType::SPECTATOR;
+    bool const bIsRemote = args.GetValue("remote", false);
 
-    String const name = args.GetValue("name", "DEFAULT");
-    String const remoteStr = args.GetValue("remote", "false");
+    // if (playerType == ePlayerType::SPECTATOR)
+    // {
+    //     static int currentSpectatorID = 0;
+    //     g_theGame->CreateLocalPlayer(currentSpectatorID);
+    //     g_theGame->CreateLocalPlayer(currentSpectatorID, playerType, name);
+    //     return false;
+    // }
 
-    // Explicitly parse remote parameter
-    bool isRemote = false;
-    if (remoteStr == "true" || remoteStr == "1")
-    {
-        isRemote = true;
-    }
-    else if (remoteStr == "false" || remoteStr == "0")
-    {
-        isRemote = false;
-    }
-    else
-    {
-        g_theDevConsole->AddLine(DevConsole::WARNING,
-            Stringf("OnChessPlayerInfo: Invalid remote value '%s', defaulting to false",
-                remoteStr.c_str()));
-        isRemote = false;
-    }
-
-    // Add debug message
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
-        Stringf("OnChessPlayerInfo: name=%s, remote=%s (parsed as %s)",
-            name.c_str(), remoteStr.c_str(), isRemote ? "true" : "false"));
-
-    if (isRemote)
+    if (bIsRemote)
     {
         // Remote player info - set opponent
         PlayerController* opponent = g_theGame->GetLocalPlayer(1);
@@ -213,7 +196,7 @@ STATIC bool Game::OnChessPlayerInfo(EventArgs& args)
             if (opponent == nullptr)
             {
                 g_theDevConsole->AddLine(DevConsole::ERROR,
-                    "OnChessPlayerInfo: Failed to create opponent player");
+                                         "OnChessPlayerInfo: Failed to create opponent player");
                 return false;
             }
         }
@@ -223,7 +206,37 @@ STATIC bool Game::OnChessPlayerInfo(EventArgs& args)
         opponent->SetName(name);
 
         g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
-            Stringf("Opponent joined: %s", name.c_str()));
+                                 Stringf("Opponent joined: %s", name.c_str()));
+
+        // // 如果我們是 Server，收到 Client 的玩家資訊後，要回傳自己的名字
+        // if (g_theNetworkSubsystem->IsServer())
+        // {
+        //     // 取得我們自己的名字（Server 的名字）
+        //     PlayerController* localPlayer = g_theGame->GetLocalPlayer(0);
+        //     String            serverName  = "DEFAULT"; // 預設名字
+        //
+        //     if (localPlayer != nullptr)
+        //     {
+        //         serverName = localPlayer->GetName();
+        //     }
+        //
+        //     // 發送我們的名字給 Client
+        //     sNetworkMessage message;
+        //     message.m_messageType = "RemoteCommand";
+        //     message.m_data        = Stringf("RemoteCmd cmd=ChessPlayerInfo name=%s remote=true", serverName.c_str());
+        //
+        //     bool success = g_theNetworkSubsystem->SendMessageToAllClients(message);
+        //     if (success)
+        //     {
+        //         g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+        //                                  Stringf("Sent our name to client: %s", serverName.c_str()));
+        //     }
+        //     else
+        //     {
+        //         g_theDevConsole->AddLine(DevConsole::WARNING,
+        //                                  "Failed to send our name to client");
+        //     }
+        // }
     }
     else
     {
@@ -236,7 +249,7 @@ STATIC bool Game::OnChessPlayerInfo(EventArgs& args)
             if (localPlayer == nullptr)
             {
                 g_theDevConsole->AddLine(DevConsole::ERROR,
-                    "OnChessPlayerInfo: Failed to create local player");
+                                         "OnChessPlayerInfo: Failed to create local player");
                 return false;
             }
         }
@@ -251,24 +264,33 @@ STATIC bool Game::OnChessPlayerInfo(EventArgs& args)
             // Send local player name to remote
             sNetworkMessage message;
             message.m_messageType = "RemoteCommand";
-            message.m_data = Stringf("RemoteCmd cmd=ChessPlayerInfo name=%s remote=true", name.c_str());
+            message.m_data        = Stringf("ChessPlayerInfo name=%s remote=true", name.c_str());
 
-            bool success = g_theNetworkSubsystem->SendMessageToServer(message);
+            bool success = false;
+            if (g_theNetworkSubsystem->IsClient())
+            {
+                success = g_theNetworkSubsystem->SendMessageToServer(message);
+            }
+            else if (g_theNetworkSubsystem->IsServer())
+            {
+                success = g_theNetworkSubsystem->SendMessageToAllClients(message);
+            }
+
             if (success)
             {
                 g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
-                    Stringf("Local player set: %s (sent to remote)", name.c_str()));
+                                         Stringf("Local player set: %s (sent to remote)", name.c_str()));
             }
             else
             {
                 g_theDevConsole->AddLine(DevConsole::WARNING,
-                    Stringf("Local player set: %s (failed to send to remote)", name.c_str()));
+                                         Stringf("Local player set: %s (failed to send to remote)", name.c_str()));
             }
         }
         else
         {
             g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
-                Stringf("Local player set: %s (not connected, unable to send to remote)", name.c_str()));
+                                     Stringf("Local player set: %s (not connected, unable to send to remote)", name.c_str()));
         }
     }
 
