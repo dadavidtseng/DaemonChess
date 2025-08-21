@@ -56,7 +56,7 @@ private:
     void              RenderAttractMode() const;
     void              RenderEntities() const;
     PlayerController* CreateLocalPlayer(int id);
-    PlayerController* CreateLocalPlayer(int id,ePlayerType const& type, String const& name);
+    PlayerController* SetLocalPlayerByID(int id,ePlayerType const& type, String const& name);
     PlayerController* GetLocalPlayer(int id) const;
 
     Camera*                        m_screenCamera = nullptr;
