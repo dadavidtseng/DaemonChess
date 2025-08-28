@@ -25,9 +25,9 @@
 //----------------------------------------------------------------------------------------------------
 Game::Game()
 {
-    g_theEventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
-    g_theEventSystem->SubscribeEventCallbackFunction("ChessBegin", OnChessBegin);
-    g_theEventSystem->SubscribeEventCallbackFunction("ChessPlayerInfo", OnChessPlayerInfo);
+    g_eventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
+    g_eventSystem->SubscribeEventCallbackFunction("ChessBegin", OnChessBegin);
+    g_eventSystem->SubscribeEventCallbackFunction("ChessPlayerInfo", OnChessPlayerInfo);
 
     m_gameClock    = new Clock(Clock::GetSystemClock());
     m_screenCamera = new Camera();
@@ -46,9 +46,9 @@ Game::Game()
 //----------------------------------------------------------------------------------------------------
 Game::~Game()
 {
-    g_theEventSystem->UnsubscribeEventCallbackFunction("ChessPlayerInfo", OnChessPlayerInfo);
-    g_theEventSystem->UnsubscribeEventCallbackFunction("ChessBegin", OnChessBegin);
-    g_theEventSystem->UnsubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
+    g_eventSystem->UnsubscribeEventCallbackFunction("ChessPlayerInfo", OnChessPlayerInfo);
+    g_eventSystem->UnsubscribeEventCallbackFunction("ChessBegin", OnChessBegin);
+    g_eventSystem->UnsubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -71,16 +71,16 @@ void Game::Render() const
 
     //-Start-of-Game-Camera---------------------------------------------------------------------------
 
-    g_theRenderer->BeginCamera(*localPlayer->GetCamera());
+    g_renderer->BeginCamera(*localPlayer->GetCamera());
 
     if (m_gameState == eGameState::MATCH ||
         m_gameState == eGameState::FINISHED)
     {
         RenderEntities();
-        g_theRenderer->RenderEmissive();
+        g_renderer->RenderEmissive();
     }
 
-    g_theRenderer->EndCamera(*localPlayer->GetCamera());
+    g_renderer->EndCamera(*localPlayer->GetCamera());
 
     //-End-of-Game-Camera-----------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
@@ -91,7 +91,7 @@ void Game::Render() const
     //------------------------------------------------------------------------------------------------
     //-Start-of-Screen-Camera-------------------------------------------------------------------------
 
-    g_theRenderer->BeginCamera(*m_screenCamera);
+    g_renderer->BeginCamera(*m_screenCamera);
 
     if (m_gameState == eGameState::ATTRACT)
     {
@@ -103,7 +103,7 @@ void Game::Render() const
     }
 
 
-    g_theRenderer->EndCamera(*m_screenCamera);
+    g_renderer->EndCamera(*m_screenCamera);
 
     //-End-of-Screen-Camera---------------------------------------------------------------------------
 
@@ -124,21 +124,21 @@ STATIC bool Game::OnGameStateChanged(EventArgs& args)
     {
         PieceDefinition::ClearAllDefs();
         BoardDefinition::ClearAllDefs();
-        GAME_SAFE_RELEASE(g_theGame->m_match);
-        g_theGame->m_currentPlayerControllerId = 0;
+        GAME_SAFE_RELEASE(g_game->m_match);
+        g_game->m_currentPlayerControllerId = 0;
     }
 
     if (newGameState == "MATCH")
     {
         PieceDefinition::InitializeDefs("Data/Definitions/PieceDefinition.xml");
         BoardDefinition::InitializeDefs("Data/Definitions/BoardDefinition.xml");
-        g_theGame->m_match = new Match();
-        g_theEventSystem->FireEvent("OnMatchInitialized");
+        g_game->m_match = new Match();
+        g_eventSystem->FireEvent("OnMatchInitialized");
     }
     else if (newGameState == "FINISHED")
     {
-        int const         id     = g_theGame->m_currentPlayerControllerId;
-        PlayerController* player = g_theGame->GetLocalPlayer(id);
+        int const         id     = g_game->m_currentPlayerControllerId;
+        PlayerController* player = g_game->GetLocalPlayer(id);
         player->m_position       = Vec3(9.5f, 4.f, 4.f);
         player->m_orientation    = EulerAngles(180, 45, 0);
     }
@@ -149,9 +149,9 @@ STATIC bool Game::OnGameStateChanged(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 STATIC bool Game::OnChessBegin(EventArgs& args)
 {
-    if (g_theNetworkSubsystem->GetConnectionState() == eConnectionState::DISCONNECTED)
+    if (g_networkSubsystem->GetConnectionState() == eConnectionState::DISCONNECTED)
     {
-        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+        g_devConsole->AddLine(DevConsole::INFO_MAJOR,
                                  Stringf("eConnectionState::DISCONNECTED"));
         return false;
     }
@@ -161,10 +161,10 @@ STATIC bool Game::OnChessBegin(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 STATIC bool Game::OnChessPlayerInfo(EventArgs& args)
 {
-    if (g_theDevConsole == nullptr) return false;
-    if (g_theNetworkSubsystem == nullptr)
+    if (g_devConsole == nullptr) return false;
+    if (g_networkSubsystem == nullptr)
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR, "(OnChessPlayerInfo)NetworkSubsystem is not initialized");
+        g_devConsole->AddLine(DevConsole::ERROR, "(OnChessPlayerInfo)NetworkSubsystem is not initialized");
 
         return false;
     }
@@ -180,8 +180,8 @@ STATIC bool Game::OnChessPlayerInfo(EventArgs& args)
     if (playerType == ePlayerType::SPECTATOR)
     {
         static int currentSpectatorID = 2;
-        g_theGame->CreateLocalPlayer(currentSpectatorID);
-        g_theGame->SetLocalPlayerByID(currentSpectatorID, playerType, name);
+        g_game->CreateLocalPlayer(currentSpectatorID);
+        g_game->SetLocalPlayerByID(currentSpectatorID, playerType, name);
 
         currentSpectatorID++;
         // return false;
@@ -191,27 +191,27 @@ STATIC bool Game::OnChessPlayerInfo(EventArgs& args)
     {
         if (playerType == ePlayerType::SPECTATOR)
         {
-            PlayerController* spectator = g_theGame->GetLocalPlayer(2);
+            PlayerController* spectator = g_game->GetLocalPlayer(2);
             spectator->SetType(ePlayerType::SPECTATOR);
             spectator->SetName(name);
 
-            g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Spectator joined: %s", name.c_str()));
+            g_devConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Spectator joined: %s", name.c_str()));
             sNetworkMessage message;
             message.m_messageType = "RemoteCommand";
             message.m_data = Stringf("Echo text=%s", "SpectatorJoined");
-            g_theNetworkSubsystem->SendMessageToAllClients(message);
+            g_networkSubsystem->SendMessageToAllClients(message);
         }
         else
         {
             // Remote player info - set opponent
-            PlayerController* opponent = g_theGame->GetLocalPlayer(1);
+            PlayerController* opponent = g_game->GetLocalPlayer(1);
             if (opponent == nullptr)
             {
                 // If player 1 doesn't exist, create it first
-                opponent = g_theGame->CreateLocalPlayer(1);
+                opponent = g_game->CreateLocalPlayer(1);
                 if (opponent == nullptr)
                 {
-                    g_theDevConsole->AddLine(DevConsole::ERROR,
+                    g_devConsole->AddLine(DevConsole::ERROR,
                                              "OnChessPlayerInfo: Failed to create opponent player");
                     return false;
                 }
@@ -221,25 +221,25 @@ STATIC bool Game::OnChessPlayerInfo(EventArgs& args)
             opponent->SetType(ePlayerType::OPPONENT);
             opponent->SetName(name);
 
-            g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+            g_devConsole->AddLine(DevConsole::INFO_MAJOR,
                                      Stringf("Opponent joined: %s", name.c_str()));
             sNetworkMessage message;
             message.m_messageType = "RemoteCommand";
             message.m_data = Stringf("Echo text=%s", "OpponentJoined");
-            g_theNetworkSubsystem->SendMessageToAllClients(message);
+            g_networkSubsystem->SendMessageToAllClients(message);
         }
     }
     else
     {
         // Local player info - set self and send to remote
-        PlayerController* localPlayer = g_theGame->GetLocalPlayer(0);
+        PlayerController* localPlayer = g_game->GetLocalPlayer(0);
         if (localPlayer == nullptr)
         {
             // If player 0 doesn't exist, create it first
-            localPlayer = g_theGame->CreateLocalPlayer(0);
+            localPlayer = g_game->CreateLocalPlayer(0);
             if (localPlayer == nullptr)
             {
-                g_theDevConsole->AddLine(DevConsole::ERROR,
+                g_devConsole->AddLine(DevConsole::ERROR,
                                          "OnChessPlayerInfo: Failed to create local player");
                 return false;
             }
@@ -250,7 +250,7 @@ STATIC bool Game::OnChessPlayerInfo(EventArgs& args)
         localPlayer->SetName(name);
 
         // Check network connection status
-        if (g_theNetworkSubsystem->IsConnected())
+        if (g_networkSubsystem->IsConnected())
         {
             // Send local player name to remote
             sNetworkMessage message;
@@ -258,29 +258,29 @@ STATIC bool Game::OnChessPlayerInfo(EventArgs& args)
             message.m_data        = Stringf("ChessPlayerInfo name=%s type=%s remote=true", name.c_str(), type.c_str());
 
             bool success = false;
-            if (g_theNetworkSubsystem->IsClient())
+            if (g_networkSubsystem->IsClient())
             {
-                success = g_theNetworkSubsystem->SendMessageToServer(message);
+                success = g_networkSubsystem->SendMessageToServer(message);
             }
-            else if (g_theNetworkSubsystem->IsServer())
+            else if (g_networkSubsystem->IsServer())
             {
-                success = g_theNetworkSubsystem->SendMessageToAllClients(message);
+                success = g_networkSubsystem->SendMessageToAllClients(message);
             }
 
             if (success)
             {
-                g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+                g_devConsole->AddLine(DevConsole::INFO_MAJOR,
                                          Stringf("Local player set: %s (sent to remote)", name.c_str()));
             }
             else
             {
-                g_theDevConsole->AddLine(DevConsole::WARNING,
+                g_devConsole->AddLine(DevConsole::WARNING,
                                          Stringf("Local player set: %s (failed to send to remote)", name.c_str()));
             }
         }
         else
         {
-            g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+            g_devConsole->AddLine(DevConsole::INFO_MAJOR,
                                      Stringf("Local player set: %s (not connected, unable to send to remote)", name.c_str()));
         }
     }
@@ -310,7 +310,7 @@ void Game::ChangeGameState(eGameState const newGameState)
 
     m_gameState = newGameState;
 
-    g_theEventSystem->FireEvent("OnGameStateChanged", args);
+    g_eventSystem->FireEvent("OnGameStateChanged", args);
 }
 
 bool Game::IsFixedCameraMode() const
@@ -336,22 +336,22 @@ void Game::UpdateFromInput()
 {
     PlayerController const* localPlayer = GetLocalPlayer(m_currentPlayerControllerId);
     UNUSED(localPlayer)
-    if (g_theInput->WasKeyJustPressed(NUMCODE_0))
+    if (g_input->WasKeyJustPressed(NUMCODE_0))
     {
         Window::s_mainWindow->SetWindowType(eWindowType::FULLSCREEN_CROP);
     }
-    if (g_theInput->WasKeyJustPressed(NUMCODE_1))
+    if (g_input->WasKeyJustPressed(NUMCODE_1))
     {
         Window::s_mainWindow->SetWindowType(eWindowType::WINDOWED);
     }
     if (m_gameState == eGameState::ATTRACT)
     {
-        if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
+        if (g_input->WasKeyJustPressed(KEYCODE_ESC))
         {
             App::RequestQuit();
         }
 
-        if (g_theInput->WasKeyJustPressed(KEYCODE_SPACE))
+        if (g_input->WasKeyJustPressed(KEYCODE_SPACE))
         {
             ChangeGameState(eGameState::MATCH);
         }
@@ -360,45 +360,45 @@ void Game::UpdateFromInput()
     if (m_gameState == eGameState::MATCH ||
         m_gameState == eGameState::FINISHED)
     {
-        if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
+        if (g_input->WasKeyJustPressed(KEYCODE_ESC))
         {
             ChangeGameState(eGameState::ATTRACT);
         }
 
-        if (g_theInput->WasKeyJustPressed(KEYCODE_P))
+        if (g_input->WasKeyJustPressed(KEYCODE_P))
         {
             m_gameClock->TogglePause();
         }
 
-        if (g_theInput->WasKeyJustPressed(KEYCODE_O))
+        if (g_input->WasKeyJustPressed(KEYCODE_O))
         {
             m_gameClock->StepSingleFrame();
         }
 
-        if (g_theInput->IsKeyDown(KEYCODE_T))
+        if (g_input->IsKeyDown(KEYCODE_T))
         {
             m_gameClock->SetTimeScale(0.1f);
         }
 
-        if (g_theInput->WasKeyJustReleased(KEYCODE_T))
+        if (g_input->WasKeyJustReleased(KEYCODE_T))
         {
             m_gameClock->SetTimeScale(1.f);
         }
 
-        if (g_theInput->WasKeyJustPressed(KEYCODE_F6))
+        if (g_input->WasKeyJustPressed(KEYCODE_F6))
         {
             m_currentDebugInt = (m_currentDebugInt + (int)m_currentDebugIntRange.m_max) % (static_cast<int>(m_currentDebugIntRange.GetLength()) + 1);
         }
-        if (g_theInput->WasKeyJustPressed(KEYCODE_F7))
+        if (g_input->WasKeyJustPressed(KEYCODE_F7))
         {
             m_currentDebugInt = (m_currentDebugInt + (int)m_currentDebugIntRange.m_min + 1) % (static_cast<int>(m_currentDebugIntRange.GetLength()) + 1);
         }
 
-        g_theRenderer->SetPerFrameConstants((float)m_gameClock->GetTotalSeconds(), m_currentDebugInt, 0);
+        g_renderer->SetPerFrameConstants((float)m_gameClock->GetTotalSeconds(), m_currentDebugInt, 0);
 
         DebugAddMessage(Stringf("DebugInt=%d|RenderMode=%s", m_currentDebugInt, GetDebugIntString(m_currentDebugInt)), 0.f, Rgba8::YELLOW);
 
-        if (g_theInput->WasKeyJustPressed(KEYCODE_F4))
+        if (g_input->WasKeyJustPressed(KEYCODE_F4))
         {
             m_isFixedCameraMode = !m_isFixedCameraMode;
 
@@ -442,14 +442,14 @@ void Game::RenderAttractMode() const
 
     VertexList_PCU verts;
     AddVertsForDisc2D(verts, Vec2((float)clientDimensions.x * 0.5f, (float)clientDimensions.y * 0.5f), 300.f, 10.f, Rgba8::YELLOW);
-    g_theRenderer->SetModelConstants();
-    g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
-    g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
-    g_theRenderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
-    g_theRenderer->SetDepthMode(eDepthMode::DISABLED);
-    g_theRenderer->BindTexture(nullptr);
-    g_theRenderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
-    g_theRenderer->DrawVertexArray(verts);
+    g_renderer->SetModelConstants();
+    g_renderer->SetBlendMode(eBlendMode::OPAQUE);
+    g_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
+    g_renderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
+    g_renderer->SetDepthMode(eDepthMode::DISABLED);
+    g_renderer->BindTexture(nullptr);
+    g_renderer->BindShader(g_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
+    g_renderer->DrawVertexArray(verts);
 
     std::vector<std::string> asciiArt = {
 
@@ -486,7 +486,7 @@ void Game::RenderEntities() const
     PlayerController const* localPlayer = GetLocalPlayer(m_currentPlayerControllerId);
 
     m_match->Render();
-    g_theRenderer->SetModelConstants(localPlayer->GetModelToWorldTransform());
+    g_renderer->SetModelConstants(localPlayer->GetModelToWorldTransform());
     localPlayer->Render();
 }
 

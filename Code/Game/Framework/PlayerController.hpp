@@ -11,6 +11,7 @@
 class Camera;
 
 //----------------------------------------------------------------------------------------------------
+// TODO: add more player types, i.e. HUMAN_PLAYER, HUMAN_OPPONENT, AI_PLAYER, AI_OPPONENT, etc.
 enum class ePlayerType : uint8_t
 {
     INVALID,

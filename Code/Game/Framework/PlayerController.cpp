@@ -48,25 +48,25 @@ void PlayerController::Update(float deltaSeconds)
     m_velocity                = Vec3::ZERO;
     float constexpr moveSpeed = 2.f;
 
-    if (g_theInput->IsKeyDown(KEYCODE_W)) m_velocity += forward * moveSpeed;
-    if (g_theInput->IsKeyDown(KEYCODE_S)) m_velocity -= forward * moveSpeed;
-    if (g_theInput->IsKeyDown(KEYCODE_A)) m_velocity += left * moveSpeed;
-    if (g_theInput->IsKeyDown(KEYCODE_D)) m_velocity -= left * moveSpeed;
-    if (g_theInput->IsKeyDown(KEYCODE_Z)) m_velocity -= Vec3(0.f, 0.f, 1.f) * moveSpeed;
-    if (g_theInput->IsKeyDown(KEYCODE_C)) m_velocity += Vec3(0.f, 0.f, 1.f) * moveSpeed;
+    if (g_input->IsKeyDown(KEYCODE_W)) m_velocity += forward * moveSpeed;
+    if (g_input->IsKeyDown(KEYCODE_S)) m_velocity -= forward * moveSpeed;
+    if (g_input->IsKeyDown(KEYCODE_A)) m_velocity += left * moveSpeed;
+    if (g_input->IsKeyDown(KEYCODE_D)) m_velocity -= left * moveSpeed;
+    if (g_input->IsKeyDown(KEYCODE_Z)) m_velocity -= Vec3(0.f, 0.f, 1.f) * moveSpeed;
+    if (g_input->IsKeyDown(KEYCODE_C)) m_velocity += Vec3(0.f, 0.f, 1.f) * moveSpeed;
 
-    if (g_theInput->IsKeyDown(KEYCODE_SHIFT)) deltaSeconds *= 10.f;
+    if (g_input->IsKeyDown(KEYCODE_SHIFT)) deltaSeconds *= 10.f;
 
     m_position += m_velocity * deltaSeconds;
 
-    m_orientation.m_yawDegrees -= g_theInput->GetCursorClientDelta().x * 0.125f;
-    m_orientation.m_pitchDegrees += g_theInput->GetCursorClientDelta().y * 0.125f;
+    m_orientation.m_yawDegrees -= g_input->GetCursorClientDelta().x * 0.125f;
+    m_orientation.m_pitchDegrees += g_input->GetCursorClientDelta().y * 0.125f;
     m_orientation.m_pitchDegrees = GetClamped(m_orientation.m_pitchDegrees, -85.f, 85.f);
 
     m_angularVelocity.m_rollDegrees = 0.f;
 
-    if (g_theInput->IsKeyDown(KEYCODE_Q)) m_angularVelocity.m_rollDegrees = 90.f;
-    if (g_theInput->IsKeyDown(KEYCODE_E)) m_angularVelocity.m_rollDegrees = -90.f;
+    if (g_input->IsKeyDown(KEYCODE_Q)) m_angularVelocity.m_rollDegrees = 90.f;
+    if (g_input->IsKeyDown(KEYCODE_E)) m_angularVelocity.m_rollDegrees = -90.f;
 
     m_orientation.m_rollDegrees += m_angularVelocity.m_rollDegrees * deltaSeconds;
     m_orientation.m_rollDegrees = GetClamped(m_orientation.m_rollDegrees, -45.f, 45.f);

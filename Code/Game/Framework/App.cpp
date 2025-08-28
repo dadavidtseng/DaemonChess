@@ -24,16 +24,16 @@
 #include "Game/Subsystem/Light/LightSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
-App*                   g_theApp               = nullptr;       // Created and owned by Main_Windows.cpp
-AudioSystem*           g_theAudio             = nullptr;       // Created and owned by the App
-BitmapFont*            g_theBitmapFont        = nullptr;       // Created and owned by the App
-Game*                  g_theGame              = nullptr;       // Created and owned by the App
-Renderer*              g_theRenderer          = nullptr;       // Created and owned by the App
-RandomNumberGenerator* g_theRNG               = nullptr;       // Created and owned by the App
-Window*                g_theWindow            = nullptr;       // Created and owned by the App
-LightSubsystem*        g_theLightSubsystem    = nullptr;       // Created and owned by the App
-NetworkSubsystem*      g_theNetworkSubsystem  = nullptr;       // Created and owned by the App
-ResourceSubsystem*     g_theResourceSubsystem = nullptr;       // Created and owned by the App
+App*                   g_app               = nullptr;       // Created and owned by Main_Windows.cpp
+AudioSystem*           g_audio             = nullptr;       // Created and owned by the App
+BitmapFont*            g_bitmapFont        = nullptr;       // Created and owned by the App
+Game*                  g_game              = nullptr;       // Created and owned by the App
+Renderer*              g_renderer          = nullptr;       // Created and owned by the App
+RandomNumberGenerator* g_rng               = nullptr;       // Created and owned by the App
+Window*                g_window            = nullptr;       // Created and owned by the App
+LightSubsystem*        g_lightSubsystem    = nullptr;       // Created and owned by the App
+NetworkSubsystem*      g_networkSubsystem  = nullptr;       // Created and owned by the App
+ResourceSubsystem*     g_resourceSubsystem = nullptr;       // Created and owned by the App
 
 //----------------------------------------------------------------------------------------------------
 /// @brief
@@ -45,22 +45,22 @@ void App::Startup()
     //-Start-of-EventSystem---------------------------------------------------------------------------
 
     sEventSystemConfig constexpr eventSystemConfig;
-    g_theEventSystem = new EventSystem(eventSystemConfig);
-    g_theEventSystem->SubscribeEventCallbackFunction("OnCloseButtonClicked", OnCloseButtonClicked);
-    g_theEventSystem->SubscribeEventCallbackFunction("ChessServerInfo", OnChessServerInfo);
-    g_theEventSystem->SubscribeEventCallbackFunction("ChessListen", OnChessListen);
-    g_theEventSystem->SubscribeEventCallbackFunction("ChessConnect", OnChessConnect);
-    g_theEventSystem->SubscribeEventCallbackFunction("ChessDisconnect", OnChessDisconnect);
-    g_theEventSystem->SubscribeEventCallbackFunction("RemoteCmd", OnRemoteCmd);
-    g_theEventSystem->SubscribeEventCallbackFunction("Echo", OnEcho);
-    g_theEventSystem->SubscribeEventCallbackFunction("quit", OnCloseButtonClicked);
+    g_eventSystem = new EventSystem(eventSystemConfig);
+    g_eventSystem->SubscribeEventCallbackFunction("OnCloseButtonClicked", OnCloseButtonClicked);
+    g_eventSystem->SubscribeEventCallbackFunction("ChessServerInfo", OnChessServerInfo);
+    g_eventSystem->SubscribeEventCallbackFunction("ChessListen", OnChessListen);
+    g_eventSystem->SubscribeEventCallbackFunction("ChessConnect", OnChessConnect);
+    g_eventSystem->SubscribeEventCallbackFunction("ChessDisconnect", OnChessDisconnect);
+    g_eventSystem->SubscribeEventCallbackFunction("RemoteCmd", OnRemoteCmd);
+    g_eventSystem->SubscribeEventCallbackFunction("Echo", OnEcho);
+    g_eventSystem->SubscribeEventCallbackFunction("quit", OnCloseButtonClicked);
 
     //-End-of-EventSystem-----------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
     //-Start-of-InputSystem---------------------------------------------------------------------------
 
     sInputSystemConfig constexpr inputConfig;
-    g_theInput = new InputSystem(inputConfig);
+    g_input = new InputSystem(inputConfig);
 
     //-End-of-InputSystem-----------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
@@ -69,25 +69,25 @@ void App::Startup()
     sWindowConfig windowConfig;
     windowConfig.m_windowType   = eWindowType::WINDOWED;
     windowConfig.m_aspectRatio  = 2.f;
-    windowConfig.m_inputSystem  = g_theInput;
+    windowConfig.m_inputSystem  = g_input;
     windowConfig.m_windowTitle  = "ChessSimulator";
     windowConfig.m_iconFilePath = L"C:/p4/Personal/SD/ChessSimulator/Run/Data/Images/Chess.ico";
-    g_theWindow                 = new Window(windowConfig);
+    g_window                 = new Window(windowConfig);
 
     //-End-of-Window----------------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
     //-Start-of-Renderer------------------------------------------------------------------------------
 
     sRendererConfig rendererConfig;
-    rendererConfig.m_window = g_theWindow;
-    g_theRenderer           = new Renderer(rendererConfig);
+    rendererConfig.m_window = g_window;
+    g_renderer           = new Renderer(rendererConfig);
 
     //-End-of-Renderer--------------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
     //-Start-of-DebugRender---------------------------------------------------------------------------
 
     sDebugRenderConfig debugRenderConfig;
-    debugRenderConfig.m_renderer = g_theRenderer;
+    debugRenderConfig.m_renderer = g_renderer;
     debugRenderConfig.m_fontName = "SquirrelFixedFont";
 
     //-End-of-DebugRender-----------------------------------------------------------------------------
@@ -97,36 +97,36 @@ void App::Startup()
     m_devConsoleCamera = new Camera();
 
     sDevConsoleConfig devConsoleConfig;
-    devConsoleConfig.m_defaultRenderer = g_theRenderer;
+    devConsoleConfig.m_defaultRenderer = g_renderer;
     devConsoleConfig.m_defaultFontName = "SquirrelFixedFont";
     devConsoleConfig.m_defaultCamera   = m_devConsoleCamera;
-    g_theDevConsole                    = new DevConsole(devConsoleConfig);
+    g_devConsole                    = new DevConsole(devConsoleConfig);
 
-    g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, "Controls");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(Mouse) Aim");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(W/A)   Move");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(S/D)   Strafe");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(Q/E)   Roll");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(Z/C)   Elevate");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(Shift) Sprint");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(~)     Toggle Dev Console");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(ESC)   Exit Game");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "(SPACE) Start Game");
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, "[Network] Network commands registered. Type 'net_help' for help.");
+    g_devConsole->AddLine(DevConsole::INFO_MAJOR, "Controls");
+    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(Mouse) Aim");
+    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(W/A)   Move");
+    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(S/D)   Strafe");
+    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(Q/E)   Roll");
+    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(Z/C)   Elevate");
+    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(Shift) Sprint");
+    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(~)     Toggle Dev Console");
+    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(ESC)   Exit Game");
+    g_devConsole->AddLine(DevConsole::INFO_MINOR, "(SPACE) Start Game");
+    g_devConsole->AddLine(DevConsole::INFO_MINOR, "[Network] Network commands registered. Type 'net_help' for help.");
 
     //-End-of-DevConsole------------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
     //-Start-of-AudioSystem---------------------------------------------------------------------------
 
     sAudioSystemConfig constexpr audioSystemConfig;
-    g_theAudio = new AudioSystem(audioSystemConfig);
+    g_audio = new AudioSystem(audioSystemConfig);
 
     //-End-of-AudioSystem-----------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
     //-Start-of-LightSubsystem------------------------------------------------------------------------
 
     sLightSubsystemConfig constexpr lightSubsystemConfig;
-    g_theLightSubsystem = new LightSubsystem(lightSubsystemConfig);
+    g_lightSubsystem = new LightSubsystem(lightSubsystemConfig);
 
     //-End-of-LightSubsystem--------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
@@ -135,7 +135,7 @@ void App::Startup()
     sNetworkSubsystemConfig networkSubsystemConfig;
     networkSubsystemConfig.hostAddressString = "127.0.0.1:3100";
     networkSubsystemConfig.maxClients        = 4;
-    g_theNetworkSubsystem                    = new NetworkSubsystem(networkSubsystemConfig);
+    g_networkSubsystem                    = new NetworkSubsystem(networkSubsystemConfig);
 
     //-End-of-NetworkSubsystem------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
@@ -144,24 +144,24 @@ void App::Startup()
     sResourceSubsystemConfig resourceSubsystemConfig;
     resourceSubsystemConfig.m_threadCount = 4;
 
-    g_theResourceSubsystem = new ResourceSubsystem(resourceSubsystemConfig);
+    g_resourceSubsystem = new ResourceSubsystem(resourceSubsystemConfig);
 
     //-End-of-ResourceSubsystem-----------------------------------------------------------------------
 
-    g_theEventSystem->Startup();
-    g_theWindow->Startup();
-    g_theRenderer->Startup();
+    g_eventSystem->Startup();
+    g_window->Startup();
+    g_renderer->Startup();
     DebugRenderSystemStartup(debugRenderConfig);
-    g_theDevConsole->StartUp();
-    g_theInput->Startup();
-    g_theAudio->Startup();
-    g_theLightSubsystem->StartUp();
-    g_theNetworkSubsystem->StartUp();
-    g_theResourceSubsystem->Startup();
+    g_devConsole->StartUp();
+    g_input->Startup();
+    g_audio->Startup();
+    g_lightSubsystem->StartUp();
+    g_networkSubsystem->StartUp();
+    g_resourceSubsystem->Startup();
 
-    g_theBitmapFont = g_theRenderer->CreateOrGetBitmapFontFromFile("Data/Fonts/SquirrelFixedFont"); // DO NOT SPECIFY FILE .EXTENSION!!  (Important later on.)
-    g_theRNG        = new RandomNumberGenerator();
-    g_theGame       = new Game();
+    g_bitmapFont = g_renderer->CreateOrGetBitmapFontFromFile("Data/Fonts/SquirrelFixedFont"); // DO NOT SPECIFY FILE .EXTENSION!!  (Important later on.)
+    g_rng        = new RandomNumberGenerator();
+    g_game       = new Game();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -170,29 +170,29 @@ void App::Startup()
 void App::Shutdown()
 {
     // Destroy all Engine Subsystem
-    GAME_SAFE_RELEASE(g_theGame);
-    GAME_SAFE_RELEASE(g_theRNG);
-    GAME_SAFE_RELEASE(g_theBitmapFont);
+    GAME_SAFE_RELEASE(g_game);
+    GAME_SAFE_RELEASE(g_rng);
+    GAME_SAFE_RELEASE(g_bitmapFont);
 
     // g_theResourceSubsystem->Shutdown();
-    g_theNetworkSubsystem->ShutDown();
-    g_theLightSubsystem->ShutDown();
-    g_theAudio->Shutdown();
-    g_theInput->Shutdown();
-    g_theDevConsole->Shutdown();
+    g_networkSubsystem->ShutDown();
+    g_lightSubsystem->ShutDown();
+    g_audio->Shutdown();
+    g_input->Shutdown();
+    g_devConsole->Shutdown();
 
     GAME_SAFE_RELEASE(m_devConsoleCamera);
 
     DebugRenderSystemShutdown();
-    g_theRenderer->Shutdown();
-    g_theWindow->Shutdown();
-    g_theEventSystem->Shutdown();
+    g_renderer->Shutdown();
+    g_window->Shutdown();
+    g_eventSystem->Shutdown();
 
     // GAME_SAFE_RELEASE(g_theResourceSubsystem);
-    GAME_SAFE_RELEASE(g_theAudio);
-    GAME_SAFE_RELEASE(g_theRenderer);
-    GAME_SAFE_RELEASE(g_theWindow);
-    GAME_SAFE_RELEASE(g_theInput);
+    GAME_SAFE_RELEASE(g_audio);
+    GAME_SAFE_RELEASE(g_renderer);
+    GAME_SAFE_RELEASE(g_window);
+    GAME_SAFE_RELEASE(g_input);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -230,9 +230,9 @@ STATIC bool App::OnCloseButtonClicked(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 STATIC bool App::OnChessServerInfo(EventArgs& args)
 {
-    if (g_theNetworkSubsystem == nullptr)
+    if (g_networkSubsystem == nullptr)
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnChessServerInfo)NetworkSubsystem is not initialized"));
+        g_devConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnChessServerInfo)NetworkSubsystem is not initialized"));
         return false;
     }
 
@@ -240,14 +240,14 @@ STATIC bool App::OnChessServerInfo(EventArgs& args)
     unsigned short const newPort = args.GetValue("port", static_cast<unsigned short>(0));
 
     // 取得目前的網路狀態
-    eNetworkMode     networkMode     = g_theNetworkSubsystem->GetNetworkMode();
-    eConnectionState connectionState = g_theNetworkSubsystem->GetConnectionState();
-    bool             isConnected     = g_theNetworkSubsystem->IsConnected();
+    eNetworkMode     networkMode     = g_networkSubsystem->GetNetworkMode();
+    eConnectionState connectionState = g_networkSubsystem->GetConnectionState();
+    bool             isConnected     = g_networkSubsystem->IsConnected();
 
     // 如果目前已連線，拒絕任何變更
     if (isConnected && (!newIP.empty() || newPort != -1))
     {
-        g_theDevConsole->AddLine(DevConsole::WARNING, "(App::OnChessServerInfo)Cannot change server info while connected. Disconnect first.");
+        g_devConsole->AddLine(DevConsole::WARNING, "(App::OnChessServerInfo)Cannot change server info while connected. Disconnect first.");
     }
     else
     {
@@ -256,8 +256,8 @@ STATIC bool App::OnChessServerInfo(EventArgs& args)
         {
             // 這裡需要根據您的系統設計來更新 IP
             // 可能需要存儲在 NetworkSubsystem 或 Game 中
-            g_theNetworkSubsystem->SetCurrentIP(newIP);
-            g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+            g_networkSubsystem->SetCurrentIP(newIP);
+            g_devConsole->AddLine(DevConsole::INFO_MINOR,
                                      Stringf("Server IP updated to: %s", newIP.c_str()));
         }
 
@@ -265,31 +265,31 @@ STATIC bool App::OnChessServerInfo(EventArgs& args)
         if (!isConnected && newPort != -1)
         {
             // 這裡需要根據您的系統設計來更新連接埠
-            g_theNetworkSubsystem->SetCurrentPort(newPort);
-            g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+            g_networkSubsystem->SetCurrentPort(newPort);
+            g_devConsole->AddLine(DevConsole::INFO_MINOR,
                                      Stringf("Server port updated to: %d", newPort));
         }
     }
 
-    String         currentIP   = g_theNetworkSubsystem->GetCurrentIP();
-    unsigned short currentPort = g_theNetworkSubsystem->GetCurrentPort();
+    String         currentIP   = g_networkSubsystem->GetCurrentIP();
+    unsigned short currentPort = g_networkSubsystem->GetCurrentPort();
 
     // 如果是伺服器模式
     if (networkMode == eNetworkMode::SERVER)
     {
-        int connectedClients = g_theNetworkSubsystem->GetConnectedClientCount();
+        int connectedClients = g_networkSubsystem->GetConnectedClientCount();
 
-        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+        g_devConsole->AddLine(DevConsole::INFO_MAJOR,
                                  Stringf("//////////Chess Client Info//////////"));
-        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+        g_devConsole->AddLine(DevConsole::INFO_MINOR,
                                  Stringf("IP: %s", currentIP.c_str()));
-        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+        g_devConsole->AddLine(DevConsole::INFO_MINOR,
                                  Stringf("Port: %d", currentPort));
-        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+        g_devConsole->AddLine(DevConsole::INFO_MINOR,
                                  Stringf("Mode: SERVER"));
-        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+        g_devConsole->AddLine(DevConsole::INFO_MINOR,
                                  Stringf("Status: %s", isConnected ? "LISTENING" : "STOPPED"));
-        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+        g_devConsole->AddLine(DevConsole::INFO_MINOR,
                                  Stringf("Connected Clients: %d", connectedClients));
     }
     // 如果是客戶端模式
@@ -312,29 +312,29 @@ STATIC bool App::OnChessServerInfo(EventArgs& args)
             break;
         }
 
-        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+        g_devConsole->AddLine(DevConsole::INFO_MAJOR,
                                  Stringf("//////////Chess Client Info//////////"));
-        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+        g_devConsole->AddLine(DevConsole::INFO_MINOR,
                                  Stringf("Server IP: %s", currentIP.c_str()));
-        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+        g_devConsole->AddLine(DevConsole::INFO_MINOR,
                                  Stringf("Server Port: %d", currentPort));
-        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+        g_devConsole->AddLine(DevConsole::INFO_MINOR,
                                  Stringf("Mode: CLIENT"));
-        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+        g_devConsole->AddLine(DevConsole::INFO_MINOR,
                                  Stringf("Connection Status: %s", connectionStatus.c_str()));
     }
     // 如果是空閒模式
     else
     {
-        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+        g_devConsole->AddLine(DevConsole::INFO_MAJOR,
                                  Stringf("//////////Chess Client Info//////////"));
-        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+        g_devConsole->AddLine(DevConsole::INFO_MINOR,
                                  Stringf("IP: %s", currentIP.c_str()));
-        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+        g_devConsole->AddLine(DevConsole::INFO_MINOR,
                                  Stringf("Port: %d", currentPort));
-        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+        g_devConsole->AddLine(DevConsole::INFO_MINOR,
                                  Stringf("Mode: IDLE"));
-        g_theDevConsole->AddLine(DevConsole::INFO_MINOR,
+        g_devConsole->AddLine(DevConsole::INFO_MINOR,
                                  Stringf("Status: Not connected"));
     }
 
@@ -347,22 +347,22 @@ STATIC bool App::OnChessServerInfo(EventArgs& args)
 /// @return true if server started successfully, false otherwise
 STATIC bool App::OnChessListen(EventArgs& args)
 {
-    if (g_theNetworkSubsystem == nullptr)
+    if (g_networkSubsystem == nullptr)
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnChessListen)NetworkSubsystem is not initialized"));
+        g_devConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnChessListen)NetworkSubsystem is not initialized"));
         return false;
     }
 
-    unsigned short const port    = args.GetValue("port", g_theNetworkSubsystem->GetCurrentPort());
-    bool const           success = g_theNetworkSubsystem->StartServer(port);
+    unsigned short const port    = args.GetValue("port", g_networkSubsystem->GetCurrentPort());
+    bool const           success = g_networkSubsystem->StartServer(port);
 
     if (success)
     {
-        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("(App::OnChessListen)Chess server listening on port %d", port));
+        g_devConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("(App::OnChessListen)Chess server listening on port %d", port));
     }
     else
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnChessListen)Failed to start chess server on port %d", port));
+        g_devConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnChessListen)Failed to start chess server on port %d", port));
     }
 
     return success;
@@ -374,23 +374,23 @@ STATIC bool App::OnChessListen(EventArgs& args)
 /// @return true if this event is consumed, false otherwise.
 STATIC bool App::OnChessConnect(EventArgs& args)
 {
-    if (g_theNetworkSubsystem == nullptr)
+    if (g_networkSubsystem == nullptr)
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnChessConnect)NetworkSubsystem is not initialized"));
+        g_devConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnChessConnect)NetworkSubsystem is not initialized"));
         return false;
     }
 
-    String const ip      = args.GetValue("ip", g_theNetworkSubsystem->GetCurrentIP());
-    int const    port    = args.GetValue("port", g_theNetworkSubsystem->GetCurrentPort());
-    bool const   success = g_theNetworkSubsystem->ConnectToServer(ip, port);
+    String const ip      = args.GetValue("ip", g_networkSubsystem->GetCurrentIP());
+    int const    port    = args.GetValue("port", g_networkSubsystem->GetCurrentPort());
+    bool const   success = g_networkSubsystem->ConnectToServer(ip, port);
 
     if (success)
     {
-        g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("(App::OnChessConnect)Connecting to chess server at %s:%d", ip.c_str(), port));
+        g_devConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("(App::OnChessConnect)Connecting to chess server at %s:%d", ip.c_str(), port));
     }
     else
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnChessConnect)Failed to connect to chess server at %s:%d", ip.c_str(), port));
+        g_devConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnChessConnect)Failed to connect to chess server at %s:%d", ip.c_str(), port));
     }
 
     return success;
@@ -399,12 +399,12 @@ STATIC bool App::OnChessConnect(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 STATIC bool App::OnChessDisconnect(EventArgs& args)
 {
-    if (g_theNetworkSubsystem == nullptr) return false;
-    if (g_theDevConsole == nullptr) return false;
+    if (g_networkSubsystem == nullptr) return false;
+    if (g_devConsole == nullptr) return false;
 
     String const reason   = args.GetValue("reason", "Did not provide reason.");
     bool         isRemote = args.GetValue("remote", false);
-    g_theNetworkSubsystem->DisconnectFromServer();
+    g_networkSubsystem->DisconnectFromServer();
     // if (isRemote)
     // {
     //     // 收到來自遠端主機的中斷連線指令
@@ -449,9 +449,9 @@ STATIC bool App::OnChessDisconnect(EventArgs& args)
 /// @return true if command sent successfully, false otherwise
 STATIC bool App::OnRemoteCmd(EventArgs& args)
 {
-    if (g_theNetworkSubsystem == nullptr)
+    if (g_networkSubsystem == nullptr)
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnRemoteCmd)NetworkSubsystem is not initialized"));
+        g_devConsole->AddLine(DevConsole::ERROR, Stringf("(App::OnRemoteCmd)NetworkSubsystem is not initialized"));
         return false;
     }
 
@@ -459,7 +459,7 @@ STATIC bool App::OnRemoteCmd(EventArgs& args)
     String const cmd = args.GetValue("cmd", "");
     if (cmd.empty())
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR, "(App::OnRemoteCmd)RemoteCmd requires cmd=<commandName>");
+        g_devConsole->AddLine(DevConsole::ERROR, "(App::OnRemoteCmd)RemoteCmd requires cmd=<commandName>");
         return false;
     }
 
@@ -478,36 +478,36 @@ STATIC bool App::OnRemoteCmd(EventArgs& args)
     }
 
     // 透過網路傳送命令字串
-    if (g_theNetworkSubsystem->IsClient())
+    if (g_networkSubsystem->IsClient())
     {
         // Client 傳送到 Server
         sNetworkMessage message;
         message.m_messageType = "RemoteCommand";
         message.m_data        = remoteCommandString;
 
-        if (g_theNetworkSubsystem->SendMessageToServer(message))
+        if (g_networkSubsystem->SendMessageToServer(message))
         {
-            g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+            g_devConsole->AddLine(DevConsole::INFO_MAJOR,
                                      Stringf("Sent to server: %s", remoteCommandString.c_str()));
             return true;
         }
     }
-    else if (g_theNetworkSubsystem->IsServer())
+    else if (g_networkSubsystem->IsServer())
     {
         // Server 傳送到所有 Clients
         sNetworkMessage message;
         message.m_messageType = "RemoteCommand";
         message.m_data        = remoteCommandString;
 
-        if (g_theNetworkSubsystem->SendMessageToAllClients(message))
+        if (g_networkSubsystem->SendMessageToAllClients(message))
         {
-            g_theDevConsole->AddLine(DevConsole::INFO_MAJOR,
+            g_devConsole->AddLine(DevConsole::INFO_MAJOR,
                                      Stringf("Sent to all clients: %s", remoteCommandString.c_str()));
             return true;
         }
     }
 
-    g_theDevConsole->AddLine(DevConsole::ERROR, "Failed to send remote command");
+    g_devConsole->AddLine(DevConsole::ERROR, "Failed to send remote command");
     return false;
 }
 
@@ -520,7 +520,7 @@ STATIC bool App::OnEcho(EventArgs& args)
     String const text     = args.GetValue("text", "DEFAULT");
     bool const   isRemote = args.GetValue("remote", false);
 
-    g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Echo(%s): %s", isRemote ? "remote" : "local", text.c_str()));
+    g_devConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Echo(%s): %s", isRemote ? "remote" : "local", text.c_str()));
 
     return true;
 }
@@ -528,21 +528,21 @@ STATIC bool App::OnEcho(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 STATIC void App::RequestQuit()
 {
-    g_theApp->m_isQuitting = true;
+    g_app->m_isQuitting = true;
 }
 
 //----------------------------------------------------------------------------------------------------
 void App::BeginFrame() const
 {
-    g_theEventSystem->BeginFrame();
-    g_theWindow->BeginFrame();
-    g_theRenderer->BeginFrame();
+    g_eventSystem->BeginFrame();
+    g_window->BeginFrame();
+    g_renderer->BeginFrame();
     DebugRenderBeginFrame();
-    g_theDevConsole->BeginFrame();
-    g_theInput->BeginFrame();
-    g_theAudio->BeginFrame();
-    g_theLightSubsystem->BeginFrame();
-    g_theNetworkSubsystem->BeginFrame();
+    g_devConsole->BeginFrame();
+    g_input->BeginFrame();
+    g_audio->BeginFrame();
+    g_lightSubsystem->BeginFrame();
+    g_networkSubsystem->BeginFrame();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -551,8 +551,8 @@ void App::Update()
     Clock::TickSystemClock();
 
     UpdateCursorMode();
-    g_theGame->Update();
-    g_theNetworkSubsystem->Update();
+    g_game->Update();
+    g_networkSubsystem->Update();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -566,37 +566,37 @@ void App::Render() const
 {
     Rgba8 const clearColor = Rgba8::BLACK;
 
-    g_theRenderer->ClearScreen(clearColor, Rgba8::BLACK);
-    g_theGame->Render();
+    g_renderer->ClearScreen(clearColor, Rgba8::BLACK);
+    g_game->Render();
 
     AABB2 const box = AABB2(Vec2::ZERO, Vec2(1600.f, 30.f));
 
-    g_theDevConsole->Render(box);
+    g_devConsole->Render(box);
 }
 
 //----------------------------------------------------------------------------------------------------
 void App::EndFrame() const
 {
-    g_theEventSystem->EndFrame();
-    g_theWindow->EndFrame();
-    g_theRenderer->EndFrame();
+    g_eventSystem->EndFrame();
+    g_window->EndFrame();
+    g_renderer->EndFrame();
     DebugRenderEndFrame();
-    g_theDevConsole->EndFrame();
-    g_theInput->EndFrame();
-    g_theAudio->EndFrame();
-    g_theLightSubsystem->EndFrame();
-    g_theNetworkSubsystem->EndFrame();
+    g_devConsole->EndFrame();
+    g_input->EndFrame();
+    g_audio->EndFrame();
+    g_lightSubsystem->EndFrame();
+    g_networkSubsystem->EndFrame();
 }
 
 //----------------------------------------------------------------------------------------------------
 void App::UpdateCursorMode() const
 {
-    bool const        doesWindowHasFocus   = GetActiveWindow() == g_theWindow->GetWindowHandle();
-    bool const        isAttractState       = g_theGame->GetCurrentGameState() == eGameState::ATTRACT;
-    bool const        shouldUsePointerMode = !doesWindowHasFocus || g_theDevConsole->IsOpen() || isAttractState;
+    bool const        doesWindowHasFocus   = GetActiveWindow() == g_window->GetWindowHandle();
+    bool const        isAttractState       = g_game->GetCurrentGameState() == eGameState::ATTRACT;
+    bool const        shouldUsePointerMode = !doesWindowHasFocus || g_devConsole->IsOpen() || isAttractState;
     eCursorMode const mode                 = shouldUsePointerMode ? eCursorMode::POINTER : eCursorMode::FPS;
 
-    g_theInput->SetCursorMode(mode);
+    g_input->SetCursorMode(mode);
 }
 
 //----------------------------------------------------------------------------------------------------

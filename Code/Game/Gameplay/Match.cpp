@@ -26,11 +26,11 @@
 //----------------------------------------------------------------------------------------------------
 Match::Match()
 {
-    g_theEventSystem->SubscribeEventCallbackFunction("ChessMove", OnChessMove);
-    g_theEventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnEnterMatchState);
-    g_theEventSystem->SubscribeEventCallbackFunction("OnEnterMatchTurn", OnEnterMatchTurn);
-    g_theEventSystem->SubscribeEventCallbackFunction("OnExitMatchTurn", OnExitMatchTurn);
-    g_theEventSystem->SubscribeEventCallbackFunction("OnMatchInitialized", OnMatchInitialized);
+    g_eventSystem->SubscribeEventCallbackFunction("ChessMove", OnChessMove);
+    g_eventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnEnterMatchState);
+    g_eventSystem->SubscribeEventCallbackFunction("OnEnterMatchTurn", OnEnterMatchTurn);
+    g_eventSystem->SubscribeEventCallbackFunction("OnExitMatchTurn", OnExitMatchTurn);
+    g_eventSystem->SubscribeEventCallbackFunction("OnMatchInitialized", OnMatchInitialized);
 
     CreateScreenCamera();
     CreateGameClock();
@@ -144,7 +144,7 @@ void Match::Update()
     // 如果有選中的項目，進行 raycast 並檢查是否為有效移動位置
     if (hasAnySelection)
     {
-        PlayerController* currentPlayer            = g_theGame->GetCurrentPlayer();
+        PlayerController* currentPlayer            = g_game->GetCurrentPlayer();
         EulerAngles       currentPlayerOrientation = currentPlayer->m_worldCamera->GetOrientation();
 
         Vec3 currentPlayerForwardNormal = currentPlayerOrientation.GetAsMatrix_IFwd_JLeft_KUp().GetIBasis3D().GetNormalized();
@@ -245,7 +245,7 @@ void Match::Update()
         m_ghostSourcePiece = nullptr;
 
         // 沒有任何選擇的情況下，進行正常的 raycast 和 highlighting
-        PlayerController* currentPlayer            = g_theGame->GetCurrentPlayer();
+        PlayerController* currentPlayer            = g_game->GetCurrentPlayer();
         EulerAngles       currentPlayerOrientation = currentPlayer->m_worldCamera->GetOrientation();
 
         Vec3 currentPlayerForwardNormal = currentPlayerOrientation.GetAsMatrix_IFwd_JLeft_KUp().GetIBasis3D().GetNormalized();
@@ -342,31 +342,31 @@ void Match::Update()
 void Match::UpdateFromInput(float const deltaSeconds)
 {
     UNUSED(deltaSeconds)
-    if (g_theInput->WasKeyJustPressed(KEYCODE_F2))
+    if (g_input->WasKeyJustPressed(KEYCODE_F2))
     {
         m_sunDirection.x -= 1.f;
-        g_theLightSubsystem->GetLight(2)->SetDirection(m_sunDirection);
+        g_lightSubsystem->GetLight(2)->SetDirection(m_sunDirection);
         DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
     }
 
-    if (g_theInput->WasKeyJustPressed(KEYCODE_F3))
+    if (g_input->WasKeyJustPressed(KEYCODE_F3))
     {
         m_sunDirection.x += 1.f;
-        g_theLightSubsystem->GetLight(2)->SetDirection(m_sunDirection);
+        g_lightSubsystem->GetLight(2)->SetDirection(m_sunDirection);
         DebugAddMessage(Stringf("Sun Direction: (%.2f, %.2f, %.2f)", m_sunDirection.x, m_sunDirection.y, m_sunDirection.z), 5.f);
     }
 
-    if (g_theInput->WasKeyJustPressed(KEYCODE_CONTROL))
+    if (g_input->WasKeyJustPressed(KEYCODE_CONTROL))
     {
         m_isCheatMode = true;
     }
-    if (g_theInput->WasKeyJustReleased(KEYCODE_CONTROL))
+    if (g_input->WasKeyJustReleased(KEYCODE_CONTROL))
     {
         m_isCheatMode = false;
     }
 
     // 左鍵點擊處理
-    if (g_theInput->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
+    if (g_input->WasKeyJustPressed(KEYCODE_LEFT_MOUSE))
     {
         // 檢查是否有任何東西已經被選中
         bool    hasAnySelection      = false;
@@ -379,7 +379,7 @@ void Match::UpdateFromInput(float const deltaSeconds)
         {
             if (piece != nullptr && piece->m_isSelected)
             {
-                if (piece->m_id == g_theGame->GetCurrentPlayerControllerId())
+                if (piece->m_id == g_game->GetCurrentPlayerControllerId())
                 {
                     hasAnySelection = true;
                     selectedPiece   = piece;
@@ -407,7 +407,7 @@ void Match::UpdateFromInput(float const deltaSeconds)
         if (hasAnySelection)
         {
             // 進行 raycast 來找到點擊的目標
-            PlayerController* currentPlayer              = g_theGame->GetCurrentPlayer();
+            PlayerController* currentPlayer              = g_game->GetCurrentPlayer();
             EulerAngles       currentPlayerOrientation   = currentPlayer->m_worldCamera->GetOrientation();
             Vec3              currentPlayerForwardNormal = currentPlayerOrientation.GetAsMatrix_IFwd_JLeft_KUp().GetIBasis3D().GetNormalized();
             Ray3              ray                        = Ray3(currentPlayer->m_position, currentPlayerForwardNormal, 100.f);
@@ -477,7 +477,7 @@ void Match::UpdateFromInput(float const deltaSeconds)
                     String teleport = m_isCheatMode ? "true" : "false";
                     args.SetValue("teleport", teleport);
 
-                    g_theEventSystem->FireEvent("ChessMove", args);
+                    g_eventSystem->FireEvent("ChessMove", args);
 
                     // 移動完成後清除選擇
                     for (sSquareInfo& info : m_board->m_squareInfoList)
@@ -502,7 +502,7 @@ void Match::UpdateFromInput(float const deltaSeconds)
             // 如果沒有任何選擇，允許選擇目前 highlighted 的項目
             for (sSquareInfo& info : m_board->m_squareInfoList)
             {
-                if (info.m_isHighlighted && (m_isCheatMode || info.m_playerControllerId == g_theGame->GetCurrentPlayerControllerId()))
+                if (info.m_isHighlighted && (m_isCheatMode || info.m_playerControllerId == g_game->GetCurrentPlayerControllerId()))
                 {
                     info.m_isSelected = true;
                     // 選中後不保持 highlight，因為一旦選中就不允許其他項目 highlight
@@ -512,7 +512,7 @@ void Match::UpdateFromInput(float const deltaSeconds)
 
             for (Piece* piece : m_pieceList)
             {
-                if (piece != nullptr && piece->m_isHighlighted && (m_isCheatMode || piece->m_id == g_theGame->GetCurrentPlayerControllerId()))
+                if (piece != nullptr && piece->m_isHighlighted && (m_isCheatMode || piece->m_id == g_game->GetCurrentPlayerControllerId()))
                 {
                     piece->m_isSelected = true;
                     // 選中後不保持 highlight，因為一旦選中就不允許其他項目 highlight
@@ -523,7 +523,7 @@ void Match::UpdateFromInput(float const deltaSeconds)
     }
 
     // 右鍵點擊 - 用於取消選擇
-    if (g_theInput->WasKeyJustPressed(KEYCODE_RIGHT_MOUSE))
+    if (g_input->WasKeyJustPressed(KEYCODE_RIGHT_MOUSE))
     {
         // 清除所有選擇和 highlight
         for (sSquareInfo& info : m_board->m_squareInfoList)
@@ -622,24 +622,24 @@ STATIC bool Match::OnEnterMatchTurn(EventArgs& args)
 {
     UNUSED(args)
 
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("=================================================="));
-    g_theDevConsole->AddLine(DevConsole::INFO_MINOR, Stringf("Player #%d -- it's your turn!", g_theGame->GetCurrentPlayerControllerId()));
+    g_devConsole->AddLine(DevConsole::INFO_MINOR, Stringf("=================================================="));
+    g_devConsole->AddLine(DevConsole::INFO_MINOR, Stringf("Player #%d -- it's your turn!", g_game->GetCurrentPlayerControllerId()));
 
-    int const currentTurnPlayerIndex = g_theGame->GetCurrentPlayerControllerId();
+    int const currentTurnPlayerIndex = g_game->GetCurrentPlayerControllerId();
 
-    if (currentTurnPlayerIndex == 0 || currentTurnPlayerIndex == -1) g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Game state is: First Player's Turn"));
-    else if (currentTurnPlayerIndex == 1) g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Game state is: Second Player's Turn"));
+    if (currentTurnPlayerIndex == 0 || currentTurnPlayerIndex == -1) g_devConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Game state is: First Player's Turn"));
+    else if (currentTurnPlayerIndex == 1) g_devConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Game state is: Second Player's Turn"));
 
-    g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf("  ABCDEFGH"));
-    g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf(" +--------+"));
+    g_devConsole->AddLine(DevConsole::INPUT_TEXT, Stringf("  ABCDEFGH"));
+    g_devConsole->AddLine(DevConsole::INPUT_TEXT, Stringf(" +--------+"));
 
     for (int row = 8; row >= 1; --row)
     {
-        g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf("%d|%s|%d", row, g_theGame->m_match->m_board->GetBoardContents(row).c_str(), row));
+        g_devConsole->AddLine(DevConsole::INPUT_TEXT, Stringf("%d|%s|%d", row, g_game->m_match->m_board->GetBoardContents(row).c_str(), row));
     }
 
-    g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf(" +--------+"));
-    g_theDevConsole->AddLine(DevConsole::INPUT_TEXT, Stringf("  ABCDEFGH"));
+    g_devConsole->AddLine(DevConsole::INPUT_TEXT, Stringf(" +--------+"));
+    g_devConsole->AddLine(DevConsole::INPUT_TEXT, Stringf("  ABCDEFGH"));
 
     return true;
 }
@@ -648,8 +648,8 @@ STATIC bool Match::OnEnterMatchTurn(EventArgs& args)
 STATIC bool Match::OnExitMatchTurn(EventArgs& args)
 {
     UNUSED(args)
-    g_theGame->TogglePlayerControllerId();
-    g_theEventSystem->FireEvent("OnEnterMatchTurn");
+    g_game->TogglePlayerControllerId();
+    g_eventSystem->FireEvent("OnEnterMatchTurn");
     return true;
 }
 
@@ -657,7 +657,7 @@ STATIC bool Match::OnExitMatchTurn(EventArgs& args)
 STATIC bool Match::OnMatchInitialized(EventArgs& args)
 {
     UNUSED(args)
-    g_theEventSystem->FireEvent("OnEnterMatchTurn");
+    g_eventSystem->FireEvent("OnEnterMatchTurn");
     return true;
 }
 
@@ -750,10 +750,10 @@ void Match::UpdatePendingRemovals(float deltaSeconds)
             // 檢查是否捕獲了國王
             if (capturedType == ePieceType::KING)
             {
-                g_theDevConsole->AddLine(DevConsole::WARNING, "##################################################");
-                g_theDevConsole->AddLine(DevConsole::WARNING, Stringf("[SYSTEM] Player #%d has won the match!", g_theGame->GetCurrentPlayerControllerId()));
-                g_theDevConsole->AddLine(DevConsole::WARNING, "##################################################");
-                g_theGame->ChangeGameState(eGameState::FINISHED);
+               g_devConsole->AddLine(DevConsole::WARNING, "##################################################");
+               g_devConsole->AddLine(DevConsole::WARNING, Stringf("[SYSTEM] Player #%d has won the match!", g_game->GetCurrentPlayerControllerId()));
+               g_devConsole->AddLine(DevConsole::WARNING, "##################################################");
+                g_game->ChangeGameState(eGameState::FINISHED);
             }
 
             // 從待處理列表中移除
@@ -774,7 +774,7 @@ void Match::OnChessMove(IntVec2 const& fromCoords,
                         bool const     isTeleport,
                         bool const     isRemote)
 {
-    if (ExecuteMove(fromCoords, toCoords, promoteTo, isTeleport, isRemote)) g_theEventSystem->FireEvent("OnExitMatchTurn");
+    if (ExecuteMove(fromCoords, toCoords, promoteTo, isTeleport, isRemote)) g_eventSystem->FireEvent("OnExitMatchTurn");
 }
 
 eMoveResult Match::ValidateChessMove(IntVec2 const& fromCoords,
@@ -797,7 +797,7 @@ eMoveResult Match::ValidateChessMove(IntVec2 const& fromCoords,
     }
 
     // 3. Check if the piece belongs to the current player
-    if (m_board->GetSquareInfoByCoords(fromCoords).m_playerControllerId != g_theGame->GetCurrentPlayerControllerId())
+    if (m_board->GetSquareInfoByCoords(fromCoords).m_playerControllerId != g_game->GetCurrentPlayerControllerId())
     {
         return eMoveResult::INVALID_MOVE_NOT_YOUR_PIECE;
     }
@@ -815,7 +815,7 @@ eMoveResult Match::ValidateChessMove(IntVec2 const& fromCoords,
     if (toPiece != nullptr)
     {
         if (isTeleport) return eMoveResult::VALID_CAPTURE_NORMAL;
-        if (toOwner == g_theGame->GetCurrentPlayerControllerId()) return eMoveResult::INVALID_MOVE_DESTINATION_BLOCKED;
+        if (toOwner == g_game->GetCurrentPlayerControllerId()) return eMoveResult::INVALID_MOVE_DESTINATION_BLOCKED;
     }
     else
     {
@@ -878,7 +878,7 @@ eMoveResult Match::ValidatePawnMove(IntVec2 const& fromCoords,
     Piece const* fromPiece = GetPieceByCoords(fromCoords);
     Piece const* toPiece   = GetPieceByCoords(toCoords);
 
-    int currentPlayer = g_theGame->GetCurrentPlayerControllerId();
+    int currentPlayer = g_game->GetCurrentPlayerControllerId();
     int direction     = (currentPlayer == 0) ? 1 : -1; // Player 0 moves up, Player 1 moves down
 
     int deltaX = toCoords.x - fromCoords.x;
@@ -1015,7 +1015,7 @@ eMoveResult Match::ValidateKingMove(int const      absDeltaX,
 bool Match::IsKingDistanceValid(IntVec2 const& toCoords) const
 {
     // Find enemy king position
-    int const     enemyPlayerControllerId = 1 - g_theGame->GetCurrentPlayerControllerId();
+    int const     enemyPlayerControllerId = 1 - g_game->GetCurrentPlayerControllerId();
     IntVec2 const enemyKingCoords         = m_board->FindKingCoordsByPlayerId(enemyPlayerControllerId);
 
     // Check if the destination is adjacent to enemy king
@@ -1167,7 +1167,7 @@ eMoveResult Match::DetermineValidMoveType(IntVec2 const& fromCoords,
     // Check for pawn promotion
     if (fromPiece->m_definition->m_type == ePieceType::PAWN)
     {
-        int currentPlayer = g_theGame->GetCurrentPlayerControllerId();
+        int currentPlayer = g_game->GetCurrentPlayerControllerId();
         int promotionRank = (currentPlayer == 0) ? 8 : 1;
 
         if (toCoords.y == promotionRank)
@@ -1242,15 +1242,15 @@ bool Match::ExecuteMove(IntVec2 const& fromCoords,
 
     if (!IsMoveValid(result))
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR, GetMoveResultString(result));
+        g_devConsole->AddLine(DevConsole::ERROR, GetMoveResultString(result));
         return false;
     }
 
     Piece* fromPiece = GetPieceByCoords(fromCoords);
-    g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Move Player #%d's %s from %s to %s(%s)", g_theGame->GetCurrentPlayerControllerId(), GetPieceByCoords(fromCoords)->m_definition->m_name.c_str(), m_board->ChessCoordToString(fromCoords).c_str(),
+    g_devConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Move Player #%d's %s from %s to %s(%s)", g_game->GetCurrentPlayerControllerId(), GetPieceByCoords(fromCoords)->m_definition->m_name.c_str(), m_board->ChessCoordToString(fromCoords).c_str(),
                                                              m_board->ChessCoordToString(toCoords).c_str(), isRemote ? "remote" : "local"));
 
-    if (!isRemote && g_theNetworkSubsystem && g_theNetworkSubsystem->IsConnected())
+    if (!isRemote && g_networkSubsystem && g_networkSubsystem->IsConnected())
     {
         String from = m_board->ChessCoordToString(fromCoords);
         String to = m_board->ChessCoordToString(toCoords);
@@ -1260,7 +1260,7 @@ bool Match::ExecuteMove(IntVec2 const& fromCoords,
         remoteCmdArgs.SetValue("cmd", "ChessMove");
         remoteCmdArgs.SetValue("from", from);
         remoteCmdArgs.SetValue("to", to);
-        g_theEventSystem->FireEvent("OnRemoteCmd", remoteCmdArgs);
+        g_eventSystem->FireEvent("OnRemoteCmd", remoteCmdArgs);
     }
     switch (result)
     {
@@ -1286,7 +1286,7 @@ bool Match::ExecuteMove(IntVec2 const& fromCoords,
     // Record move for en passant detection
     m_pieceMoveList.push_back({fromPiece, fromCoords, toCoords});
 
-    g_theDevConsole->AddLine(DevConsole::INFO_MAJOR, GetMoveResultString(result));
+    g_devConsole->AddLine(DevConsole::INFO_MAJOR, GetMoveResultString(result));
     return true;
 }
 
@@ -1371,27 +1371,27 @@ void Match::RenderPlayerBasis() const
 {
     VertexList_PCU verts;
 
-    Vec3 const worldCameraPosition = g_theGame->GetCurrentPlayer()->m_worldCamera->GetPosition();
-    Vec3 const forwardNormal       = g_theGame->GetCurrentPlayer()->m_worldCamera->GetOrientation().GetAsMatrix_IFwd_JLeft_KUp().GetIBasis3D().GetNormalized();
+    Vec3 const worldCameraPosition = g_game->GetCurrentPlayer()->m_worldCamera->GetPosition();
+    Vec3 const forwardNormal       = g_game->GetCurrentPlayer()->m_worldCamera->GetOrientation().GetAsMatrix_IFwd_JLeft_KUp().GetIBasis3D().GetNormalized();
 
     // Add vertices in world space.
     AddVertsForArrow3D(verts, worldCameraPosition + forwardNormal, worldCameraPosition + forwardNormal + Vec3::X_BASIS * 0.1f, 0.8f, 0.001f, 0.003f, Rgba8::RED);
     AddVertsForArrow3D(verts, worldCameraPosition + forwardNormal, worldCameraPosition + forwardNormal + Vec3::Y_BASIS * 0.1f, 0.8f, 0.001f, 0.003f, Rgba8::GREEN);
     AddVertsForArrow3D(verts, worldCameraPosition + forwardNormal, worldCameraPosition + forwardNormal + Vec3::Z_BASIS * 0.1f, 0.8f, 0.001f, 0.003f, Rgba8::BLUE);
 
-    g_theRenderer->SetModelConstants();
-    g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
-    g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
-    g_theRenderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
-    g_theRenderer->SetDepthMode(eDepthMode::DISABLED);
-    g_theRenderer->BindTexture(nullptr);
-    g_theRenderer->DrawVertexArray(static_cast<int>(verts.size()), verts.data());
+    g_renderer->SetModelConstants();
+    g_renderer->SetBlendMode(eBlendMode::OPAQUE);
+    g_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
+    g_renderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
+    g_renderer->SetDepthMode(eDepthMode::DISABLED);
+    g_renderer->BindTexture(nullptr);
+    g_renderer->DrawVertexArray(static_cast<int>(verts.size()), verts.data());
 }
 
 //----------------------------------------------------------------------------------------------------
 STATIC bool Match::OnChessMove(EventArgs& args)
 {
-    Match* match = g_theGame->m_match;
+    Match* match = g_game->m_match;
     if (!match) return false;
 
     String const from       = args.GetValue("from", "DEFAULT");
@@ -1402,7 +1402,7 @@ STATIC bool Match::OnChessMove(EventArgs& args)
 
     if (from == "DEFAULT" || to == "DEFAULT")
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("(Match::ChessMove)from=<position> to=<position> is required."));
+        g_devConsole->AddLine(DevConsole::ERROR, Stringf("(Match::ChessMove)from=<position> to=<position> is required."));
         return false;
     }
 
@@ -1413,7 +1413,7 @@ STATIC bool Match::OnChessMove(EventArgs& args)
     eMoveResult result = match->ValidateChessMove(fromCoords, toCoords, promotion, isTeleport);
     if (!IsMoveValid(result))
     {
-        g_theDevConsole->AddLine(DevConsole::ERROR, Stringf("(Match::ChessMove)Invalid move: %s", GetMoveResultString(result)));
+        g_devConsole->AddLine(DevConsole::ERROR, Stringf("(Match::ChessMove)Invalid move: %s", GetMoveResultString(result)));
         return false;
     }
 

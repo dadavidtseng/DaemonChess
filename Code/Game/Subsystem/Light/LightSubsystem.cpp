@@ -54,7 +54,7 @@ void LightSubsystem::StartUp()
 
 void LightSubsystem::BeginFrame()
 {
-    g_theRenderer->SetLightConstants(m_lights, GetLightCount());
+    g_renderer->SetLightConstants(m_lights, GetLightCount());
 }
 
 void LightSubsystem::Update()

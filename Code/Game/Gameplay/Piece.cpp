@@ -130,18 +130,18 @@ void Piece::Render() const
     if (m_definition == nullptr) return;
     // if (m_isCaptured) return; // 被捕獲的棋子不渲染
 
-    g_theRenderer->SetModelConstants(GetModelToWorldTransform(), m_color);
-    g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
-    g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
-    g_theRenderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
-    g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
-    g_theRenderer->BindTexture(m_diffuseTexture, 0);
-    g_theRenderer->BindTexture(m_normalTexture, 1);
-    g_theRenderer->BindTexture(m_normalTexture, 1);
-    g_theRenderer->BindTexture(m_specularGlossEmitTexture, 2);
-    g_theRenderer->BindShader(m_shader);
+    g_renderer->SetModelConstants(GetModelToWorldTransform(), m_color);
+    g_renderer->SetBlendMode(eBlendMode::OPAQUE);
+    g_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
+    g_renderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
+    g_renderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
+    g_renderer->BindTexture(m_diffuseTexture, 0);
+    g_renderer->BindTexture(m_normalTexture, 1);
+    g_renderer->BindTexture(m_normalTexture, 1);
+    g_renderer->BindTexture(m_specularGlossEmitTexture, 2);
+    g_renderer->BindShader(m_shader);
     unsigned int const indexCount = m_definition->GetIndexCountByID(m_id);
-    g_theRenderer->DrawIndexedVertexBuffer(m_definition->m_vertexBuffer[m_id], m_definition->m_indexBuffer[m_id], indexCount);
+    g_renderer->DrawIndexedVertexBuffer(m_definition->m_vertexBuffer[m_id], m_definition->m_indexBuffer[m_id], indexCount);
 
     if (m_isHighlighted || m_isSelected)
     {
@@ -158,26 +158,26 @@ void Piece::RenderSelectedPiece() const
     AddVertsForWireframeCylinder3D(verts, m_position, m_position + Vec3::Z_BASIS, 0.25f, 0.005f);
 
 
-    g_theRenderer->SetModelConstants();
-    g_theRenderer->BindTexture(nullptr);
-    g_theRenderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
-    g_theRenderer->DrawVertexArray(verts);
+    g_renderer->SetModelConstants();
+    g_renderer->BindTexture(nullptr);
+    g_renderer->BindShader(g_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
+    g_renderer->DrawVertexArray(verts);
 }
 
 void Piece::RenderTargetPiece() const
 {
-    g_theRenderer->SetModelConstants(GetModelToWorldTransform(), Rgba8(m_color.r, m_color.g, m_color.b, 100));
-    g_theRenderer->SetBlendMode(eBlendMode::ALPHA);
-    g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
-    g_theRenderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
-    g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
-    g_theRenderer->BindTexture(m_diffuseTexture, 0);
+    g_renderer->SetModelConstants(GetModelToWorldTransform(), Rgba8(m_color.r, m_color.g, m_color.b, 100));
+    g_renderer->SetBlendMode(eBlendMode::ALPHA);
+    g_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
+    g_renderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
+    g_renderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
+    g_renderer->BindTexture(m_diffuseTexture, 0);
     // g_theRenderer->BindTexture(m_normalTexture, 1);
     // g_theRenderer->BindTexture(m_normalTexture, 1);
-    g_theRenderer->BindTexture(m_specularGlossEmitTexture, 2);
-    g_theRenderer->BindShader(m_shader);
+    g_renderer->BindTexture(m_specularGlossEmitTexture, 2);
+    g_renderer->BindShader(m_shader);
     unsigned int const indexCount = m_definition->GetIndexCountByID(m_id);
-    g_theRenderer->DrawIndexedVertexBuffer(m_definition->m_vertexBuffer[m_id], m_definition->m_indexBuffer[m_id], indexCount);
+    g_renderer->DrawIndexedVertexBuffer(m_definition->m_vertexBuffer[m_id], m_definition->m_indexBuffer[m_id], indexCount);
 }
 
 void Piece::UpdatePositionByCoords(IntVec2 const& newCoords)

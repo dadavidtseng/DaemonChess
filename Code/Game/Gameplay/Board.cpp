@@ -26,14 +26,14 @@ Board::Board(Match* owner)
     : Actor(owner)
 
 {
-    m_shader                   = g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Bloom", eVertexType::VERTEX_PCU);
-    m_diffuseTexture           = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures/FunkyBricks_d.png");
-    m_normalTexture            = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures/FunkyBricks_n.png");
-    m_specularGlossEmitTexture = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures/FunkyBricks_sge.png");
+    m_shader                   = g_renderer->CreateOrGetShaderFromFile("Data/Shaders/Bloom", eVertexType::VERTEX_PCU);
+    m_diffuseTexture           = g_renderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures/FunkyBricks_d.png");
+    m_normalTexture            = g_renderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures/FunkyBricks_n.png");
+    m_specularGlossEmitTexture = g_renderer->CreateOrGetTextureFromFile("Data/Images/PhongTextures/FunkyBricks_sge.png");
     CreateLocalVertsForAABB3s();
     CreateLocalVertsForBoardFrame();
 
-    m_resourceHandle = g_theResourceSubsystem->LoadResource<ModelResource>("Data/Models/TutorialBox_Phong/Tutorial_Box.obj");
+    m_resourceHandle = g_resourceSubsystem->LoadResource<ModelResource>("Data/Models/TutorialBox_Phong/Tutorial_Box.obj");
 
     ModelResource const* modelResource = m_resourceHandle.Get();
 
@@ -54,10 +54,10 @@ void Board::Update(float const deltaSeconds)
     m_orientation.m_pitchDegrees += m_angularVelocity.m_pitchDegrees * deltaSeconds;
     m_orientation.m_rollDegrees += m_angularVelocity.m_rollDegrees * deltaSeconds;
 
-    if (g_theInput->IsKeyDown(KEYCODE_I)) m_testPos.y++;
-    if (g_theInput->IsKeyDown(KEYCODE_J)) m_testPos.x--;
-    if (g_theInput->IsKeyDown(KEYCODE_K)) m_testPos.y--;
-    if (g_theInput->IsKeyDown(KEYCODE_L)) m_testPos.x++;
+    if (g_input->IsKeyDown(KEYCODE_I)) m_testPos.y++;
+    if (g_input->IsKeyDown(KEYCODE_J)) m_testPos.x--;
+    if (g_input->IsKeyDown(KEYCODE_K)) m_testPos.y--;
+    if (g_input->IsKeyDown(KEYCODE_L)) m_testPos.x++;
 }
 
 AABB3 Board::GetAABB3FromCoords(IntVec2 const& coords,
@@ -88,24 +88,24 @@ void Board::RenderSelectedBox() const
         }
     }
 
-    g_theRenderer->BindTexture(nullptr);
-    g_theRenderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
-    g_theRenderer->DrawVertexArray(verts);
+    g_renderer->BindTexture(nullptr);
+    g_renderer->BindShader(g_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
+    g_renderer->DrawVertexArray(verts);
 }
 
 //----------------------------------------------------------------------------------------------------
 void Board::Render() const
 {
-    g_theRenderer->SetModelConstants(GetModelToWorldTransform(), m_color);
-    g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
-    g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
-    g_theRenderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
-    g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
-    g_theRenderer->BindTexture(m_diffuseTexture, 0);
-    g_theRenderer->BindTexture(m_normalTexture, 1);
-    g_theRenderer->BindTexture(m_specularGlossEmitTexture, 2);
-    g_theRenderer->BindShader(m_shader);
-    g_theRenderer->DrawVertexArray(m_vertexes, m_indexes);
+    g_renderer->SetModelConstants(GetModelToWorldTransform(), m_color);
+    g_renderer->SetBlendMode(eBlendMode::OPAQUE);
+    g_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
+    g_renderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
+    g_renderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
+    g_renderer->BindTexture(m_diffuseTexture, 0);
+    g_renderer->BindTexture(m_normalTexture, 1);
+    g_renderer->BindTexture(m_specularGlossEmitTexture, 2);
+    g_renderer->BindShader(m_shader);
+    g_renderer->DrawVertexArray(m_vertexes, m_indexes);
 
     RenderSelectedBox();
 
@@ -134,16 +134,16 @@ void Board::Render() const
         m2w.AppendXRotation(90.f);
         m2w.AppendYRotation(45.f);
         m2w.AppendScaleUniform3D(0.01f);
-        g_theRenderer->SetModelConstants(m2w);
-        g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
-        g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
-        g_theRenderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
-        g_theRenderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
-        g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Models/TutorialBox_Phong/Tutorial_Box_Diffuse.tga"), 0);
-        g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Models/TutorialBox_Phong/Tutorial_Box_Normal.tga"), 1);
-        g_theRenderer->BindTexture(g_theRenderer->CreateOrGetTextureFromFile("Data/Models/TutorialBox_Phong/Tutorial_Box_SpecGlossEmit.tga"), 2);
-        g_theRenderer->BindShader(m_shader);
-        g_theRenderer->DrawVertexArray(m_vertexWoman, m_indexWoman);
+        g_renderer->SetModelConstants(m2w);
+        g_renderer->SetBlendMode(eBlendMode::OPAQUE);
+        g_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
+        g_renderer->SetSamplerMode(eSamplerMode::POINT_CLAMP);
+        g_renderer->SetDepthMode(eDepthMode::READ_WRITE_LESS_EQUAL);
+        g_renderer->BindTexture(g_renderer->CreateOrGetTextureFromFile("Data/Models/TutorialBox_Phong/Tutorial_Box_Diffuse.tga"), 0);
+        g_renderer->BindTexture(g_renderer->CreateOrGetTextureFromFile("Data/Models/TutorialBox_Phong/Tutorial_Box_Normal.tga"), 1);
+        g_renderer->BindTexture(g_renderer->CreateOrGetTextureFromFile("Data/Models/TutorialBox_Phong/Tutorial_Box_SpecGlossEmit.tga"), 2);
+        g_renderer->BindShader(m_shader);
+        g_renderer->DrawVertexArray(m_vertexWoman, m_indexWoman);
     }
 }
 
