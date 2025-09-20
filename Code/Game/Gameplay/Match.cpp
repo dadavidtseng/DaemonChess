@@ -21,7 +21,7 @@
 #include "Game/Framework/PlayerController.hpp"
 #include "Game/Gameplay/Game.hpp"
 #include "Game/Gameplay/Piece.hpp"
-#include "Game/Subsystem/Light/LightSubsystem.hpp"
+#include "Engine/Renderer/LightSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Match::Match()

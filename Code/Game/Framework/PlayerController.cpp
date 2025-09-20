@@ -14,7 +14,7 @@
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game/Framework/GameCommon.hpp"
 #include "Game/Gameplay/Game.hpp"
-#include "Game/Subsystem/Light/LightSubsystem.hpp"
+#include "Engine/Renderer/LightSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
 PlayerController::PlayerController(Game* owner)

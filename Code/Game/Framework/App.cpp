@@ -21,7 +21,7 @@
 #include "Game/Framework/GameCommon.hpp"
 #include "Game/Gameplay/Game.hpp"
 #include "Game/Gameplay/Match.hpp"
-#include "Game/Subsystem/Light/LightSubsystem.hpp"
+#include "Engine/Renderer/LightSubsystem.hpp"
 
 //----------------------------------------------------------------------------------------------------
 App*                   g_app               = nullptr;       // Created and owned by Main_Windows.cpp
@@ -541,7 +541,7 @@ void App::BeginFrame() const
     g_devConsole->BeginFrame();
     g_input->BeginFrame();
     g_audio->BeginFrame();
-    g_lightSubsystem->BeginFrame();
+    g_lightSubsystem->BeginFrame(g_renderer);
     g_networkSubsystem->BeginFrame();
 }
 
