@@ -3,6 +3,7 @@
 /.vs/
 /.qodo/
 /.claude/
+/.spec-workflow/
 /[Tt]emporary/
 
 # User-specific files
