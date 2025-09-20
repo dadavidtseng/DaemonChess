@@ -8,12 +8,11 @@
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Network/NetworkSubsystem.hpp"
+#include "Engine/Platform/Window.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
-#include "Engine/Platform/Window.hpp"
 #include "Engine/Resource/ResourceLoader/ObjModelLoader.hpp"
 #include "Game/Definition/BoardDefinition.hpp"
 #include "Game/Definition/PieceDefinition.hpp"
@@ -492,7 +491,7 @@ void Game::RenderEntities() const
 
 PlayerController* Game::CreateLocalPlayer(int const id)
 {
-    PlayerController* newPlayer = new PlayerController(nullptr);
+    PlayerController* newPlayer = new PlayerController(this);
 
     for (PlayerController const* controller : m_localPlayerControllerList)
     {
