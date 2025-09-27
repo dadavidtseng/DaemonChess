@@ -23,7 +23,7 @@ struct Vec2;
 class App;
 class AudioSystem;
 class BitmapFont;
-class NetworkSubsystem;
+class NetworkTCPSubsystem;
 class Game;
 class LightSubsystem;
 class Renderer;
@@ -38,7 +38,7 @@ extern Game*                  g_game;
 extern Renderer*              g_renderer;
 extern RandomNumberGenerator* g_rng;
 extern LightSubsystem*        g_lightSubsystem;
-extern NetworkSubsystem*      g_networkSubsystem;
+extern NetworkTCPSubsystem*   g_networkTCPSubsystem;
 extern ResourceSubsystem*     g_resourceSubsystem;
 
 //-----------------------------------------------------------------------------------------------
