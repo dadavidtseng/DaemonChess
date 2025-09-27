@@ -9,11 +9,11 @@
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Input/InputSystem.hpp"
-#include "Engine/Network/NetworkSubsystem.hpp"
+#include "Engine/Network/NetworkTCPSubsystem.hpp"
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
-#include "Engine/Resource/ResourceLoader/ObjModelLoader.hpp"
+#include "Engine/Resource/ObjModelLoader.hpp"
 #include "Game/Definition/BoardDefinition.hpp"
 #include "Game/Definition/PieceDefinition.hpp"
 #include "Game/Framework/App.hpp"
@@ -148,7 +148,7 @@ STATIC bool Game::OnGameStateChanged(EventArgs& args)
 //----------------------------------------------------------------------------------------------------
 STATIC bool Game::OnChessBegin(EventArgs& args)
 {
-    if (g_networkSubsystem->GetConnectionState() == eConnectionState::DISCONNECTED)
+    if (g_networkTCPSubsystem->GetConnectionState() == eConnectionState::DISCONNECTED)
     {
         g_devConsole->AddLine(DevConsole::INFO_MAJOR,
                                  Stringf("eConnectionState::DISCONNECTED"));
@@ -161,7 +161,7 @@ STATIC bool Game::OnChessBegin(EventArgs& args)
 STATIC bool Game::OnChessPlayerInfo(EventArgs& args)
 {
     if (g_devConsole == nullptr) return false;
-    if (g_networkSubsystem == nullptr)
+    if (g_networkTCPSubsystem == nullptr)
     {
         g_devConsole->AddLine(DevConsole::ERROR, "(OnChessPlayerInfo)NetworkSubsystem is not initialized");
 
@@ -198,7 +198,7 @@ STATIC bool Game::OnChessPlayerInfo(EventArgs& args)
             sNetworkMessage message;
             message.m_messageType = "RemoteCommand";
             message.m_data = Stringf("Echo text=%s", "SpectatorJoined");
-            g_networkSubsystem->SendMessageToAllClients(message);
+            g_networkTCPSubsystem->SendMessageToAllClients(message);
         }
         else
         {
@@ -225,7 +225,7 @@ STATIC bool Game::OnChessPlayerInfo(EventArgs& args)
             sNetworkMessage message;
             message.m_messageType = "RemoteCommand";
             message.m_data = Stringf("Echo text=%s", "OpponentJoined");
-            g_networkSubsystem->SendMessageToAllClients(message);
+            g_networkTCPSubsystem->SendMessageToAllClients(message);
         }
     }
     else
@@ -249,7 +249,7 @@ STATIC bool Game::OnChessPlayerInfo(EventArgs& args)
         localPlayer->SetName(name);
 
         // Check network connection status
-        if (g_networkSubsystem->IsConnected())
+        if (g_networkTCPSubsystem->IsConnected())
         {
             // Send local player name to remote
             sNetworkMessage message;
@@ -257,13 +257,13 @@ STATIC bool Game::OnChessPlayerInfo(EventArgs& args)
             message.m_data        = Stringf("ChessPlayerInfo name=%s type=%s remote=true", name.c_str(), type.c_str());
 
             bool success = false;
-            if (g_networkSubsystem->IsClient())
+            if (g_networkTCPSubsystem->IsClient())
             {
-                success = g_networkSubsystem->SendMessageToServer(message);
+                success = g_networkTCPSubsystem->SendMessageToServer(message);
             }
-            else if (g_networkSubsystem->IsServer())
+            else if (g_networkTCPSubsystem->IsServer())
             {
-                success = g_networkSubsystem->SendMessageToAllClients(message);
+                success = g_networkTCPSubsystem->SendMessageToAllClients(message);
             }
 
             if (success)

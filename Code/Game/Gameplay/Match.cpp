@@ -10,7 +10,7 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/MathUtils.hpp"
-#include "Engine/Network/NetworkSubsystem.hpp"
+#include "Engine/Network/NetworkTCPSubsystem.hpp"
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
@@ -1250,7 +1250,7 @@ bool Match::ExecuteMove(IntVec2 const& fromCoords,
     g_devConsole->AddLine(DevConsole::INFO_MAJOR, Stringf("Move Player #%d's %s from %s to %s(%s)", g_game->GetCurrentPlayerControllerId(), GetPieceByCoords(fromCoords)->m_definition->m_name.c_str(), m_board->ChessCoordToString(fromCoords).c_str(),
                                                              m_board->ChessCoordToString(toCoords).c_str(), isRemote ? "remote" : "local"));
 
-    if (!isRemote && g_networkSubsystem && g_networkSubsystem->IsConnected())
+    if (!isRemote && g_networkTCPSubsystem && g_networkTCPSubsystem->IsConnected())
     {
         String from = m_board->ChessCoordToString(fromCoords);
         String to = m_board->ChessCoordToString(toCoords);
