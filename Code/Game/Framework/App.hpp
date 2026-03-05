@@ -13,8 +13,8 @@ class Camera;
 class App
 {
 public:
-    App()  = default;
-    ~App() = default;
+    App();
+    ~App();
     void Startup();
     void Shutdown();
     void RunFrame();
@@ -33,6 +33,4 @@ private:
 
     void UpdateCursorMode() const;
     void LoadGameConfig(char const* gameConfigXmlFilePath) const;
-
-    Camera* m_devConsoleCamera = nullptr;
 };

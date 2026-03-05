@@ -4,8 +4,10 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
+#include "Game/Subsystem/Light/LightSubsystem.hpp"
 
 #if defined ERROR
+class LightSubsystem;
 #undef ERROR
 #endif
 
@@ -21,25 +23,12 @@
 struct Rgba8;
 struct Vec2;
 class App;
-class AudioSystem;
-class BitmapFont;
-class NetworkSubsystem;
 class Game;
-class LightSubsystem;
-class Renderer;
-class RandomNumberGenerator;
-class ResourceSubsystem;
 
 // one-time declaration
-extern App*                   g_theApp;
-extern AudioSystem*           g_theAudio;
-extern BitmapFont*            g_theBitmapFont;
-extern Game*                  g_theGame;
-extern Renderer*              g_theRenderer;
-extern RandomNumberGenerator* g_theRNG;
-extern LightSubsystem*        g_theLightSubsystem;
-// extern NetworkSubsystem*      g_theNetworkSubsystem;
-extern ResourceSubsystem*     g_theResourceSubsystem;
+extern App*                   g_app;
+extern Game*                  g_game;
+extern LightSubsystem*       g_lightSubsystem;
 
 //-----------------------------------------------------------------------------------------------
 // DebugRender-related

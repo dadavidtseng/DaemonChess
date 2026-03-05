@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Subsystem/Light/LightSubsystem.hpp"
 
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/Light.hpp"
 #include "Engine/Renderer/RenderCommon.hpp"
 #include "Engine/Renderer/Renderer.hpp"
@@ -54,7 +55,7 @@ void LightSubsystem::StartUp()
 
 void LightSubsystem::BeginFrame()
 {
-    g_theRenderer->SetLightConstants(m_lights, GetLightCount());
+    g_renderer->SetLightConstants(m_lights, GetLightCount());
 }
 
 void LightSubsystem::Update()

@@ -5,6 +5,7 @@
 //----------------------------------------------------------------------------------------------------
 #include "Game/Framework/GameCommon.hpp"
 
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Renderer/Vertex_PCU.hpp"
@@ -76,8 +77,8 @@ void DebugDrawRing(Vec2 const& center, float radius, float thickness, Rgba8 cons
         verts[vertIndexF].m_color    = color;
     }
 
-    g_theRenderer->BindTexture(nullptr);
-    g_theRenderer->DrawVertexArray(NUM_VERTS, &verts[0]);
+    g_renderer->BindTexture(nullptr);
+    g_renderer->DrawVertexArray(NUM_VERTS, &verts[0]);
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -109,8 +110,8 @@ void DebugDrawLine(Vec2 const& start, Vec2 const& end, float thickness, Rgba8 co
     verts[4].m_color    = color;
     verts[5].m_color    = color;
 
-    g_theRenderer->BindTexture(nullptr);
-    g_theRenderer->DrawVertexArray(6, &verts[0]);
+    g_renderer->BindTexture(nullptr);
+    g_renderer->DrawVertexArray(6, &verts[0]);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -159,7 +160,7 @@ void DebugDrawGlowCircle(Vec2 const& center, float radius, Rgba8 const& color, f
         verts[vertIndexC].m_color = glowColor;
     }
 
-    g_theRenderer->DrawVertexArray(NUM_VERTS, &verts[0]);
+    g_renderer->DrawVertexArray(NUM_VERTS, &verts[0]);
 }
 
 void DebugDrawGlowBox(Vec2 const& center, Vec2 const& dimensions, Rgba8 const& color, float glowIntensity)
@@ -206,7 +207,7 @@ void DebugDrawGlowBox(Vec2 const& center, Vec2 const& dimensions, Rgba8 const& c
     }
 
     // Draw the vertex array
-    g_theRenderer->DrawVertexArray(NUM_VERTS, &verts[0]);
+    g_renderer->DrawVertexArray(NUM_VERTS, &verts[0]);
 }
 
 
@@ -272,7 +273,7 @@ void DebugDrawBoxRing(Vec2 const& center, float radius, float thickness, Rgba8 c
         verts[i].m_color = color;
     }
 
-    g_theRenderer->DrawVertexArray(24, &verts[0]);
+    g_renderer->DrawVertexArray(24, &verts[0]);
 }
 
 char const* GetDebugIntString(int const debugInt)
