@@ -4,11 +4,13 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include "Engine/Core/Clock.hpp"
-#include "Engine/Core/EventSystem.hpp"
+//----------------------------------------------------------------------------------------------------
 #include "Game/Definition/PieceDefinition.hpp"
 #include "Game/Framework/MatchCommon.hpp"
 #include "Game/Gameplay/Board.hpp"
+//----------------------------------------------------------------------------------------------------
+#include "Engine/Core/Clock.hpp"
+#include "Engine/Core/EventSystem.hpp"
 
 //-Forward-Declaration--------------------------------------------------------------------------------
 class Camera;

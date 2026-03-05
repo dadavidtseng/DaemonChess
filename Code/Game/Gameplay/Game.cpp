@@ -4,28 +4,25 @@
 
 //----------------------------------------------------------------------------------------------------
 #include "Game/Gameplay/Game.hpp"
-
-#include "Engine/Core/Clock.hpp"
-#include "Engine/Core/DevConsole.hpp"
-#include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
-#include "Engine/Input/InputSystem.hpp"
-#include "Engine/Network/NetworkSubsystem.hpp"
-#include "Engine/Renderer/DebugRenderSystem.hpp"
-#include "Engine/Renderer/Renderer.hpp"
-#include "Engine/Platform/Window.hpp"
-#include "Engine/Resource/ResourceLoader/ObjModelLoader.hpp"
+//----------------------------------------------------------------------------------------------------
 #include "Game/Definition/BoardDefinition.hpp"
 #include "Game/Definition/PieceDefinition.hpp"
 #include "Game/Framework/App.hpp"
 #include "Game/Framework/GameCommon.hpp"
 #include "Game/Framework/PlayerController.hpp"
 #include "Game/Gameplay/Match.hpp"
+//----------------------------------------------------------------------------------------------------
+#include "Engine/Core/Clock.hpp"
+#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Input/InputSystem.hpp"
+#include "Engine/Platform/Window.hpp"
+#include "Engine/Renderer/DebugRenderSystem.hpp"
+#include "Engine/Renderer/Renderer.hpp"
 
 //----------------------------------------------------------------------------------------------------
 Game::Game()
 {
-    g_theEventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
+    g_eventSystem->SubscribeEventCallbackFunction("OnGameStateChanged", OnGameStateChanged);
 
     m_gameClock                 = new Clock(Clock::GetSystemClock());
     m_screenCamera              = new Camera();
@@ -65,16 +62,16 @@ void Game::Render() const
 
     //-Start-of-Game-Camera---------------------------------------------------------------------------
 
-    g_theRenderer->BeginCamera(*localPlayer->GetCamera());
+    g_renderer->BeginCamera(*localPlayer->GetCamera());
 
     if (m_gameState == eGameState::MATCH ||
         m_gameState == eGameState::FINISHED)
     {
         RenderEntities();
-        g_theRenderer->RenderEmissive();
+        g_renderer->RenderEmissive();
     }
 
-    g_theRenderer->EndCamera(*localPlayer->GetCamera());
+    g_renderer->EndCamera(*localPlayer->GetCamera());
 
     //-End-of-Game-Camera-----------------------------------------------------------------------------
     //------------------------------------------------------------------------------------------------
@@ -85,7 +82,7 @@ void Game::Render() const
     //------------------------------------------------------------------------------------------------
     //-Start-of-Screen-Camera-------------------------------------------------------------------------
 
-    g_theRenderer->BeginCamera(*m_screenCamera);
+    g_renderer->BeginCamera(*m_screenCamera);
 
     if (m_gameState == eGameState::ATTRACT)
     {
@@ -97,7 +94,7 @@ void Game::Render() const
     }
 
 
-    g_theRenderer->EndCamera(*m_screenCamera);
+    g_renderer->EndCamera(*m_screenCamera);
 
     //-End-of-Screen-Camera---------------------------------------------------------------------------
 
@@ -118,21 +115,21 @@ STATIC bool Game::OnGameStateChanged(EventArgs& args)
     {
         PieceDefinition::ClearAllDefs();
         BoardDefinition::ClearAllDefs();
-        GAME_SAFE_RELEASE(g_theGame->m_match);
-        g_theGame->m_currentPlayerControllerId = 0;
+        GAME_SAFE_RELEASE(g_game->m_match);
+        g_game->m_currentPlayerControllerId = 0;
     }
 
     if (newGameState == "MATCH")
     {
         PieceDefinition::InitializeDefs("Data/Definitions/PieceDefinition.xml");
         BoardDefinition::InitializeDefs("Data/Definitions/BoardDefinition.xml");
-        g_theGame->m_match = new Match();
-        g_theEventSystem->FireEvent("OnMatchInitialized");
+        g_game->m_match = new Match();
+        g_eventSystem->FireEvent("OnMatchInitialized");
     }
     else if (newGameState == "FINISHED")
     {
-        int const         id     = g_theGame->m_currentPlayerControllerId;
-        PlayerController* player = g_theGame->GetLocalPlayer(id);
+        int const         id     = g_game->m_currentPlayerControllerId;
+        PlayerController* player = g_game->GetLocalPlayer(id);
         player->m_position       = Vec3(9.5f, 4.f, 4.f);
         player->m_orientation    = EulerAngles(180, 45, 0);
     }
@@ -162,7 +159,7 @@ void Game::ChangeGameState(eGameState const newGameState)
 
     m_gameState = newGameState;
 
-    g_theEventSystem->FireEvent("OnGameStateChanged", args);
+    g_eventSystem->FireEvent("OnGameStateChanged", args);
 }
 
 bool Game::IsFixedCameraMode() const
@@ -188,22 +185,22 @@ void Game::UpdateFromInput()
 {
     PlayerController const* localPlayer = GetLocalPlayer(m_currentPlayerControllerId);
     UNUSED(localPlayer)
-    if (g_theInput->WasKeyJustPressed(NUMCODE_0))
+    if (g_input->WasKeyJustPressed(NUMCODE_0))
     {
         Window::s_mainWindow->SetWindowType(eWindowType::FULLSCREEN_CROP);
     }
-    if (g_theInput->WasKeyJustPressed(NUMCODE_1))
+    if (g_input->WasKeyJustPressed(NUMCODE_1))
     {
         Window::s_mainWindow->SetWindowType(eWindowType::WINDOWED);
     }
     if (m_gameState == eGameState::ATTRACT)
     {
-        if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
+        if (g_input->WasKeyJustPressed(KEYCODE_ESC))
         {
             App::RequestQuit();
         }
 
-        if (g_theInput->WasKeyJustPressed(KEYCODE_SPACE))
+        if (g_input->WasKeyJustPressed(KEYCODE_SPACE))
         {
             ChangeGameState(eGameState::MATCH);
         }
@@ -212,45 +209,45 @@ void Game::UpdateFromInput()
     if (m_gameState == eGameState::MATCH ||
         m_gameState == eGameState::FINISHED)
     {
-        if (g_theInput->WasKeyJustPressed(KEYCODE_ESC))
+        if (g_input->WasKeyJustPressed(KEYCODE_ESC))
         {
             ChangeGameState(eGameState::ATTRACT);
         }
 
-        if (g_theInput->WasKeyJustPressed(KEYCODE_P))
+        if (g_input->WasKeyJustPressed(KEYCODE_P))
         {
             m_gameClock->TogglePause();
         }
 
-        if (g_theInput->WasKeyJustPressed(KEYCODE_O))
+        if (g_input->WasKeyJustPressed(KEYCODE_O))
         {
             m_gameClock->StepSingleFrame();
         }
 
-        if (g_theInput->IsKeyDown(KEYCODE_T))
+        if (g_input->IsKeyDown(KEYCODE_T))
         {
             m_gameClock->SetTimeScale(0.1f);
         }
 
-        if (g_theInput->WasKeyJustReleased(KEYCODE_T))
+        if (g_input->WasKeyJustReleased(KEYCODE_T))
         {
             m_gameClock->SetTimeScale(1.f);
         }
 
-        if (g_theInput->WasKeyJustPressed(KEYCODE_F6))
+        if (g_input->WasKeyJustPressed(KEYCODE_F6))
         {
             m_currentDebugInt = (m_currentDebugInt + (int)m_currentDebugIntRange.m_max) % (static_cast<int>(m_currentDebugIntRange.GetLength()) + 1);
         }
-        if (g_theInput->WasKeyJustPressed(KEYCODE_F7))
+        if (g_input->WasKeyJustPressed(KEYCODE_F7))
         {
             m_currentDebugInt = (m_currentDebugInt + (int)m_currentDebugIntRange.m_min + 1) % (static_cast<int>(m_currentDebugIntRange.GetLength()) + 1);
         }
 
-        g_theRenderer->SetPerFrameConstants((float)m_gameClock->GetTotalSeconds(), m_currentDebugInt, 0);
+        g_renderer->SetPerFrameConstants((float)m_gameClock->GetTotalSeconds(), m_currentDebugInt, 0);
 
         DebugAddMessage(Stringf("DebugInt=%d|RenderMode=%s", m_currentDebugInt, GetDebugIntString(m_currentDebugInt)), 0.f, Rgba8::YELLOW);
 
-        if (g_theInput->WasKeyJustPressed(KEYCODE_F4))
+        if (g_input->WasKeyJustPressed(KEYCODE_F4))
         {
             m_isFixedCameraMode = !m_isFixedCameraMode;
 
@@ -294,14 +291,14 @@ void Game::RenderAttractMode() const
 
     VertexList_PCU verts;
     AddVertsForDisc2D(verts, Vec2((float)clientDimensions.x * 0.5f, (float)clientDimensions.y * 0.5f), 300.f, 10.f, Rgba8::YELLOW);
-    g_theRenderer->SetModelConstants();
-    g_theRenderer->SetBlendMode(eBlendMode::OPAQUE);
-    g_theRenderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
-    g_theRenderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
-    g_theRenderer->SetDepthMode(eDepthMode::DISABLED);
-    g_theRenderer->BindTexture(nullptr);
-    g_theRenderer->BindShader(g_theRenderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
-    g_theRenderer->DrawVertexArray(verts);
+    g_renderer->SetModelConstants();
+    g_renderer->SetBlendMode(eBlendMode::OPAQUE);
+    g_renderer->SetRasterizerMode(eRasterizerMode::SOLID_CULL_BACK);
+    g_renderer->SetSamplerMode(eSamplerMode::BILINEAR_CLAMP);
+    g_renderer->SetDepthMode(eDepthMode::DISABLED);
+    g_renderer->BindTexture(nullptr);
+    g_renderer->BindShader(g_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
+    g_renderer->DrawVertexArray(verts);
 
     std::vector<std::string> asciiArt = {
 
@@ -338,7 +335,7 @@ void Game::RenderEntities() const
     PlayerController const* localPlayer = GetLocalPlayer(m_currentPlayerControllerId);
 
     m_match->Render();
-    g_theRenderer->SetModelConstants(localPlayer->GetModelToWorldTransform());
+    g_renderer->SetModelConstants(localPlayer->GetModelToWorldTransform());
     localPlayer->Render();
 }
 

@@ -4,8 +4,7 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include <cstdint>
-
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/FloatRange.hpp"

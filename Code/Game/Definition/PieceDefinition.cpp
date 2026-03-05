@@ -10,6 +10,7 @@
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/OBB3.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Resource/ResourceSubsystem.hpp"
 #include "Game/Framework/GameCommon.hpp"
 
 //----------------------------------------------------------------------------------------------------
@@ -34,13 +35,13 @@ bool PieceDefinition::LoadFromXmlElement(XmlElement const* element)
     else if (type == "king") m_type = ePieceType::KING;
 
     String const shader                   = ParseXmlAttribute(*element, "shader", "DEFAULT");
-    m_shader                              = g_theRenderer->CreateOrGetShaderFromFile(shader.c_str(), eVertexType::VERTEX_PCUTBN);
+    m_shader                              = g_renderer->CreateOrGetShaderFromFile(shader.c_str(), eVertexType::VERTEX_PCUTBN);
     String const diffuseTexture           = ParseXmlAttribute(*element, "diffuseTexture", "DEFAULT");
-    m_diffuseTexture                      = g_theRenderer->CreateOrGetTextureFromFile(diffuseTexture.c_str());
+    m_diffuseTexture                      = g_resourceSubsystem->CreateOrGetTextureFromFile(diffuseTexture.c_str());
     String const normalTexture            = ParseXmlAttribute(*element, "normalTexture", "DEFAULT");
-    m_normalTexture                       = g_theRenderer->CreateOrGetTextureFromFile(normalTexture.c_str());
+    m_normalTexture                       = g_resourceSubsystem->CreateOrGetTextureFromFile(normalTexture.c_str());
     String const specularGlossEmitTexture = ParseXmlAttribute(*element, "specularGlossEmitTexture", "DEFAULT");
-    m_specularGlossEmitTexture            = g_theRenderer->CreateOrGetTextureFromFile(specularGlossEmitTexture.c_str());
+    m_specularGlossEmitTexture            = g_resourceSubsystem->CreateOrGetTextureFromFile(specularGlossEmitTexture.c_str());
 
     XmlElement const* partElement = element->FirstChildElement("PiecePart");
 
@@ -80,11 +81,11 @@ void PieceDefinition::CreateMeshByID(int const id)
         }
     }
 
-    m_vertexBuffer[id] = g_theRenderer->CreateVertexBuffer(sizeof(Vertex_PCUTBN), sizeof(Vertex_PCUTBN));
-    m_indexBuffer[id]  = g_theRenderer->CreateIndexBuffer(sizeof(unsigned int), sizeof(unsigned int));
+    m_vertexBuffer[id] = g_renderer->CreateVertexBuffer(sizeof(Vertex_PCUTBN), sizeof(Vertex_PCUTBN));
+    m_indexBuffer[id]  = g_renderer->CreateIndexBuffer(sizeof(unsigned int), sizeof(unsigned int));
 
-    g_theRenderer->CopyCPUToGPU(verts.data(), static_cast<int>(verts.size()) * sizeof(Vertex_PCUTBN), m_vertexBuffer[id]);
-    g_theRenderer->CopyCPUToGPU(indexes.data(), static_cast<int>(indexes.size()) * sizeof(unsigned int), m_indexBuffer[id]);
+    g_renderer->CopyCPUToGPU(verts.data(), static_cast<int>(verts.size()) * sizeof(Vertex_PCUTBN), m_vertexBuffer[id]);
+    g_renderer->CopyCPUToGPU(indexes.data(), static_cast<int>(indexes.size()) * sizeof(unsigned int), m_indexBuffer[id]);
 }
 
 //----------------------------------------------------------------------------------------------------

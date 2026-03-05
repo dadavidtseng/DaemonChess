@@ -4,13 +4,13 @@
 
 //----------------------------------------------------------------------------------------------------
 #pragma once
-#include <vector>
-
+//----------------------------------------------------------------------------------------------------
+#include "Game/Definition/BoardDefinition.hpp"
+#include "Game/Gameplay/Actor.hpp"
+//----------------------------------------------------------------------------------------------------
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Shader.hpp"
 #include "Engine/Resource/ResourceHandle.hpp"
-#include "Game/Definition/BoardDefinition.hpp"
-#include "Game/Gameplay/Actor.hpp"
 
 class ModelResource;
 //----------------------------------------------------------------------------------------------------
