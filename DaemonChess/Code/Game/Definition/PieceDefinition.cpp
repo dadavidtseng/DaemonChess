@@ -35,7 +35,7 @@ bool PieceDefinition::LoadFromXmlElement(XmlElement const* element)
     else if (type == "king") m_type = ePieceType::KING;
 
     String const shader                   = ParseXmlAttribute(*element, "shader", "DEFAULT");
-    m_shader                              = g_renderer->CreateOrGetShaderFromFile(shader.c_str(), eVertexType::VERTEX_PCUTBN);
+    m_shader                              = g_resourceSubsystem->CreateOrGetShaderFromFile(shader.c_str(), eVertexType::VERTEX_PCUTBN);
     String const diffuseTexture           = ParseXmlAttribute(*element, "diffuseTexture", "DEFAULT");
     m_diffuseTexture                      = g_resourceSubsystem->CreateOrGetTextureFromFile(diffuseTexture.c_str());
     String const normalTexture            = ParseXmlAttribute(*element, "normalTexture", "DEFAULT");

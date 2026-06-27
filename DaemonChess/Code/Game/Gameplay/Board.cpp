@@ -23,7 +23,7 @@ Board::Board(Match* owner)
     : Actor(owner)
 
 {
-    m_shader                   = g_renderer->CreateOrGetShaderFromFile("Data/Shaders/Bloom", eVertexType::VERTEX_PCU);
+    m_shader                   = g_resourceSubsystem->CreateOrGetShaderFromFile("Data/Shaders/Bloom", eVertexType::VERTEX_PCU);
     m_diffuseTexture           = g_resourceSubsystem->CreateOrGetTextureFromFile("Data/Images/PhongTextures/FunkyBricks_d.png");
     m_normalTexture            = g_resourceSubsystem->CreateOrGetTextureFromFile("Data/Images/PhongTextures/FunkyBricks_n.png");
     m_specularGlossEmitTexture = g_resourceSubsystem->CreateOrGetTextureFromFile("Data/Images/PhongTextures/FunkyBricks_sge.png");
@@ -86,7 +86,7 @@ void Board::RenderSelectedBox() const
     }
 
     g_renderer->BindTexture(nullptr);
-    g_renderer->BindShader(g_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
+    g_renderer->BindShader(g_resourceSubsystem->CreateOrGetShaderFromFile("Data/Shaders/Default"));
     g_renderer->DrawVertexArray(verts);
 }
 

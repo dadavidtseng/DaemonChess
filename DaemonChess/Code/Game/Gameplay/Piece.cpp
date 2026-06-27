@@ -15,6 +15,7 @@
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Renderer/VertexUtils.hpp"
 //----------------------------------------------------------------------------------------------------
+#include "Engine/Resource/ResourceSubsystem.hpp"
 #include "ThirdParty/stb/stb_image.h"
 
 //----------------------------------------------------------------------------------------------------
@@ -163,7 +164,7 @@ void Piece::RenderSelectedPiece() const
 
     g_renderer->SetModelConstants();
     g_renderer->BindTexture(nullptr);
-    g_renderer->BindShader(g_renderer->CreateOrGetShaderFromFile("Data/Shaders/Default"));
+    g_renderer->BindShader(g_resourceSubsystem->CreateOrGetShaderFromFile("Data/Shaders/Default"));
     g_renderer->DrawVertexArray(verts);
 }
 
